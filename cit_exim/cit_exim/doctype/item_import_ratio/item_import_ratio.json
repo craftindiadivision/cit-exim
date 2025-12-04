@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "creation": "2025-12-03 11:24:32.464259",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "license_name",
+  "ratio",
+  "approved_qty",
+  "total_import_qty",
+  "remaining_qty",
+  "column_break_7",
+  "currency",
+  "approved_amount",
+  "total_import_amount",
+  "remaining_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "license_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "License Name"
+  },
+  {
+   "fieldname": "ratio",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Ratio"
+  },
+  {
+   "fieldname": "approved_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Approved Qty"
+  },
+  {
+   "fieldname": "total_import_qty",
+   "fieldtype": "Float",
+   "label": "Total import Qty"
+  },
+  {
+   "fieldname": "remaining_qty",
+   "fieldtype": "Float",
+   "label": "Remaining Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "USD",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "print_hide": 1
+  },
+  {
+   "fieldname": "approved_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Approved Amount",
+   "options": "currency"
+  },
+  {
+   "fieldname": "total_import_amount",
+   "fieldtype": "Currency",
+   "label": "Total Import Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remaining_amount",
+   "fieldtype": "Currency",
+   "label": "Remaining Amount",
+   "options": "currency"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-03 11:24:32.464259",
+ "modified_by": "Administrator",
+ "module": "CIT Exim",
+ "name": "Item Import Ratio",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

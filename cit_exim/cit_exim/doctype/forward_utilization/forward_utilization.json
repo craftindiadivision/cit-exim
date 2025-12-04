@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "creation": "2025-12-03 12:19:14.518502",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "forward_contract",
+  "forward_rate",
+  "forward_amount",
+  "amount_outstanding",
+  "column_break_25",
+  "maturity_from",
+  "maturity_to",
+  "amount_utilized",
+  "pre_utilization_charges"
+ ],
+ "fields": [
+  {
+   "fieldname": "forward_contract",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Forward Contract",
+   "options": "Forward Booking",
+   "reqd": 1
+  },
+  {
+   "fieldname": "forward_rate",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Forward Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "forward_amount",
+   "fieldtype": "Currency",
+   "label": "Forward Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_outstanding",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Forward Amount Outstanding",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_25",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "maturity_from",
+   "fieldtype": "Date",
+   "label": "Maturity From",
+   "read_only": 1
+  },
+  {
+   "fieldname": "maturity_to",
+   "fieldtype": "Date",
+   "label": "Maturity To",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_utilized",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount Utilized"
+  },
+  {
+   "fieldname": "pre_utilization_charges",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Pre Utilization Charges"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-03 12:19:14.518502",
+ "modified_by": "Administrator",
+ "module": "CIT Exim",
+ "name": "Forward Utilization",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

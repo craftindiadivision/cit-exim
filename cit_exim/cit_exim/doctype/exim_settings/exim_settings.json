@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-03 12:58:02.500069",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "exim_tab",
+  "section_break_vuwi",
+  "use_advance_authorization_license_based_on_cas_no_of_item"
+ ],
+ "fields": [
+  {
+   "fieldname": "exim_tab",
+   "fieldtype": "Tab Break",
+   "label": "Exim"
+  },
+  {
+   "fieldname": "section_break_vuwi",
+   "fieldtype": "Section Break",
+   "label": "License Setting"
+  },
+  {
+   "default": "0",
+   "fieldname": "use_advance_authorization_license_based_on_cas_no_of_item",
+   "fieldtype": "Check",
+   "ignore_user_permissions": 1,
+   "label": "Use Advance Authorization License based on CAS No of Item"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-12-03 12:58:02.500069",
+ "modified_by": "Administrator",
+ "module": "CIT Exim",
+ "name": "Exim Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

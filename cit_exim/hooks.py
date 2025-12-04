@@ -228,6 +228,12 @@ app_license = "mit"
 # 	}
 # ]
 
+# payment term override
+from cit_exim.cit_exim.monkey_patch.accounts_controller import get_due_date
+from erpnext.controllers import accounts_controller
+
+accounts_controller.get_due_date = get_due_date
+
 # Authentication and authorization
 # --------------------------------
 
@@ -242,3 +248,83 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+
+fixtures=[
+    # {"dt": "Custom Field", "filters": [["module", "in", ["CIT Exim"]]]},
+    {
+    "dt": "Custom Field",
+    "filters": [
+        ["dt", "in", ["Sales Order","Address","Supplier","Sales Invoice"]]
+    ]
+    },
+    {
+    "dt": "Property Setter",
+    "filters": [
+        ["name", "in", [
+           "Sales Order-main-field_order","Sales Order-shipping_terms-label","Sales Order-po_no-label","Supplier-main-field_order","Sales Order-customer-label","Address-is_shipping_address-depends_on",
+           "Address-main-field_order"
+        ]]
+    ]
+    },
+
+
+]
+
+doctype_js = {
+    "Sales Order": "public/js/doctype_js/sales_order.js",
+    "Address":"public/js/doctype_js/address.js",
+    "Delivery Note":"public/js/doctype_js/delivery_note.js",
+    "Sales Invoice":"public/js/doctype_js/sales_invoice.js",
+    "Lead":"public/js/doctype_js/lead.js",
+    "Customize Form":"public/js/doctype_js/customize_form.js",
+    "Payment Entry":"public/js/doctype_js/payment_entry.js",
+    "Purchase Invoice":"public/js/doctype_js/purchase_invoice.js",
+    "Purchase Order":"public/js/doctype_js/purchase_order.js",
+    "Purchase Receipt":"public/js/doctype_js/purchase_receipt"
+
+}
+
+
+doc_events = {
+    "Sales Invoice": {
+        "before_save": "cit_exim.cit_exim.doc_events.sales_invoice.before_save",
+        "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
+        "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
+        "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
+    },
+    "Purchase Invoice": {
+         "on_submit": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_submit",
+        "on_cancel": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_cancel",
+    },
+    (
+        "Purchase Invoice",
+        "Payment Request",
+        "Payment Entry",
+        "Journal Entry",
+        "Material Request",
+        "Purchase Order",
+        "Work Order",
+        "Production Plan",
+        "Stock Entry",
+        "Quotation",
+        "Sales Order",
+        "Delivery Note",
+        "Purchase Receipt",
+        "Packing Slip",
+    ): {
+        # "before_naming": "cit_exim.api.docs_before_naming",
+    },
+    "Rodtep Claim": {
+        "on_submit": "cit_exim.cit_exim.doctype.rodtep_claim.rodtep_claim.create_jv_on_submit"
+    },
+    "Duty DrawBack Claim": {
+        "on_submit": "cit_exim.cit_exim.doctype.duty_drawback_claim.duty_drawback_claim.create_jv_on_submit"
+    },
+    "Payment Entry": {
+        "on_submit": "cit_exim.api.pe_on_submit",
+        "before_cancel": "cit_exim.api.pe_on_cancel",
+    },
+    ("Delivery Note", "Sales Invoice"): {
+        "validate": "cit_exim.cit_exim.doc_events.igst_calculation.cal_igst"
+    },
+}

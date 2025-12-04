@@ -1,0 +1,386 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-12-03 12:57:16.429216",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "sales_order",
+  "contract_date",
+  "payment_term",
+  "terms_based_on",
+  "contract_status",
+  "to_order",
+  "column_break_6",
+  "customer_name",
+  "customer_address",
+  "address",
+  "remarks",
+  "section_break_12",
+  "lc_no",
+  "lc_opening_bank",
+  "lc_bank_address",
+  "documentary_credit_number",
+  "applicant",
+  "beneficiary",
+  "currency",
+  "contract_amount",
+  "percentage_credit_amount_tolerance",
+  "partial_shipment",
+  "trans_shipment",
+  "description_of_goods",
+  "column_break_23",
+  "date_of_issue",
+  "date_of_expiry",
+  "place_of_expiry",
+  "available_with_by",
+  "drafts_at",
+  "port_of_loading",
+  "port_of_discharge",
+  "latest_date_of_shipment",
+  "contract_sales_order",
+  "contract_term_order",
+  "total_grand_amount",
+  "total_net_amount",
+  "section_break_32",
+  "document",
+  "document_checks",
+  "contract_term_check",
+  "amount_allowed_to",
+  "amount_allowed_from"
+ ],
+ "fields": [
+  {
+   "default": "CT-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "CT-"
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order"
+  },
+  {
+   "fieldname": "contract_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Contract Date"
+  },
+  {
+   "fieldname": "payment_term",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Payment Term",
+   "options": "Payment Term"
+  },
+  {
+   "default": "Letter of Credit",
+   "fieldname": "terms_based_on",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Terms Based On",
+   "options": "Letter of Credit\nCAD"
+  },
+  {
+   "fieldname": "contract_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Contract Status",
+   "options": "\nDone\nPending\nConfirm"
+  },
+  {
+   "default": "0",
+   "fieldname": "to_order",
+   "fieldtype": "Check",
+   "label": "To Order"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "sales_order.customer",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "sales_order.customer_address",
+   "fieldname": "customer_address",
+   "fieldtype": "Data",
+   "label": "Customer Address"
+  },
+  {
+   "fetch_from": "sales_order.address_display",
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "depends_on": "eval: doc.terms_based_on == \"Letter of Credit\"",
+   "fieldname": "section_break_12",
+   "fieldtype": "Section Break",
+   "label": "LC Details"
+  },
+  {
+   "fieldname": "lc_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "LC No"
+  },
+  {
+   "fieldname": "lc_opening_bank",
+   "fieldtype": "Link",
+   "label": "LC Opening Bank",
+   "options": "Bank"
+  },
+  {
+   "fieldname": "lc_bank_address",
+   "fieldtype": "Data",
+   "label": "LC Bank Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "documentary_credit_number",
+   "fieldtype": "Data",
+   "label": "Documentary Credit Number"
+  },
+  {
+   "fetch_from": "sales_order.customer_name",
+   "fieldname": "applicant",
+   "fieldtype": "Data",
+   "label": "Applicant",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "sales_order.company",
+   "fieldname": "beneficiary",
+   "fieldtype": "Data",
+   "label": "Beneficiary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "contract_amount",
+   "fieldtype": "Currency",
+   "label": "Contract Amount",
+   "options": "currency"
+  },
+  {
+   "fieldname": "percentage_credit_amount_tolerance",
+   "fieldtype": "Percent",
+   "label": "Percentage Credit Amount Tolerance",
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "fetch_from": "sales_order.partial_shipment",
+   "fieldname": "partial_shipment",
+   "fieldtype": "Check",
+   "label": "Partial Shipment"
+  },
+  {
+   "default": "0",
+   "fetch_from": "sales_order.trans_shipment",
+   "fieldname": "trans_shipment",
+   "fieldtype": "Check",
+   "label": "Trans Shipment"
+  },
+  {
+   "fieldname": "description_of_goods",
+   "fieldtype": "Small Text",
+   "label": "Description Of Goods"
+  },
+  {
+   "fieldname": "column_break_23",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_issue",
+   "fieldtype": "Date",
+   "label": "Date of Issue"
+  },
+  {
+   "fieldname": "date_of_expiry",
+   "fieldtype": "Date",
+   "label": "Date of Expiry"
+  },
+  {
+   "default": "India",
+   "fieldname": "place_of_expiry",
+   "fieldtype": "Data",
+   "label": "Place of Expiry"
+  },
+  {
+   "fieldname": "available_with_by",
+   "fieldtype": "Link",
+   "label": "Available With By",
+   "options": "Bank Account"
+  },
+  {
+   "fieldname": "drafts_at",
+   "fieldtype": "Select",
+   "label": "Drafts At",
+   "options": "\nSight\n30 Days\n45 Days\n60 Days\n90 Days\n120 Days"
+  },
+  {
+   "fieldname": "port_of_loading",
+   "fieldtype": "Link",
+   "label": "Port of Loading",
+   "options": "Port Details"
+  },
+  {
+   "fieldname": "port_of_discharge",
+   "fieldtype": "Link",
+   "label": "Port of Discharge",
+   "options": "Port Details"
+  },
+  {
+   "fieldname": "latest_date_of_shipment",
+   "fieldtype": "Date",
+   "label": "Latest Date of Shipment"
+  },
+  {
+   "fieldname": "contract_sales_order",
+   "fieldtype": "Section Break",
+   "label": "Contract Term Order"
+  },
+  {
+   "fieldname": "contract_term_order",
+   "fieldtype": "Table",
+   "label": "Contract Term Order",
+   "options": "Contract Term Order"
+  },
+  {
+   "fieldname": "total_grand_amount",
+   "fieldtype": "Currency",
+   "label": "Total Grand Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_net_amount",
+   "fieldtype": "Currency",
+   "label": "Total Net Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_32",
+   "fieldtype": "Section Break",
+   "label": "Export Documents"
+  },
+  {
+   "fieldname": "document",
+   "fieldtype": "Table",
+   "label": "Document",
+   "options": "Export Document Item"
+  },
+  {
+   "fieldname": "document_checks",
+   "fieldtype": "Section Break",
+   "label": "Document Checks"
+  },
+  {
+   "fieldname": "contract_term_check",
+   "fieldtype": "Table",
+   "label": "Contract Term Check",
+   "options": "Contract Term Check"
+  },
+  {
+   "depends_on": "eval: doc.terms_based_on == \"Letter of Credit\"",
+   "fieldname": "amount_allowed_to",
+   "fieldtype": "Currency",
+   "label": "Amount Allowed To",
+   "options": "currency"
+  },
+  {
+   "depends_on": "eval: doc.terms_based_on == \"Letter of Credit\"",
+   "fieldname": "amount_allowed_from",
+   "fieldtype": "Currency",
+   "label": "Amount Allowed From",
+   "options": "currency"
+  }
+ ],
+ "links": [],
+ "modified": "2025-12-03 12:57:16.429216",
+ "modified_by": "Administrator",
+ "module": "CIT Exim",
+ "name": "Contract Term",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Analytics",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
