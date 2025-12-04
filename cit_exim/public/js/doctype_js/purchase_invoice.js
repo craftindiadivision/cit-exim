@@ -31,7 +31,7 @@ frappe.ui.form.on("Purchase Invoice", {
                     let d = locals[cdt][cdn];
                     if (data) {
                         return {
-                                query: "exim.exim.doctype.advance_authorisation_license.advance_authorisation_license.cas_number_details",
+                                query: "cit_exim.cit_exim.doctype.advance_authorisation_license.advance_authorisation_license.cas_number_details",
                                 filters: {
                                     'cas_number': d.cas_number
                                 }
@@ -39,7 +39,7 @@ frappe.ui.form.on("Purchase Invoice", {
                     }
                     else{
                         return {
-                            query: "exim.exim.doctype.advance_authorisation_license.advance_authorisation_license.license_query",
+                            query: "cit_exim.cit_exim.doctype.advance_authorisation_license.advance_authorisation_license.license_query",
                                     filters: {
                                         'item_code': d.item_code
                                     }
@@ -118,7 +118,7 @@ frappe.ui.form.on("Purchase Invoice Item", {
 
         if (d.advance_authorisation_license) {
             frappe.call({
-                method: "exim.exim.doctype.advance_authorisation_license.advance_authorisation_license.get_license_details",
+                method: "cit_exim.cit_exim.doctype.advance_authorisation_license.advance_authorisation_license.get_license_details",
                 args: {
                     'aal': d.advance_authorisation_license,
                     'item_code': d.item_code,

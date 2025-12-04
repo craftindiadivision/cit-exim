@@ -132,7 +132,7 @@ frappe.ui.form.on("Sales Invoice", {
         if (so_list_item.length) {
             frm.set_query("contract_and_lc", function () {
                 return {
-                    query: "exim.api.contract_and_lc_filter",
+                    query: "cit_exim.api.contract_and_lc_filter",
                     filters: {
                         'sales_order_item': so_list_item
                     }

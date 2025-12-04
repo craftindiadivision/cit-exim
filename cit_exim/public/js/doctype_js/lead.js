@@ -11,7 +11,7 @@ frappe.ui.form.on('Lead', {
 
 				if(frm.doc.organization_lead){
 					frappe.call({
-						method: "exim.get_party_details.get_party_details",
+						method: "cit_exim.get_party_details.get_party_details",
 						args: {
 							party: frm.doc.name,
 							party_type: "Lead"
@@ -45,7 +45,7 @@ frappe.ui.form.on('Lead', {
 
 var send_email = function(recipients, person, email_template, doc_name){
 	frappe.call({
-		method : "exim.api.send_lead_mail",
+		method : "cit_exim.api.send_lead_mail",
 		args : {
 			recipients: recipients,
 			person: person,

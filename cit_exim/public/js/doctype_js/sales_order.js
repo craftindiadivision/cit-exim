@@ -268,7 +268,7 @@ frappe.ui.form.on("Sales Order", {
     before_save: function (frm) {
         frm.trigger("cal_total");
         frappe.call({
-            method: 'exim.api.company_address',
+            method: 'cit_exim.api.company_address',
             args: {
                 'company': frm.doc.company
             },
@@ -285,7 +285,7 @@ frappe.ui.form.on("Sales Order", {
             if (frm.doc.docstatus == 1) {
                 frm.add_custom_button(__("Contract Term"), function () {
                     frappe.model.open_mapped_doc({
-                        method: "exim.api.make_lc",
+                        method: "cit_exim.api.make_lc",
                         frm: cur_frm
                     })
                 }, __("Create"))
@@ -367,9 +367,6 @@ frappe.ui.form.on("Sales Order", {
 
 
 
-    /* ----------------------------------------
-       BELOW IS THE SECOND SCRIPT (ADDED AS IS)
-       ---------------------------------------- */
 
     // LOAD TEMPLATE FOR QUALITY & SPECIFICATIONS
     custom_product(frm) {
@@ -428,11 +425,11 @@ frappe.ui.form.on("Sales Order", {
 
         // PORT FILTERS
         frm.set_query("port_of_loading", () => ({
-            filters: { custom_is_in_india: 1 }
+            filters: { is_in_india: 1 }
         }));
 
         frm.set_query("port_of_discharge", () => ({
-            filters: { custom_is_in_india: 0 }
+            filters: { is_in_india: 0 }
         }));
 
         frm.trigger("set_signing_authority_options");

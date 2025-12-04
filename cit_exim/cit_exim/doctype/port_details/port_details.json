@@ -10,7 +10,9 @@
  "field_order": [
   "port_name",
   "port_code",
-  "country"
+  "column_break_kabi",
+  "country",
+  "is_in_india"
  ],
  "fields": [
   {
@@ -31,13 +33,24 @@
    "fieldtype": "Link",
    "label": "Country",
    "options": "Country"
+  },
+  {
+   "fieldname": "column_break_kabi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_in_india",
+   "fieldtype": "Check",
+   "label": "Is In India"
   }
  ],
  "links": [],
- "modified": "2025-12-03 12:01:52.514849",
- "modified_by": "Administrator",
+ "modified": "2025-12-04 18:10:14.922586",
+ "modified_by": "administrator@gmail.com",
  "module": "CIT Exim",
  "name": "Port Details",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
