@@ -280,19 +280,20 @@ frappe.ui.form.on("Sales Order", {
         })
     },
 
-    refresh: function (frm) {
-        if (!in_list(["Closed", "Completed"], frm.doc.status)) {
-            if (frm.doc.docstatus == 1) {
-                frm.add_custom_button(__("Contract Term"), function () {
-                    frappe.model.open_mapped_doc({
-                        method: "cit_exim.api.make_lc",
-                        frm: cur_frm
-                    })
-                }, __("Create"))
-            }
-        }
-
-    },
+//     refresh: function (frm) {
+//         if (!in_list(["Closed", "Completed"], frm.doc.status)) {
+            
+//             if (frm.doc.docstatus == 1) {
+//                 frm.add_custom_button(__("Contract Term"), function () {
+//                     frappe.model.open_mapped_doc({
+//                         method: "cit_exim.api.make_lc",
+//                         frm: cur_frm
+//                     })
+//                 }, __("Create"))
+//             }
+//         }
+// // /home/user/v15/apps/cit_exim/cit_exim/api.py
+//     },
 
     onload:function(frm){
         if(frm.doc.customer_address || frm.doc.shipping_address_name){
@@ -396,7 +397,18 @@ frappe.ui.form.on("Sales Order", {
 
     // REFRESH FUNCTION
     refresh(frm) {
-
+        console.log('888888888')
+        if (!in_list(["Closed", "Completed"], frm.doc.status)) {
+            console.log('kkkkkkkkk')
+            if (frm.doc.docstatus == 1) {
+                frm.add_custom_button(__("Contract Term"), function () {
+                    frappe.model.open_mapped_doc({
+                        method: "cit_exim.api.make_lc",
+                        frm: cur_frm
+                    })
+                }, __("Create"))
+            }
+        }
         // AUTO SET START AND END DATES
         if (frm.doc.transaction_date && !frm.doc.custom_shipment_period_start) {
             frm.set_value("custom_shipment_period_start", frm.doc.transaction_date);
@@ -432,7 +444,7 @@ frappe.ui.form.on("Sales Order", {
             filters: { is_in_india: 0 }
         }));
 
-        frm.trigger("set_signing_authority_options");
+        // frm.trigger("set_signing_authority_options");
         frm.trigger("calculate_shipping_period");
         toggle_other_insurance_field(frm);
     },
@@ -467,9 +479,9 @@ frappe.ui.form.on("Sales Order", {
         });
     },
 
-    // SIGNING AUTHORITY
-    customer(frm) { frm.trigger("set_signing_authority_options"); },
-    custom_agent(frm) { frm.trigger("set_signing_authority_options"); },
+    // // SIGNING AUTHORITY
+    // customer(frm) { frm.trigger("set_signing_authority_options"); },
+    // custom_agent(frm) { frm.trigger("set_signing_authority_options"); },
 
     // INSURANCE OPTION
     custom_insurance(frm) { toggle_other_insurance_field(frm); },
@@ -511,22 +523,25 @@ frappe.ui.form.on("Sales Order", {
         }
     },
 
-    // UPDATE SIGNING AUTHORITY OPTIONS
-    set_signing_authority_options(frm) {
-        let options = [];
+    // // UPDATE SIGNING AUTHORITY OPTIONS
+    // set_signing_authority_options(frm) {
+    //     console.log("111111111111")
+    //     let options = [];
+        
+    //     if (frm.doc.custom_agent)
+    //         options.push("Agent: " + frm.doc.custom_agent);
 
-        if (frm.doc.custom_agent)
-            options.push("Agent: " + frm.doc.custom_agent);
+    //     if (frm.doc.customer_name)
+    //         options.push("Buyer: " + frm.doc.customer_name);
 
-        if (frm.doc.customer_name)
-            options.push("Buyer: " + frm.doc.customer_name);
+    //     frm.set_df_property(
+    //         "custom_signing_authority",
+    //         "options",
+    //         options.join("\n")
+    //     );
+    // }
 
-        frm.set_df_property(
-            "custom_signing_authority",
-            "options",
-            options.join("\n")
-        );
-    }
+
 });
 
 

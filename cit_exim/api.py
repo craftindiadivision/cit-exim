@@ -342,6 +342,7 @@ def company_address(company):
 
 @frappe.whitelist()
 def make_lc(source_name, target_doc=None):
+	print(33333333333333)
 	def postprocess(source, target):
 		target.append('contract_term_order', {
 				'sales_order': source.name,
