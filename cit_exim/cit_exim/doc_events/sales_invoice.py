@@ -84,7 +84,6 @@ def calculate_total(self):
 	if self.freight_calculated == "Manual":
 		self.freight = total_freight
 		self.insurance = total_insurance
-	self.total_meis = total_meis
 	self.total_fob_value = total_fob_value
 	self.total_pallets = total_pallets
 
