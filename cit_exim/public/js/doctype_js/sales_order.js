@@ -418,15 +418,15 @@ frappe.ui.form.on("Sales Order", {
         }
 
         // CONSIGNEE FILTER
-        frm.set_query("custom_consignee", function() {
-            return {
-                filters: {
-                    custom_is_consignee: 1,
-                    link_doctype: "Customer",
-                    link_name: frm.doc.customer || ""
-                }
-            };
-        });
+        // frm.set_query("custom_consignee", function() {
+        //     return {
+        //         filters: {
+        //             custom_is_consignee: 1,
+        //             link_doctype: "Customer",
+        //             link_name: frm.doc.customer || ""
+        //         }
+        //     };
+        // });
 
         // AGENT FILTER
         frm.set_query("custom_agent", function() {
@@ -713,3 +713,16 @@ function render_producer_html(frm) {
             frm.refresh_field('custom_producer_table');
         });
 }
+frappe.ui.form.on("Sales Order", {
+    customer: function(frm) {
+        frm.set_query("custom_consignee", function() {
+            return {
+                query: "cit_exim.cit_exim.doc_events.sales_order.get_consignee_list",
+                // /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
+                filters: {
+                    customer: frm.doc.customer
+                }
+            };
+        });
+    }
+});

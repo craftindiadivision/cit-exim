@@ -6,3 +6,24 @@ def get_producers():
         "Producer",
         fields=["name", "producer_name"]
     )
+
+
+@frappe.whitelist()
+def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
+    customer = filters.get("customer")
+
+    if not customer:
+        return []
+
+    addresses = frappe.db.get_all(
+        "Address",
+        filters={
+            "custom_is_consignee": 1,
+            "link_doctype": "Customer",
+            "link_name": customer,
+        },
+        fields=["custom_consignee_name"]
+    )
+
+    # Return list of tuples (required for link field query)
+    return [(d.custom_consignee_name,) for d in addresses]

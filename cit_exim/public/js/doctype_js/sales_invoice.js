@@ -107,6 +107,7 @@ cur_frm.set_query("contact_person", function () {
         filters: { link_doctype: "Customer", link_name: cur_frm.doc.customer }
     };
 });
+// -----------------------------------------------------------------------------------------------------------
 
 frappe.ui.form.on("Sales Invoice", {
     onload: function (frm) {
@@ -205,7 +206,7 @@ frappe.ui.form.on('Notify Party Address', {
 
 
 // ------------------------------------------------------------------------
-// *** YOUR NEW CODE ADDED EXACTLY AS REQUESTED (NO CHANGES MADE ABOVE) ***
+// NEW CODE
 // ------------------------------------------------------------------------
 
 frappe.ui.form.on("Sales Invoice", {

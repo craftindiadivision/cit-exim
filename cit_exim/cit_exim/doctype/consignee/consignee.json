@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:consignee_name",
  "creation": "2025-12-10 10:07:44.060702",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -28,7 +29,8 @@
   {
    "fieldname": "consignee_name",
    "fieldtype": "Data",
-   "label": "Consignee Name "
+   "label": "Consignee Name ",
+   "unique": 1
   },
   {
    "fieldname": "buyer",
@@ -41,10 +43,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-10 10:58:05.862150",
- "modified_by": "administrator@gmail.com",
+ "modified": "2025-12-10 11:28:25.104345",
+ "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consignee",
+ "naming_rule": "By fieldname",
  "owner": "administrator@gmail.com",
  "permissions": [
   {
