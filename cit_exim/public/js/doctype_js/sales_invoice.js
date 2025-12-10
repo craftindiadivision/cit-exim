@@ -243,3 +243,74 @@ frappe.ui.form.on("Sales Invoice", {
     }
 
 });
+
+
+frappe.ui.form.on('Sales Invoice', {
+    onload(frm) {
+        // Hide the real table
+        frm.set_df_property('custom_producer_table', 'hidden', 1);
+
+        // Render HTML table
+        render_producer_html(frm);
+    },
+
+    refresh(frm) {
+        render_producer_html(frm);
+    }
+});
+
+function render_producer_html(frm) {
+    if (!frm.doc.custom_producer_table || !frm.fields_dict.custom_producer_list) return;
+
+    let html = `
+        <div style="
+            background-color: #f2f2f2;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            width: 95%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        ">
+    `;
+
+    // Show only selected rows
+    frm.doc.custom_producer_table
+        .filter(row => row.selected == 1)
+        .forEach((row) => {
+            html += `
+                <div style="flex:0 0 45%; display:flex; flex-direction:column;">
+                    <div style="display:flex; align-items:center;">
+                        <input type="checkbox"
+                            class="producer-check"
+                            data-name="${row.name}"
+                            ${row.selected ? 'checked' : ''}>
+                        <label style="margin-left:5px;">${row.producer}</label>
+                    </div>
+                    ${row.address ? `<div style="font-size:12px; color:#555; margin-left:20px;">${row.address}</div>` : ``}
+                </div>
+            `;
+        });
+
+    html += `</div>`;
+
+    frm.fields_dict.custom_producer_list.$wrapper.html(html);
+
+    // Sync checkbox changes back to child table
+    frm.fields_dict.custom_producer_list.$wrapper
+        .off('change', '.producer-check')
+        .on('change', '.producer-check', function () {
+            const row_name = $(this).data('name');
+            const is_checked = $(this).is(':checked');
+
+            frm.doc.custom_producer_table.forEach(row => {
+                if (row.name === row_name) {
+                    row.selected = is_checked ? 1 : 0;
+                }
+            });
+
+            frm.dirty();
+            frm.refresh_field('custom_producer_table');
+        });
+}

@@ -1,0 +1,71 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:producer_name",
+ "creation": "2025-12-08 17:28:46.010250",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_xhdr",
+  "producer_name",
+  "producer_title",
+  "column_break_zejs",
+  "address"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_xhdr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "producer_name",
+   "fieldtype": "Data",
+   "label": "Producer Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_zejs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "producer_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Producer Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-09 15:31:40.295346",
+ "modified_by": "administrator@gmail.com",
+ "module": "CIT Exim",
+ "name": "Producer",
+ "naming_rule": "By fieldname",
+ "owner": "administrator@gmail.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

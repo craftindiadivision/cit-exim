@@ -280,7 +280,8 @@ doctype_js = {
     "Payment Entry":"public/js/doctype_js/payment_entry.js",
     "Purchase Invoice":"public/js/doctype_js/purchase_invoice.js",
     "Purchase Order":"public/js/doctype_js/purchase_order.js",
-    "Purchase Receipt":"public/js/doctype_js/purchase_receipt"
+    "Purchase Receipt":"public/js/doctype_js/purchase_receipt",
+  
 
 }
 
@@ -291,6 +292,7 @@ doc_events = {
         "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
+        "before_insert":"cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
     },
     "Purchase Invoice": {
          "on_submit": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_submit",
@@ -325,6 +327,10 @@ doc_events = {
         "before_cancel": "cit_exim.api.pe_on_cancel",
     },
     ("Delivery Note", "Sales Invoice"): {
-        "validate": "cit_exim.cit_exim.doc_events.igst_calculation.cal_igst"
+        "validate": "cit_exim.cit_exim.doc_events.igst_calculation.cal_igst",
+          
     },
+    # "Delivery Note":{
+    #     "before_insert":"cit_exim.cit_exim.doc_events.delivery_note.before_insert"
+    # },
 }

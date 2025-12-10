@@ -381,3 +381,62 @@ frappe.ui.form.on("Delivery Note Item", {
     },
     */
 });
+
+
+// frappe.ui.form.on('Delivery Note', {
+//     onload(frm) {
+//         // Make child table read only and hide it (we render a custom HTML view)
+//         frm.set_df_property('custom_producer_table', 'read_only', 1);
+//         frm.set_df_property('custom_producer_table', 'hidden', 1);
+
+//         render_producer_html(frm);
+//     },
+
+//     refresh(frm) {
+//         render_producer_html(frm);
+//     }
+// });
+
+// function render_producer_html(frm) {
+//     if (!frm.doc.custom_producer_table || !frm.fields_dict.custom_producer_list) return;
+
+//     let html = `
+//         <div style="
+//             background-color: #f2f2f2;
+//             padding: 15px;
+//             border-radius: 12px;
+//             border: 1px solid #e0e0e0;
+//             width: 95%;
+//             display: flex;
+//             flex-wrap: wrap;
+//             gap: 40px;
+//         ">
+//     `;
+
+//     frm.doc.custom_producer_table.forEach((row) => {
+//         // use a safe address string and wrap HTML inside backticks
+//         const safeAddress = row.address ? String(row.address) : '';
+//         html += `
+//             <div style="flex:0 0 45%; display:flex; flex-direction:column;">
+//                 <div style="display:flex; align-items:center;">
+//                     <input type="checkbox"
+//                         data-producer="${row.producer || ''}"
+//                         ${row.selected ? 'checked' : ''}
+//                         disabled>
+//                     <label style="margin-left:5px;">${row.producer || ''}</label>
+//                 </div>
+
+//                 ${ safeAddress ? `<div style="font-size:12px; color:#555; margin-left:20px;">${safeAddress}</div>` : `` }
+//             </div>
+//         `;
+//     });
+
+//     html += `</div>`; // <- must be a string inside backticks/quotes
+
+//     frm.fields_dict.custom_producer_list.$wrapper.html(html);
+
+//     // No change handlers because this view is read-only
+//     frm.fields_dict.custom_producer_list.$wrapper
+//         .off('change', 'input[type="checkbox"]');
+// }
+
