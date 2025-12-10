@@ -9,7 +9,9 @@ def before_save(self, method):
 	meis_calculation(self)
 
 
-
+# ------------------------------------------------------------------------------
+# SET THE BATCH NO IN TO LOTNO 
+# --------------------------------------------------------------------------------
 def validate(doc, method=None):
     print("Starting LOT number auto-fill...")
 

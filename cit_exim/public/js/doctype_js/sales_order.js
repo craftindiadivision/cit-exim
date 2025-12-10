@@ -626,86 +626,9 @@ frappe.ui.form.on("Sales Order Item", {
 
 
 
-// frappe.ui.form.on('Sales Order', {
-//     onload(frm) {
-//         // Hide your actual table
-//         frm.set_df_property('custom_producer_table', 'hidden', 1);
-//         fetch_producers(frm);
-//     },
-//     refresh(frm) {
-//         render_producer_html(frm);
-//     }
-// });
-
-// function fetch_producers(frm) {
-//     frappe.call({
-//         method: "cit_exim.cit_exim.doc_events.sales_order.get_producers",
-//         // /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
-//         callback: function(r) {
-//             if (r.message) {
-//                 const existing = frm.doc.custom_producer_table?.map(r => r.producer) || [];
-
-//                 r.message.forEach(p => {
-//                     if (!existing.includes(p.name)) {
-//                         let row = frm.add_child("custom_producer_table");
-//                         row.producer = p.name;
-//                         row.selected = 0;
-//                     }
-//                 });
-
-//                 frm.refresh_field("custom_producer_table");
-//                 render_producer_html(frm);
-//             }
-//         }
-//     });
-// }
-
-// function render_producer_html(frm) {
-//     if (!frm.doc.custom_producer_table || !frm.fields_dict.custom_producer_list) return;
-
-//     let html = `
-//         <div style="
-//             background-color: #f2f2f2;
-//             padding: 15px;
-//             border-radius: 12px;
-//             border: 1px solid #e0e0e0;
-//             width: 95%;
-//             display: flex;
-//             flex-wrap: wrap;
-//             gap: 55px;
-//         ">
-//     `;
-
-//     frm.doc.custom_producer_table.forEach((row) => {
-//         html += `
-//             <!-- ✅ CHANGE DONE HERE: 45% means 2 columns per row -->
-//             <div style="flex:0 0 45%; display:flex; flex-direction:column;">
-//                 <div style="display:flex; align-items:center;">
-//                     <input type="checkbox" data-producer="${row.producer}" ${row.selected ? 'checked' : ''}>
-//                     <label style="margin-left:5px;">${row.producer}</label>
-//                 </div>
-//                 ${row.address ? <div style="font-size:12px; color:#555; margin-left:20px;">${row.address}</div> : ``}
-//             </div>
-//         `;
-//     });
-
-//     html += '</div>';
-//     frm.fields_dict.custom_producer_list.$wrapper.html(html);
-
-//     frm.fields_dict.custom_producer_list.$wrapper
-//         .off('change', 'input[type="checkbox"]')
-//         .on('change', 'input[type="checkbox"]', function () {
-//             const name = $(this).data('producer');
-//             const checked = $(this).is(':checked');
-
-//             const row = frm.doc.custom_producer_table.find(r => r.producer === name);
-//             if (row) {
-//                 frappe.model.set_value(row.doctype, row.name, 'selected', checked);
-//             }
-
-//             frm.refresh_field('custom_producer_table');
-//         });
-// }
+// -------------------------------------------------------------------------------
+//  SET THE PRODUCER
+// --------------------------------------------------------------------------------
 frappe.ui.form.on('Sales Order', {
     onload(frm) {
         // Hide your actual table
