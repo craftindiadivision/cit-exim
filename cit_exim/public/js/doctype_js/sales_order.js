@@ -417,16 +417,15 @@ frappe.ui.form.on("Sales Order", {
             frm.set_value("custom_shipment_period_end", frm.doc.delivery_date);
         }
 
-        // CONSIGNEE FILTER
-        // frm.set_query("custom_consignee", function() {
-        //     return {
-        //         filters: {
-        //             custom_is_consignee: 1,
-        //             link_doctype: "Customer",
-        //             link_name: frm.doc.customer || ""
-        //         }
-        //     };
-        // });
+    //   frm.set_query("custom_consignee", function() {
+    //         return {
+    //             filters: {
+    //                 custom_is_consignee: 1,
+    //                 link_doctype: "Customer",
+    //                 link_name: frm.doc.customer || ""
+    //             }
+    //         };
+    //     });
 
         // AGENT FILTER
         frm.set_query("custom_agent", function() {
@@ -462,26 +461,24 @@ frappe.ui.form.on("Sales Order", {
         }
     },
 
-    // AUTO FILL SHIPPING ADDRESS BASED ON CONSIGNEE
-    custom_consignee(frm) {
-        if (!frm.doc.custom_consignee) return;
+    // // // AUTO FILL SHIPPING ADDRESS BASED ON CONSIGNEE
+    // custom_consignee(frm) {
+    //     if (!frm.doc.custom_consignee) return;
 
-        frm.set_value("shipping_address_name", frm.doc.custom_consignee);
+    //     frm.set_value("shipping_address_name", frm.doc.custom_consignee);
 
-        frappe.call({
-            method: "frappe.contacts.doctype.address.address.get_address_display",
-            args: { address_dict: frm.doc.custom_consignee },
-            callback(r) {
-                if (r.message) {
-                    frm.set_value("shipping_address", r.message);
-                }
-            }
-        });
-    },
+    //     frappe.call({
+    //         method: "frappe.contacts.doctype.address.address.get_address_display",
+    //         args: { address_dict: frm.doc.custom_consignee },
+    //         callback(r) {
+    //             if (r.message) {
+    //                 frm.set_value("shipping_address", r.message);
+    //             }
+    //         }
+    //     });
+    // },
 
-    // // SIGNING AUTHORITY
-    // customer(frm) { frm.trigger("set_signing_authority_options"); },
-    // custom_agent(frm) { frm.trigger("set_signing_authority_options"); },
+
 
     // INSURANCE OPTION
     custom_insurance(frm) { toggle_other_insurance_field(frm); },
@@ -522,24 +519,6 @@ frappe.ui.form.on("Sales Order", {
             frm.set_value("custom_shipping_period", totalMonths + " Months");
         }
     },
-
-    // // UPDATE SIGNING AUTHORITY OPTIONS
-    // set_signing_authority_options(frm) {
-    //     console.log("111111111111")
-    //     let options = [];
-        
-    //     if (frm.doc.custom_agent)
-    //         options.push("Agent: " + frm.doc.custom_agent);
-
-    //     if (frm.doc.customer_name)
-    //         options.push("Buyer: " + frm.doc.customer_name);
-
-    //     frm.set_df_property(
-    //         "custom_signing_authority",
-    //         "options",
-    //         options.join("\n")
-    //     );
-    // }
 
 
 });
@@ -713,12 +692,14 @@ function render_producer_html(frm) {
             frm.refresh_field('custom_producer_table');
         });
 }
+
+
+
 frappe.ui.form.on("Sales Order", {
     customer: function(frm) {
         frm.set_query("custom_consignee", function() {
             return {
                 query: "cit_exim.cit_exim.doc_events.sales_order.get_consignee_list",
-                // /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
                 filters: {
                     customer: frm.doc.customer
                 }
@@ -726,3 +707,15 @@ frappe.ui.form.on("Sales Order", {
         });
     }
 });
+
+ 
+                // /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
+
+
+
+
+
+
+
+
+
