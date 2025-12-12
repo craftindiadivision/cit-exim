@@ -54,3 +54,31 @@ def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
 
 
 
+# your_app/your_module/doctype/sales_order/sales_order.py
+
+
+
+
+
+import frappe
+
+@frappe.whitelist()
+def get_customer_billing_address(customer):
+    """
+    Returns the primary billing address of a Customer.
+    """
+    # Get address linked to this customer
+    address = frappe.db.sql("""
+        SELECT a.name
+        FROM `tabAddress` a
+        JOIN `tabDynamic Link` dl
+            ON dl.parent = a.name
+        WHERE dl.link_doctype = 'Customer'
+          AND dl.link_name = %s
+          AND a.is_primary_address = 1
+        LIMIT 1
+    """, customer, as_dict=True)
+
+    if address:
+        return address[0].name
+    return None

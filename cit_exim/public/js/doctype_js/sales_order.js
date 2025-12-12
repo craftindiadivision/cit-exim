@@ -717,5 +717,26 @@ frappe.ui.form.on("Sales Order", {
 
 
 
+frappe.ui.form.on("Sales Order", {
+    customer: function(frm) {
+        if (!frm.doc.customer) return;
+
+        // Call server to get billing address
+        frappe.call({
+            method: "cit_exim.cit_exim.doc_events.sales_order.get_customer_billing_address",
+            args: {
+                customer: frm.doc.customer
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frm.set_value("customer_address", r.message);
+                } else {
+                    frm.set_value("customer_address", "");
+                }
+            }
+        });
+    }
+});
+
 
 

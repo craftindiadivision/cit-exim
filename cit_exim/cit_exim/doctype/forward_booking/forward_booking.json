@@ -52,7 +52,6 @@
   "can_avg_rate",
   "rate_diff",
   "diff_amount",
-  "amended_from",
   "amended_from"
  ],
  "fields": [
@@ -111,7 +110,6 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Booking Rate",
-   "read_only": 1,
    "reqd": 1
   },
   {
@@ -168,15 +166,13 @@
    "fieldname": "amount_outstanding",
    "fieldtype": "Currency",
    "label": "Amount Outstanding",
-   "options": "currency",
-   "read_only": 1
+   "options": "currency"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "outstanding_inr",
    "fieldtype": "Currency",
-   "label": "Outstanding INR",
-   "read_only": 1
+   "label": "Outstanding INR"
   },
   {
    "fieldname": "company",
@@ -375,17 +371,17 @@
    "no_copy": 1,
    "options": "Forward Booking",
    "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "read_only": 1
   }
  ],
  "icon": "fa fa-usd",
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-03 12:08:03.117764",
+ "modified": "2025-12-12 10:37:00.078931",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Forward Booking",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
