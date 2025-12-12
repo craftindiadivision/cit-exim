@@ -739,4 +739,35 @@ frappe.ui.form.on("Sales Order", {
 });
 
 
+frappe.ui.form.on("Sales Order", {
+    custom_is_consignee_same_as_buyer(frm) {
+        if (frm.doc.custom_is_consignee_same_as_buyer) {
+            if (!frm.doc.customer) {
+                frappe.msgprint("Please select a Customer first.");
+                frm.set_value("custom_is_consignee_same_as_buyer", 0);
+                return;
+            }
+
+            // Fetch the customer's billing address
+            frappe.call({
+                method: "frappe.contacts.doctype.address.address.get_default_address",
+                args: {
+                    doctype: "Customer",
+                    name: frm.doc.customer
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        // Set billing address for both fields
+                        frm.set_value("customer_address", r.message);
+                        frm.set_value("shipping_address_name", r.message);
+                    } else {
+                        frappe.msgprint("No Billing Address found for this customer.");
+                    }
+                }
+            });
+        }
+    }
+});
+
+
 
