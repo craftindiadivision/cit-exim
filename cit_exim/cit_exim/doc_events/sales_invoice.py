@@ -12,6 +12,34 @@ def before_save(self, method):
 # ------------------------------------------------------------------------------
 # SET THE BATCH NO IN TO LOTNO 
 # --------------------------------------------------------------------------------
+# def validate(doc, method=None):
+#     print("Starting LOT number auto-fill...")
+
+#     lot_list = []
+
+#     # 1. Collect batch numbers and quantities from Serial & Batch Bundles
+#     for item in doc.items:
+#         if item.serial_and_batch_bundle:
+#             bundle = frappe.get_doc("Serial and Batch Bundle", item.serial_and_batch_bundle)
+#             for entry in bundle.entries:
+#                 if entry.batch_no:
+#                     lot_list.append({
+#                         "lot_no": entry.batch_no,
+#                         "qty": abs(entry.qty)  # take absolute value
+#                     })
+
+#     print("Collected lot_list with absolute qty:", lot_list)
+
+#     # 2. Clear existing container_detail rows
+#     # doc.container_detail = []
+
+#     # 3. Create a new row for each batch number with absolute qty
+#     for lot in lot_list:
+#         doc.append("container_detail", {
+#             "lot_no": lot["lot_no"],
+#             "no_of_packages": lot["qty"]
+#         })
+
 def validate(doc, method=None):
     print("Starting LOT number auto-fill...")
 
@@ -25,21 +53,24 @@ def validate(doc, method=None):
                 if entry.batch_no:
                     lot_list.append({
                         "lot_no": entry.batch_no,
-                        "qty": abs(entry.qty)  # take absolute value
+                        "qty": abs(entry.qty)
                     })
 
-    print("Collected lot_list with absolute qty:", lot_list)
+    print("Collected lot_list:", lot_list)
 
-    # 2. Clear existing container_detail rows
-    doc.container_detail = []
+    # Create a set of already existing lot numbers to avoid duplicates
+    existing_lots = {row.lot_no for row in doc.container_detail}
 
-    # 3. Create a new row for each batch number with absolute qty
+    # 2. Add only new batch numbers (avoid duplicates)
     for lot in lot_list:
-        doc.append("container_detail", {
-            "lot_no": lot["lot_no"],
-            "no_of_packages": lot["qty"]
-        })
+        if lot["lot_no"] not in existing_lots:
+            doc.append("container_detail", {
+                "lot_no": lot["lot_no"],
+                "no_of_packages": lot["qty"]
+            })
+            existing_lots.add(lot["lot_no"])  # update the set
 
+    print("Final container_detail:", doc.container_detail)
 
 
 

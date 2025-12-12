@@ -82,3 +82,39 @@ def get_customer_billing_address(customer):
     if address:
         return address[0].name
     return None
+
+
+
+
+
+@frappe.whitelist()
+def get_billing_address_for_customer(customer):
+    if not customer:
+        return None
+
+    # Search for Billing Address linked to Customer
+    address_list = frappe.get_all(
+        "Address",
+        filters={
+            "address_type": "Billing",
+            "disabled": 0
+        },
+        fields=["name"],
+        order_by="is_primary_address desc, modified desc",
+        limit_page_length=1
+    )
+
+    # If not found, try all addresses linked to this customer
+    if not address_list:
+        address_list = frappe.get_all(
+            "Address",
+            filters={"disabled": 0},
+            fields=["name"],
+            order_by="is_primary_address desc, modified desc",
+            limit_page_length=1
+        )
+
+    if address_list:
+        return address_list[0].name
+
+    return None
