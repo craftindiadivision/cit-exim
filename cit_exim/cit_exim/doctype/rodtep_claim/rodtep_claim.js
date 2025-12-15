@@ -9,7 +9,6 @@
 
 
 
-
 frappe.ui.form.on('Rodtep Claim', {
   
   get_rodtep_entries:function(frm){
@@ -19,7 +18,9 @@ frappe.ui.form.on('Rodtep Claim', {
             }
         }
     frappe.call({
-      method : "exim.exim.doctype.rodtep_claim.rodtep_claim.journal_entry_list",
+    //   method : "exim.exim.doctype.rodtep_claim.rodtep_claim.journal_entry_list",
+      method : "cit_exim.cit_exim.doctype.rodtep_claim.rodtep_claim.journal_entry_list",
+
       args:{
         "start_date":frm.doc.start_date,
         "end_date":frm.doc.end_date,
@@ -39,8 +40,7 @@ frappe.ui.form.on('Rodtep Claim', {
                    }
            )
         
-           
-          
+       
       }
       else{
         cur_frm.doc.rodtep_details = []

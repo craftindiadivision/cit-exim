@@ -25,14 +25,14 @@
   "total_debit_amount",
   "round_off_amount",
   "journal_entry_ref",
-  "amended_from",
   "amended_from"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Series"
+   "label": "Series",
+   "options": "DD-####"
   },
   {
    "fieldname": "posting_date",
@@ -137,18 +137,17 @@
    "no_copy": 1,
    "options": "Duty DrawBack Claim",
    "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-03 13:05:34.655320",
+ "modified": "2025-12-15 16:12:43.548052",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Duty DrawBack Claim",
- "naming_rule": "By fieldname",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

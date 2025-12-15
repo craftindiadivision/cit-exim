@@ -53,7 +53,7 @@ def validate(doc, method=None):
                 if entry.batch_no:
                     lot_list.append({
                         "lot_no": entry.batch_no,
-                        "qty": abs(entry.qty)
+                        
                     })
 
     print("Collected lot_list:", lot_list)
@@ -66,7 +66,7 @@ def validate(doc, method=None):
         if lot["lot_no"] not in existing_lots:
             doc.append("container_detail", {
                 "lot_no": lot["lot_no"],
-                "no_of_packages": lot["qty"]
+                # "no_of_packages": lot["qty"]
             })
             existing_lots.add(lot["lot_no"])  # update the set
 
@@ -427,3 +427,8 @@ def copy_selected_producers(doc, sales_order):
             child.producer = row.producer
             child.address = row.address
             child.selected = row.selected
+
+
+
+
+
