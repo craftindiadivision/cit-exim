@@ -293,6 +293,7 @@ doc_events = {
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
         "before_insert":"cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
+        "before_submit":"cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
     },
     "Purchase Invoice": {
          "on_submit": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_submit",

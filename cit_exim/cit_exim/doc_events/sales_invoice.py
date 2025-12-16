@@ -86,8 +86,9 @@ def validate(doc, method=None):
             # frappe.db.set_value(row, "lot_no", new_lot_no)
 
 def before_submit(self,method):
-    if self._action == 'submit':
-       validate_document_checks(self)
+	# if self._action == 'submit':
+	print(222222222222)
+	validate_document_checks(self)
 
 
 def on_submit(self, method):
@@ -206,24 +207,14 @@ def meis_calculation(self):
 
 def validate_document_checks(self):
 	if self.get('sales_invoice_export_document_item') and not all([row.checked for row in self.get('sales_invoice_export_document_item')]):
+		print(3333333333)
 		frappe.throw(_("Not all documents are checked for Export Documents"))
 
 	elif self.get('sales_invoice_contract_term_check') and not all([row.checked for row in self.get('sales_invoice_contract_term_check')]):
+		print(9999999999)
 		frappe.throw(_("Not all documents are checked for Document Checks"))
 
 
-
-# def validate_document_checks(self):
-
-# 	if self.get("sales_invoice_export_document_item"):
-# 		for row in self.sales_invoice_export_document_item:
-# 			if not row.checked:
-# 				frappe.throw(_("Not all documents are checked for Export Documents"))
-
-# 	if self.get("sales_invoice_contract_term_check"):
-# 		for row in self.sales_invoice_contract_term_check:
-# 			if not row.checked:
-# 				frappe.throw(_("Not all documents are checked for Document Checks"))
 
 
 
