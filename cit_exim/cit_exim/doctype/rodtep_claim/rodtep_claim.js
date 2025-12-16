@@ -56,3 +56,30 @@ frappe.ui.form.on('Rodtep Claim', {
   },
   
 });
+
+
+frappe.ui.form.on('Rodtep Claim', {
+  onload(frm) {
+      set_credit_account_filter(frm);
+  },
+
+  company(frm) {
+      frm.set_value('credit_account', null); // clear old value
+      set_credit_account_filter(frm);
+  }
+});
+
+function set_credit_account_filter(frm) {
+  frm.set_query('credit_account', function () {
+      if (!frm.doc.company) {
+          return {};
+      }
+
+      return {
+          filters: {
+              company: frm.doc.company,
+              is_group: 0
+          }
+      };
+  });
+}

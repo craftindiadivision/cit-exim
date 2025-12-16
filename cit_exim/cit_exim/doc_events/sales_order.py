@@ -124,37 +124,3 @@ def get_billing_address_for_customer(customer):
 
 
 
-# import frappe
-# from frappe.model.document import Document
-# from frappe import _
-
-
-# class SalesInvoice(Document):
-
-#     def validate(self):
-#         self.validate_contract_and_export_checks()
-
-#     def validate_contract_and_export_checks(self):
-#         missing = []
-
-#         # -------- Child Table 1 --------
-#         for row in self.sales_invoice_contract_term_check or []:
-#             if not row.is_checked:
-#                 missing.append(
-#                     _("Contract Term row {0} is not checked").format(row.idx)
-#                 )
-
-#         # -------- Child Table 2 --------
-#         for row in self.sales_invoice_export_document_item or []:
-#             if not row.is_checked:
-#                 missing.append(
-#                     _("Export Document row {0} is not checked").format(row.idx)
-#                 )
-
-#         # -------- Block submit if any unchecked --------
-#         if missing:
-#             frappe.throw(
-#                 _("Please check all mandatory checkboxes before submitting:<br>{0}")
-#                 .format("<br>".join(missing)),
-#                 title=_("Missing Confirmation")
-#             )

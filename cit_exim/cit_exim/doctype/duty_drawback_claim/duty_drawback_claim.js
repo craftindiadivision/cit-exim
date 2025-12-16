@@ -62,3 +62,75 @@ frappe.ui.form.on('Duty DrawBack Claim', {
 		});
 	}
 });
+
+
+frappe.ui.form.on('Duty DrawBack Claim', {
+    onload(frm) {
+        set_credit_account_filter(frm);
+    },
+
+    company(frm) {
+        frm.set_value('credit_account', null); // clear old value
+        set_credit_account_filter(frm);
+    }
+});
+
+function set_credit_account_filter(frm) {
+    frm.set_query('credit_account', function () {
+        if (!frm.doc.company) {
+            return {};
+        }
+
+        return {
+            filters: {
+                company: frm.doc.company,
+                is_group: 0
+            }
+        };
+    });
+}
+
+
+frappe.ui.form.on('Duty DrawBack Claim', {
+    onload(frm) {
+        set_credit_account_filter(frm);
+        set_round_off_account_filter(frm);
+    },
+
+    company(frm) {
+        frm.set_value('credit_account', null); // clear old value
+        frm.set_value('round_off_account', null); // clear old value
+        set_credit_account_filter(frm);
+        set_round_off_account_filter(frm);
+    }
+});
+
+function set_credit_account_filter(frm) {
+    frm.set_query('credit_account', function () {
+        if (!frm.doc.company) {
+            return {};
+        }
+
+        return {
+            filters: {
+                company: frm.doc.company,
+                is_group: 0
+            }
+        };
+    });
+}
+
+function set_round_off_account_filter(frm) {
+    frm.set_query('round_off_account', function () {
+        if (!frm.doc.company) {
+            return {};
+        }
+
+        return {
+            filters: {
+                company: frm.doc.company,
+                is_group: 0
+            }
+        };
+    });
+}

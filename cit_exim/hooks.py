@@ -254,7 +254,7 @@ fixtures=[
     {
     "dt": "Custom Field",
     "filters": [
-        ["dt", "in", ["Sales Order","Address","Supplier","Sales Invoice","Sales Invoice Item","Sales Order Item","Payment Entry","Journal Entry","Company"]]
+        ["dt", "in", ["Sales Order","Address","Supplier","Sales Invoice","Sales Invoice Item","Sales Order Item","Payment Entry","Journal Entry","Company",]]
     ]
     },
     {
@@ -262,7 +262,7 @@ fixtures=[
     "filters": [
         ["name", "in", [
            "Sales Order-main-field_order","Sales Order-shipping_terms-label","Sales Order-po_no-label","Supplier-main-field_order","Sales Order-customer-label","Address-is_shipping_address-depends_on",
-           "Address-main-field_order","Journal Entry-voucher_type-options"
+           "Address-main-field_order","Journal Entry-voucher_type-options","Contract Term-custom_document_no",
         ]]
     ]
     },

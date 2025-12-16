@@ -354,37 +354,3 @@ function update_number_of_containers(frm) {
 
 
 
-// frappe.ui.form.on("Sales Invoice", {
-//     before_submit(frm) {
-
-//         // Contract Term Check table
-//         if (!all_rows_checked(frm, "sales_invoice_contract_term_check", "check")) {
-//             frappe.msgprint(
-//                 __("Please check all checkboxes in Contract Term Check table before submitting.")
-//             );
-//             frappe.validated = false;
-//             return;
-//         }
-
-//         // Export Document Item table
-//         if (!all_rows_checked(frm, "sales_invoice_export_document_item", "check")) {
-//             frappe.msgprint(
-//                 __("Please check all checkboxes in Export Document Item table before submitting.")
-//             );
-//             frappe.validated = false;
-//             return;
-//         }
-//     }
-// });
-
-// function all_rows_checked(frm, table_fieldname, checkbox_fieldname) {
-//     let rows = frm.doc[table_fieldname] || [];
-
-//     for (let row of rows) {
-//         // cint is REQUIRED for checkbox correctness
-//         if (cint(row[checkbox_fieldname]) !== 1) {
-//             return false;
-//         }
-//     }
-//     return true;
-// }

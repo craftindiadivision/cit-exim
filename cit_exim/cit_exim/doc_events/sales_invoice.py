@@ -2,6 +2,10 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from frappe.model.document import Document
+
+
+
 
 def before_save(self, method):
 	calculate_total(self)
@@ -41,6 +45,7 @@ def before_save(self, method):
 #         })
 
 def validate(doc, method=None):
+	
     print("Starting LOT number auto-fill...")
 
     lot_list = []
@@ -205,6 +210,21 @@ def validate_document_checks(self):
 
 	elif self.get('sales_invoice_contract_term_check') and not all([row.checked for row in self.get('sales_invoice_contract_term_check')]):
 		frappe.throw(_("Not all documents are checked for Document Checks"))
+
+
+
+# def validate_document_checks(self):
+
+# 	if self.get("sales_invoice_export_document_item"):
+# 		for row in self.sales_invoice_export_document_item:
+# 			if not row.checked:
+# 				frappe.throw(_("Not all documents are checked for Export Documents"))
+
+# 	if self.get("sales_invoice_contract_term_check"):
+# 		for row in self.sales_invoice_contract_term_check:
+# 			if not row.checked:
+# 				frappe.throw(_("Not all documents are checked for Document Checks"))
+
 
 
 def export_lic(self):
@@ -427,6 +447,7 @@ def copy_selected_producers(doc, sales_order):
             child.producer = row.producer
             child.address = row.address
             child.selected = row.selected
+
 
 
 

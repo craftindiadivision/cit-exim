@@ -155,3 +155,23 @@ def create_jv_on_submit(self, method):
 
     except Exception as e:
         frappe.throw(str(e))
+
+
+
+@frappe.whitelist()
+def get_credit_account_list(doctype, txt, searchfield, start, page_len, filters):
+    company = filters.get("company")
+
+    if not company:
+        return []
+
+    accounts = frappe.db.get_all(
+        "Account",
+        filters={
+            "company": company,
+            "is_group": 0
+        },
+        fields=["name"]
+    )
+
+    return [(d.name,) for d in accounts]
