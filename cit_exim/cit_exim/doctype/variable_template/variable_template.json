@@ -7,8 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
-  "lab_variable",
-  "item_group"
+  "lab_variable"
  ],
  "fields": [
   {
@@ -22,18 +21,12 @@
    "fieldtype": "Table",
    "label": "Lab variable",
    "options": "FISH MEAL CHILDTABLE"
-  },
-  {
-   "fieldname": "item_group",
-   "fieldtype": "Link",
-   "label": "Item Group",
-   "options": "Item Group"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-04 10:16:37.103428",
+ "modified": "2025-12-17 12:41:44.007863",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Variable Template",

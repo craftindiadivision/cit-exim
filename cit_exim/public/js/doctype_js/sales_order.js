@@ -369,31 +369,6 @@ frappe.ui.form.on("Sales Order", {
 
 
 
-    // LOAD TEMPLATE FOR QUALITY & SPECIFICATIONS
-    custom_product(frm) {
-
-        if (frm._template_loaded_for === frm.doc.custom_product) return;
-
-        frm._template_loaded_for = frm.doc.custom_product;
-
-        frm.clear_table("custom_quality_and_specification");
-
-        if (!frm.doc.custom_product) {
-            frm.refresh_field("custom_quality_and_specification");
-            return;
-        }
-
-        frappe.db.get_doc("Variable Template", frm.doc.custom_product)
-            .then(template => {
-                (template.lab_variable || []).forEach(t => {
-                    let child = frm.add_child("custom_quality_and_specification");
-                    child.test = t.test;
-                    child.value = t.value;
-                });
-
-                frm.refresh_field("custom_quality_and_specification");
-            });
-    },
 
     // REFRESH FUNCTION
     refresh(frm) {
@@ -572,33 +547,33 @@ frappe.ui.form.on("Sales Order Item", {
 
 
     // ADDITIONAL SCRIPT (ITEM TEMPLATE MATCHING)
-    item_code(frm, cdt, cdn) {
-        let row = locals[cdt][cdn];
-        if (!row.item_code) return;
+    // item_code(frm, cdt, cdn) {
+    //     let row = locals[cdt][cdn];
+    //     if (!row.item_code) return;
 
-        // Get Item Group of selected Item
-        frappe.db.get_value("Item", row.item_code, "item_group")
-            .then(r => {
-                let item_group = r.message.item_group;
-                if (!item_group) return;
+    //     // Get Item Group of selected Item
+    //     frappe.db.get_value("Item", row.item_code, "item_group")
+    //         .then(r => {
+    //             let item_group = r.message.item_group;
+    //             if (!item_group) return;
 
-                // Get matching Variable Template
-                frappe.db.get_list("Variable Template", {
-                    fields: ["name"],
-                    filters: { item_group: item_group },
-                    limit: 1
-                }).then(res => {
-                    if (res && res.length > 0) {
+    //             // Get matching Variable Template
+    //             frappe.db.get_list("Variable Template", {
+    //                 fields: ["name"],
+    //                 filters: { item_group: item_group },
+    //                 limit: 1
+    //             }).then(res => {
+    //                 if (res && res.length > 0) {
 
-                        // Avoid infinite loop
-                        if (frm.doc.custom_product !== res[0].name) {
-                            frm._template_loaded_for = null;
-                            frm.set_value("custom_product", res[0].name);
-                        }
-                    }
-                });
-            });
-    }
+    //                     // Avoid infinite loop
+    //                     if (frm.doc.custom_product !== res[0].name) {
+    //                         frm._template_loaded_for = null;
+    //                         frm.set_value("custom_product", res[0].name);
+    //                     }
+    //                 }
+    //             });
+    //         });
+    // }
 });
 
 
@@ -739,36 +714,6 @@ frappe.ui.form.on("Sales Order", {
 });
 
 
-// frappe.ui.form.on("Sales Order", {
-//     custom_is_consignee_same_as_buyer(frm) {
-//         if (frm.doc.custom_is_consignee_same_as_buyer) {
-//             if (!frm.doc.customer) {
-//                 frappe.msgprint("Please select a Customer first.");
-//                 frm.set_value("custom_is_consignee_same_as_buyer", 0);
-//                 return;
-//             }
-
-//             // Fetch the customer's billing address
-//             frappe.call({
-//                 method: "frappe.contacts.doctype.address.address.get_default_address",
-//                 args: {
-//                     doctype: "Customer",
-//                     name: frm.doc.customer
-//                 },
-//                 callback: function(r) {
-//                     if (r.message) {
-//                         // Set billing address for both fields
-//                         frm.set_value("customer_address", r.message);
-//                         frm.set_value("shipping_address_name", r.message);
-//                     } else {
-//                         frappe.msgprint("No Billing Address found for this customer.");
-//                     }
-//                 }
-//             });
-//         }
-//     }
-// });
-
 
 frappe.ui.form.on("Sales Order", {
     custom_is_consignee_same_as_buyer(frm) {
@@ -800,4 +745,153 @@ frappe.ui.form.on("Sales Order", {
 });
 
 
+// frappe.ui.form.on("Sales Order Item", {
+//     item_code(frm, cdt, cdn) {
+//         const row = locals[cdt][cdn];
 
+//         if (!row.item_code) return;
+
+//         // Fetch custom_template from Item
+//         frappe.db.get_value(
+//             "Item",
+//             row.item_code,
+//             "custom_template"
+//         ).then(r => {
+//             const template = r.message.custom_template;
+
+//             if (template) {
+//                 // Set template into custom_product (parent field)
+//                 frm.set_value("custom_product", template);
+
+//                 // Load template details
+//                 load_variable_template(frm, template);
+//             } else {
+//                 // No template found → clear everything
+//                 frm.set_value("custom_product", "");
+//                 frm.clear_table("custom_quality_and_specification");
+//                 frm.refresh_field("custom_quality_and_specification");
+//             }
+//         });
+//     }
+// });
+
+
+// function load_variable_template(frm, template_name) {
+
+//     // Prevent duplicate reload
+//     if (frm._template_loaded_for === template_name) return;
+//     frm._template_loaded_for = template_name;
+
+//     frm.clear_table("custom_quality_and_specification");
+
+//     frappe.db.get_doc("Variable Template", template_name)
+//         .then(doc => {
+//             (doc.lab_variable || []).forEach(row => {
+//                 let child = frm.add_child("custom_quality_and_specification");
+//                 child.test = row.test;
+//                 child.value = row.value;
+//             });
+
+//             frm.refresh_field("custom_quality_and_specification");
+//         });
+// }
+
+//     frappe.ui.form.on("Sales Order", {
+//     custom_product(frm) {
+
+//         // Avoid duplicate reload
+//         if (frm._template_loaded_for === frm.doc.custom_product) return;
+//         frm._template_loaded_for = frm.doc.custom_product;
+
+//         // Clear table first
+//         frm.clear_table("custom_quality_and_specification");
+
+//         if (!frm.doc.custom_product) {
+//             frm.refresh_field("custom_quality_and_specification");
+//             return;
+//         }
+
+//         // Fetch Variable Template
+//         frappe.db.get_doc("Variable Template", frm.doc.custom_product)
+//             .then(doc => {
+//                 (doc.lab_variable || []).forEach(row => {
+//                     let child = frm.add_child("custom_quality_and_specification");
+//                     child.test = row.test;
+//                     child.value = row.value;
+//                 });
+
+//                 frm.refresh_field("custom_quality_and_specification");
+//             });
+//     }
+// });
+
+
+
+
+// ================================
+// COMMON TEMPLATE LOADER
+// ================================
+function load_variable_template(frm, template_name) {
+
+    if (!template_name) {
+        frm.clear_table("custom_quality_and_specification");
+        frm.refresh_field("custom_quality_and_specification");
+        frm._template_loaded_for = null;
+        return;
+    }
+
+    // Prevent duplicate reload
+    if (frm._template_loaded_for === template_name) return;
+    frm._template_loaded_for = template_name;
+
+    frm.clear_table("custom_quality_and_specification");
+
+    frappe.db.get_doc("Variable Template", template_name)
+        .then(doc => {
+            (doc.lab_variable || []).forEach(row => {
+                let child = frm.add_child("custom_quality_and_specification");
+                child.test = row.test;
+                child.value = row.value;
+            });
+
+            frm.refresh_field("custom_quality_and_specification");
+        });
+}
+
+// ================================
+// LOAD FROM ITEM (Child Table)
+// ================================
+frappe.ui.form.on("Sales Order Item", {
+    item_code(frm, cdt, cdn) {
+
+        const row = locals[cdt][cdn];
+        if (!row.item_code) return;
+
+        frappe.db.get_value(
+            "Item",
+            row.item_code,
+            "custom_template"
+        ).then(r => {
+
+            const template = r.message?.custom_template;
+
+            if (template) {
+                // Set parent field → triggers Sales Order handler also
+                frm.set_value("custom_product", template);
+                load_variable_template(frm, template);
+            } else {
+                frm.set_value("custom_product", "");
+                load_variable_template(frm, null);
+            }
+        });
+    }
+});
+
+// ================================
+// LOAD FROM MANUAL TEMPLATE CHANGE
+// ================================
+frappe.ui.form.on("Sales Order", {
+    custom_product(frm) {
+        load_variable_template(frm, frm.doc.custom_product);
+    }
+});
