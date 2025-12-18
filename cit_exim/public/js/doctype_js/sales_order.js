@@ -745,91 +745,10 @@ frappe.ui.form.on("Sales Order", {
 });
 
 
-// frappe.ui.form.on("Sales Order Item", {
-//     item_code(frm, cdt, cdn) {
-//         const row = locals[cdt][cdn];
-
-//         if (!row.item_code) return;
-
-//         // Fetch custom_template from Item
-//         frappe.db.get_value(
-//             "Item",
-//             row.item_code,
-//             "custom_template"
-//         ).then(r => {
-//             const template = r.message.custom_template;
-
-//             if (template) {
-//                 // Set template into custom_product (parent field)
-//                 frm.set_value("custom_product", template);
-
-//                 // Load template details
-//                 load_variable_template(frm, template);
-//             } else {
-//                 // No template found → clear everything
-//                 frm.set_value("custom_product", "");
-//                 frm.clear_table("custom_quality_and_specification");
-//                 frm.refresh_field("custom_quality_and_specification");
-//             }
-//         });
-//     }
-// });
-
-
-// function load_variable_template(frm, template_name) {
-
-//     // Prevent duplicate reload
-//     if (frm._template_loaded_for === template_name) return;
-//     frm._template_loaded_for = template_name;
-
-//     frm.clear_table("custom_quality_and_specification");
-
-//     frappe.db.get_doc("Variable Template", template_name)
-//         .then(doc => {
-//             (doc.lab_variable || []).forEach(row => {
-//                 let child = frm.add_child("custom_quality_and_specification");
-//                 child.test = row.test;
-//                 child.value = row.value;
-//             });
-
-//             frm.refresh_field("custom_quality_and_specification");
-//         });
-// }
-
-//     frappe.ui.form.on("Sales Order", {
-//     custom_product(frm) {
-
-//         // Avoid duplicate reload
-//         if (frm._template_loaded_for === frm.doc.custom_product) return;
-//         frm._template_loaded_for = frm.doc.custom_product;
-
-//         // Clear table first
-//         frm.clear_table("custom_quality_and_specification");
-
-//         if (!frm.doc.custom_product) {
-//             frm.refresh_field("custom_quality_and_specification");
-//             return;
-//         }
-
-//         // Fetch Variable Template
-//         frappe.db.get_doc("Variable Template", frm.doc.custom_product)
-//             .then(doc => {
-//                 (doc.lab_variable || []).forEach(row => {
-//                     let child = frm.add_child("custom_quality_and_specification");
-//                     child.test = row.test;
-//                     child.value = row.value;
-//                 });
-
-//                 frm.refresh_field("custom_quality_and_specification");
-//             });
-//     }
-// });
-
-
 
 
 // ================================
-// COMMON TEMPLATE LOADER
+//  LOADING THE TEMPLATES 
 // ================================
 function load_variable_template(frm, template_name) {
 
