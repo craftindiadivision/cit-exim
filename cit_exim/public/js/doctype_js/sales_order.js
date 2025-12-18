@@ -726,7 +726,7 @@ frappe.ui.form.on("Sales Order", {
         if (frm.doc.custom_is_consignee_same_as_buyer) {
             frappe.call({
                 method: "cit_exim.cit_exim.doc_events.sales_order.get_billing_address_for_customer",
-                // /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
+
                 args: {
                    
                     customer: frm.doc.customer
