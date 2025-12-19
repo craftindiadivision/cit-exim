@@ -4190,7 +4190,7 @@
   "insert_after": "allow_negative_stock",
   "is_system_generated": 0,
   "is_virtual": 0,
-  "label": "Packing Detail",
+  "label": "Packing Details",
   "length": 0,
   "link_filters": null,
   "mandatory_depends_on": null,
