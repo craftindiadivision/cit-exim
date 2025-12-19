@@ -29,39 +29,6 @@ def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
 
 
 
-
-
-# @frappe.whitelist()
-# def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
-#     customer = filters.get("customer")
-
-#     if not customer:
-#         return []
-
-#     addresses = frappe.db.get_all(
-#         "Address",
-#         filters={
-#             "custom_is_consignee": 1,
-#             "link_doctype": "Customer",
-#             "link_name": customer,
-#         },
-#         fields=["name", "custom_consignee_name"]
-#     )
-
-#     # Return (value, label) so Link field can save correctly
-#     return [(d.name, d.custom_consignee_name) for d in addresses]
-
-
-
-
-# your_app/your_module/doctype/sales_order/sales_order.py
-
-
-
-
-
-import frappe
-
 @frappe.whitelist()
 def get_customer_billing_address(customer):
     """
@@ -122,5 +89,29 @@ def get_billing_address_for_customer(customer):
 
 
 
+@frappe.whitelist()
+def get_customer_shipping_address(customer):
+    """
+    Returns Shipping Address of a Customer (Consignee).
+    Handles real ERPNext address structure.
+    """
 
+    address = frappe.db.sql("""
+        SELECT a.name
+        FROM `tabAddress` a
+        INNER JOIN `tabDynamic Link` dl
+            ON dl.parent = a.name
+        WHERE dl.link_doctype = 'Customer'
+          AND dl.link_name = %s
+          AND a.disabled = 0
+          AND (
+                a.address_type = 'Shipping'
+                OR a.is_shipping_address = 1
+          )
+        ORDER BY
+            a.is_primary_address DESC,
+            a.modified DESC
+        LIMIT 1
+    """, (customer,), as_dict=True)
 
+    return address[0].name if address else None

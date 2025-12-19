@@ -280,20 +280,7 @@ frappe.ui.form.on("Sales Order", {
         })
     },
 
-//     refresh: function (frm) {
-//         if (!in_list(["Closed", "Completed"], frm.doc.status)) {
-            
-//             if (frm.doc.docstatus == 1) {
-//                 frm.add_custom_button(__("Contract Term"), function () {
-//                     frappe.model.open_mapped_doc({
-//                         method: "cit_exim.api.make_lc",
-//                         frm: cur_frm
-//                     })
-//                 }, __("Create"))
-//             }
-//         }
-// // /home/user/v15/apps/cit_exim/cit_exim/api.py
-//     },
+
 
     onload:function(frm){
         if(frm.doc.customer_address || frm.doc.shipping_address_name){
@@ -392,15 +379,6 @@ frappe.ui.form.on("Sales Order", {
             frm.set_value("custom_shipment_period_end", frm.doc.delivery_date);
         }
 
-    //   frm.set_query("custom_consignee", function() {
-    //         return {
-    //             filters: {
-    //                 custom_is_consignee: 1,
-    //                 link_doctype: "Customer",
-    //                 link_name: frm.doc.customer || ""
-    //             }
-    //         };
-    //     });
 
         // AGENT FILTER
         frm.set_query("custom_agent", function() {
@@ -436,7 +414,7 @@ frappe.ui.form.on("Sales Order", {
         }
     },
 
-    // // // AUTO FILL SHIPPING ADDRESS BASED ON CONSIGNEE
+    // // AUTO FILL SHIPPING ADDRESS BASED ON CONSIGNEE
     // custom_consignee(frm) {
     //     if (!frm.doc.custom_consignee) return;
 
@@ -546,34 +524,6 @@ frappe.ui.form.on("Sales Order Item", {
 
 
 
-    // ADDITIONAL SCRIPT (ITEM TEMPLATE MATCHING)
-    // item_code(frm, cdt, cdn) {
-    //     let row = locals[cdt][cdn];
-    //     if (!row.item_code) return;
-
-    //     // Get Item Group of selected Item
-    //     frappe.db.get_value("Item", row.item_code, "item_group")
-    //         .then(r => {
-    //             let item_group = r.message.item_group;
-    //             if (!item_group) return;
-
-    //             // Get matching Variable Template
-    //             frappe.db.get_list("Variable Template", {
-    //                 fields: ["name"],
-    //                 filters: { item_group: item_group },
-    //                 limit: 1
-    //             }).then(res => {
-    //                 if (res && res.length > 0) {
-
-    //                     // Avoid infinite loop
-    //                     if (frm.doc.custom_product !== res[0].name) {
-    //                         frm._template_loaded_for = null;
-    //                         frm.set_value("custom_product", res[0].name);
-    //                     }
-    //                 }
-    //             });
-    //         });
-    // }
 });
 
 
@@ -689,30 +639,38 @@ frappe.ui.form.on("Sales Order", {
 
 
 
+// /////////////////////////////////////////Address changing based on Buyer and consignee//////////////////////////////////////////////////////////////
+
 
 
 
 frappe.ui.form.on("Sales Order", {
-    customer: function(frm) {
-        if (!frm.doc.customer) return;
+    custom_consignee: function(frm) {
+        if (!frm.doc.custom_consignee) {
+            frm.set_value("shipping_address_name", "");
+            return;
+        }
 
-        // Call server to get billing address
         frappe.call({
-            method: "cit_exim.cit_exim.doc_events.sales_order.get_customer_billing_address",
+            method: "cit_exim.cit_exim.doc_events.sales_order.get_customer_shipping_address",
             args: {
                 customer: frm.doc.customer
             },
             callback: function(r) {
                 if (r.message) {
-                    frm.set_value("customer_address", r.message);
+                    frm.set_value("shipping_address_name", r.message);
                 } else {
-                    frm.set_value("customer_address", "");
+                    frm.set_value("shipping_address_name", "");
+                    frappe.msgprint({
+                        title: "Shipping Address",
+                        message: "No Shipping Address found for this Consignee",
+                        indicator: "orange"
+                    });
                 }
             }
         });
     }
 });
-
 
 
 frappe.ui.form.on("Sales Order", {
@@ -740,6 +698,9 @@ frappe.ui.form.on("Sales Order", {
                     }
                 }
             });
+        }
+        if(frm.doc.custom_is_consignee_same_as_buyer === 1 && frm.doc.custom_consignee){
+            frm.set_value("shipping_address_name",frm.doc.customer_address)
         }
     }
 });
