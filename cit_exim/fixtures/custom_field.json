@@ -14080,7 +14080,7 @@
  },
  {
   "allow_in_quick_entry": 0,
-  "allow_on_submit": 0,
+  "allow_on_submit": 1,
   "bold": 0,
   "collapsible": 0,
   "collapsible_depends_on": null,
@@ -14112,7 +14112,7 @@
   "length": 0,
   "link_filters": null,
   "mandatory_depends_on": null,
-  "modified": "2024-05-31 15:36:59.716143",
+  "modified": "2025-12-22 14:48:50.458058",
   "module": "CIT Exim",
   "name": "Sales Invoice-container_detail",
   "no_copy": 0,

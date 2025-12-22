@@ -19,6 +19,7 @@
  ],
  "fields": [
   {
+   "allow_on_submit": 1,
    "columns": 2,
    "fieldname": "container_no",
    "fieldtype": "Data",
@@ -27,6 +28,7 @@
    "width": "1"
   },
   {
+   "allow_on_submit": 1,
    "default": "20'",
    "fieldname": "size",
    "fieldtype": "Select",
@@ -34,11 +36,13 @@
    "options": "\n20'\n40'"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "lot_no",
    "fieldtype": "Data",
    "label": "Lot No"
   },
   {
+   "allow_on_submit": 1,
    "columns": 2,
    "fieldname": "shipping_line_seal_no",
    "fieldtype": "Data",
@@ -46,12 +50,14 @@
    "label": "Shipping Line Seal No"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "self_seal_no",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Self Seal No"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "shipping_bill",
    "fieldtype": "Data",
    "label": "Shipping Bill"
@@ -61,6 +67,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "columns": 1,
    "fieldname": "nt_wt_kgs",
    "fieldtype": "Float",
@@ -68,6 +75,7 @@
    "label": "NT WT KGS"
   },
   {
+   "allow_on_submit": 1,
    "columns": 1,
    "fieldname": "gr_wt_kgs",
    "fieldtype": "Float",
@@ -75,11 +83,13 @@
    "label": "GR WT KGS"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "no_of_packages",
    "fieldtype": "Int",
    "label": "No of Packages"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "custom_seal_no",
    "fieldtype": "Data",
    "label": "Custom Seal No"
@@ -87,8 +97,8 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2025-12-09 12:41:10.381644",
- "modified_by": "administrator@gmail.com",
+ "modified": "2025-12-22 14:51:09.585578",
+ "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Container Details",
  "owner": "Administrator",

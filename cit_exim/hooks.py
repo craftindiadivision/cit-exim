@@ -279,6 +279,7 @@ fixtures=[
 
 ]
 
+
 doctype_js = {
     "Sales Order": "public/js/doctype_js/sales_order.js",
     "Address":"public/js/doctype_js/address.js",
@@ -343,4 +344,11 @@ doc_events = {
     # "Delivery Note":{
     #     "before_insert":"cit_exim.cit_exim.doc_events.delivery_note.before_insert"
     # },
+   
+    "Payment Entry": {
+        "on_submit": "cit_exim.cit_exim.doc_events.payment_entry.on_submit_update_sales_invoice"
+    
+    }
+
+
 }

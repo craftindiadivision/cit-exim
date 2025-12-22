@@ -13,36 +13,10 @@ def before_save(self, method):
 	meis_calculation(self)
 
 
-# ------------------------------------------------------------------------------
-# SET THE BATCH NO IN TO LOTNO 
-# --------------------------------------------------------------------------------
-# def validate(doc, method=None):
-#     print("Starting LOT number auto-fill...")
 
-#     lot_list = []
 
-#     # 1. Collect batch numbers and quantities from Serial & Batch Bundles
-#     for item in doc.items:
-#         if item.serial_and_batch_bundle:
-#             bundle = frappe.get_doc("Serial and Batch Bundle", item.serial_and_batch_bundle)
-#             for entry in bundle.entries:
-#                 if entry.batch_no:
-#                     lot_list.append({
-#                         "lot_no": entry.batch_no,
-#                         "qty": abs(entry.qty)  # take absolute value
-#                     })
+# ------------------------------------FETCH THE LOT NO FROM SERIAL AND BATCH AND NO OF PACKAGE FROM ITEM MASTER-----------------------------------------
 
-#     print("Collected lot_list with absolute qty:", lot_list)
-
-#     # 2. Clear existing container_detail rows
-#     # doc.container_detail = []
-
-#     # 3. Create a new row for each batch number with absolute qty
-#     for lot in lot_list:
-#         doc.append("container_detail", {
-#             "lot_no": lot["lot_no"],
-#             "no_of_packages": lot["qty"]
-#         })
 
 def validate(doc, method=None):
 	
@@ -50,7 +24,7 @@ def validate(doc, method=None):
 
     lot_list = []
 
-    # 1. Collect batch numbers and quantities from Serial & Batch Bundles
+    # 1. Collect batch numbers from Serial & Batch Bundles
     for item in doc.items:
         if item.serial_and_batch_bundle:
             bundle = frappe.get_doc("Serial and Batch Bundle", item.serial_and_batch_bundle)
@@ -58,7 +32,6 @@ def validate(doc, method=None):
                 if entry.batch_no:
                     lot_list.append({
                         "lot_no": entry.batch_no,
-                        
                     })
 
     print("Collected lot_list:", lot_list)
@@ -69,21 +42,36 @@ def validate(doc, method=None):
     # 2. Add only new batch numbers (avoid duplicates)
     for lot in lot_list:
         if lot["lot_no"] not in existing_lots:
+
+            #  FETCH from Item Master
+            item_code = doc.items[0].item_code if doc.items else None
+            packages = frappe.db.get_value(
+                "Item",
+                item_code,
+                "custom_no_of_packages_per_lot"
+            ) if item_code else None
+
             doc.append("container_detail", {
                 "lot_no": lot["lot_no"],
-               
+                "no_of_packages": packages   #  SET HERE
             })
-            existing_lots.add(lot["lot_no"])  # update the set
+
+            existing_lots.add(lot["lot_no"])
+
+    #  Ensure existing rows also get the value
+    for row in doc.container_detail:
+        if not row.no_of_packages:
+            item_code = doc.items[0].item_code if doc.items else None
+            if item_code:
+                row.no_of_packages = frappe.db.get_value(
+                    "Item",
+                    item_code,
+                    "custom_no_of_packages_per_lot"
+                )
 
     print("Final container_detail:", doc.container_detail)
 
-
-
-    # for row in doc.container_detail:
-    #     print(44444444444)
-    #     if lot_list:
-    #         new_lot_no = f"{row.lot_no},{lot_list.pop(0)}" if row.lot_no else lot_list.pop(0)
-            # frappe.db.set_value(row, "lot_no", new_lot_no)
+# ------------------------------------------------------------------------------------------------------------------------
 
 def before_submit(self,method):
 	# if self._action == 'submit':
