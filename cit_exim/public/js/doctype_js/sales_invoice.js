@@ -1,39 +1,3 @@
-// frappe.ui.form.on("Sales Invoice", {
-
-//     refresh(frm) {
-
-//         frm.set_query("port_of_loading", () => {
-//             return {
-//                 filters: {
-//                     custom_is_in_india: 1
-//                 }
-//             };
-//         });
-
-//         frm.set_query("port_of_discharge", () => {
-//             return {
-//                 filters: {
-//                     custom_is_in_india: 0
-//                 }
-//             };
-//         });
-//     },
-
-//     port_of_discharge(frm) {
-//         if (frm.doc.port_of_discharge) {
-//             frappe.db.get_value("Port Details", frm.doc.port_of_discharge, "country")
-//                 .then(r => {
-//                     if (r && r.message) {
-//                         frm.set_value("country_of_destination", r.message.country);
-//                     }
-//                 });
-//         } else {
-//             frm.set_value("country_of_destination", "");
-//         }
-//     }
-
-// });
-
 
 
 
@@ -206,7 +170,7 @@ frappe.ui.form.on('Notify Party Address', {
 
 
 // ------------------------------------------------------------------------
-// NEW CODE
+//set port oof loading and discharge
 // ------------------------------------------------------------------------
 
 frappe.ui.form.on("Sales Invoice", {
@@ -245,6 +209,7 @@ frappe.ui.form.on("Sales Invoice", {
 
 });
 
+//----------------producer table--------------------------
 
 frappe.ui.form.on('Sales Invoice', {
     onload(frm) {
@@ -316,7 +281,7 @@ function render_producer_html(frm) {
         });
 }
 
-
+//----------------set container no: in to field---------------
 
 frappe.ui.form.on("Sales Invoice", {
     refresh(frm) {
@@ -354,3 +319,42 @@ function update_number_of_containers(frm) {
 
 
 
+
+//----------------- set no of packages ------------------
+
+frappe.ui.form.on("Sales Invoice Item", {
+    qty: function (frm, cdt, cdn) {
+        update_no_of_packages(frm, cdt, cdn);
+    },
+
+    item_code: function (frm, cdt, cdn) {
+        update_no_of_packages(frm, cdt, cdn);
+    }
+});
+
+function update_no_of_packages(frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+
+    if (!row.item_code || !row.qty) return;
+
+    //SET THE  BASE LOT QTY 20(MT) 
+    const BASE_LOT_QTY = 20;
+
+    frappe.db.get_value(
+        "Item",
+        row.item_code,
+        "custom_no_of_packages_per_lot"
+    ).then(r => {
+        let packages_per_lot = r.message.custom_no_of_packages_per_lot;
+
+        if (!packages_per_lot) return;
+
+        let calculated_packages =
+            (row.qty / BASE_LOT_QTY) * packages_per_lot;
+
+        // Safety: round to whole packages
+        row.no_of_packages = Math.round(calculated_packages);
+
+        frm.refresh_field("items");
+    });
+}

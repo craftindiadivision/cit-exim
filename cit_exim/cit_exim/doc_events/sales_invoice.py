@@ -71,7 +71,7 @@ def validate(doc, method=None):
         if lot["lot_no"] not in existing_lots:
             doc.append("container_detail", {
                 "lot_no": lot["lot_no"],
-                # "no_of_packages": lot["qty"]
+               
             })
             existing_lots.add(lot["lot_no"])  # update the set
 
