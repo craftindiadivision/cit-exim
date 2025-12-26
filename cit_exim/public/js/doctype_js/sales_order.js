@@ -716,6 +716,7 @@ function load_variable_template(frm, template_name) {
     if (!template_name) {
         frm.clear_table("custom_quality_and_specification");
         frm.refresh_field("custom_quality_and_specification");
+        frm.set_value("custom_specification_details", "");
         frm._template_loaded_for = null;
         return;
     }
@@ -728,6 +729,10 @@ function load_variable_template(frm, template_name) {
 
     frappe.db.get_doc("Variable Template", template_name)
         .then(doc => {
+
+            // ===============================
+            // EXISTING CHILD TABLE LOGIC
+            // ===============================
             (doc.lab_variable || []).forEach(row => {
                 let child = frm.add_child("custom_quality_and_specification");
                 child.test = row.test;
@@ -735,8 +740,18 @@ function load_variable_template(frm, template_name) {
             });
 
             frm.refresh_field("custom_quality_and_specification");
+
+            // ===============================
+            //  NEW ADDITION (SPECIFICATION)
+            // ===============================
+            frm.set_value(
+                "custom_specification_details",
+                doc.specification_details || ""
+            );
+            
         });
 }
+
 
 // ================================
 // LOAD FROM ITEM (Child Table)
@@ -756,7 +771,6 @@ frappe.ui.form.on("Sales Order Item", {
             const template = r.message?.custom_template;
 
             if (template) {
-                // Set parent field → triggers Sales Order handler also
                 frm.set_value("custom_product", template);
                 load_variable_template(frm, template);
             } else {
@@ -766,12 +780,108 @@ frappe.ui.form.on("Sales Order Item", {
         });
     }
 });
-
 // ================================
 // LOAD FROM MANUAL TEMPLATE CHANGE
 // ================================
 frappe.ui.form.on("Sales Order", {
     custom_product(frm) {
         load_variable_template(frm, frm.doc.custom_product);
+    }
+});
+
+
+// FETCH THE DOCUMENTS FROM DOCUMENT DOC
+
+frappe.ui.form.on("Sales Order", {
+
+    custom_document: function (frm) {
+        
+        
+        // Clear existing rows
+        frm.clear_table("custom_document_list");
+        frm.refresh_field("custom_document_list");
+
+        if (!frm.doc.custom_document) {
+            return;
+        }
+
+        frappe.db.get_doc("Document", frm.doc.custom_document)
+            .then(doc => {
+
+                if (!doc.documents || doc.documents.length === 0) {
+                    frappe.msgprint("No documents found in selected Document");
+                    return;
+                }
+
+                doc.documents.forEach(d => {
+                    let row = frm.add_child("custom_document_list");
+                    row.document_name = d.document_name;
+                });
+
+                frm.refresh_field("custom_document_list");
+            })
+            .catch(err => {
+                console.error(err);
+                frappe.msgprint("Failed to fetch Document");
+            });
+    }
+
+});
+
+// FETCH CONTAMINATION DETAILS FROM CONTAMINATION DOC
+
+
+frappe.ui.form.on("Sales Order", {
+    custom_contamination: function(frm) {
+        if (!frm.doc.custom_contamination) {
+            frm.set_value("custom_contamination_details", "");
+            return;
+        }
+
+        frappe.db.get_value(
+            "Contamination",
+            frm.doc.custom_contamination,
+            "contamination_details",   // <-- field name in Contamination doctype
+            function(r) {
+                if (r && r.contamination_details) {
+                    frm.set_value(
+                        "custom_contamination_details",
+                        r.contamination_details
+                    );
+                } else {
+                    frm.set_value("custom_contamination_details", "");
+                }
+            }
+        );
+    }
+});
+
+
+// //FETCH THE OTHER CONDITIONS 
+
+frappe.ui.form.on("Sales Order", {
+    custom_other_conditions: function(frm) {
+
+        // Clear target field if link is empty
+        if (!frm.doc.custom_other_conditions) {
+            frm.set_value("custom_description_of_conditions", "");
+            return;
+        }
+
+        frappe.db.get_value(
+            "Other Conditions",
+            frm.doc.custom_other_conditions,
+            "description_of_conditions",
+            function(r) {
+                if (r && r.description_of_conditions) {
+                    frm.set_value(
+                        "custom_description_of_conditions",
+                        r.description_of_conditions
+                    );
+                } else {
+                    frm.set_value("custom_description_of_conditions", "");
+                }
+            }
+        );
     }
 });

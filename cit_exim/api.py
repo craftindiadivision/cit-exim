@@ -375,12 +375,12 @@ def contract_and_lc_filter(doctype, txt, searchfield, start, page_len, filters, 
 		WHERE cto.sales_order in (%s) """% ', '.join(['%s']*len(so_list)), tuple(so_list))
 
 		
-def validate_document_checks(self):
-	if self.get('sales_invoice_export_document_item') and not all([row.checked for row in self.get('sales_invoice_export_document_item')]):
-		frappe.throw(_("Not all documents are checked for Export Documents"))
+# def validate_document_checks(self):
+# 	if self.get('sales_invoice_export_document_item') and not all([row.checked for row in self.get('sales_invoice_export_document_item')]):
+# 		frappe.throw(_("Not all documents are checked for Export Documents"))
 
-	elif self.get('sales_invoice_contract_term_check') and not all([row.checked for row in self.get('sales_invoice_contract_term_check')]):
-		frappe.throw(_("Not all documents are checked for Document Checks"))
+# 	elif self.get('sales_invoice_contract_term_check') and not all([row.checked for row in self.get('sales_invoice_contract_term_check')]):
+# 		frappe.throw(_("Not all documents are checked for Document Checks"))
 		
 @frappe.whitelist()
 def docs_before_naming(self, method):

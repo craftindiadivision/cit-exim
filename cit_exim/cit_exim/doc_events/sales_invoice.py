@@ -71,12 +71,19 @@ def validate(doc, method=None):
 
     print("Final container_detail:", doc.container_detail)
 
+
+
+
+
+
+
 # ------------------------------------------------------------------------------------------------------------------------
 
 def before_submit(self,method):
 	# if self._action == 'submit':
 	print(222222222222)
 	validate_document_checks(self)
+	before_workflow_action(self)
 
 
 def on_submit(self, method):
@@ -428,7 +435,52 @@ def copy_selected_producers(doc, sales_order):
             child.selected = row.selected
 
 
+# def before_save(doc, method):
+#     """
+#     Copy selected producers from Sales Order
+#     ONLY once for NEW Sales Invoice
+#     """
+
+#     #  VERY IMPORTANT GUARD
+#     if doc.custom_producer_table:
+#         return
+
+#     if doc.get("items") and len(doc.items) > 0:
+#         so_name = doc.items[0].sales_order
+#         if so_name:
+#             copy_selected_producers(doc, so_name)
 
 
+# def copy_selected_producers(doc, sales_order):
+#     so = frappe.get_doc("Sales Order", sales_order)
+
+#     # Clear existing mapped producers
+#     doc.custom_producer_table = []
+
+#     for row in so.custom_producer_table:
+#         if row.selected:
+#             child = doc.append("custom_producer_table", {})
+#             child.producer = row.producer
+#             child.address = row.address
+#             child.selected = row.selected
+
+
+def before_workflow_action(doc, method=None):
+    all_checked = True
+
+    if doc.sales_invoice_contract_term_check:
+        for row in doc.sales_invoice_contract_term_check:
+            if not row.checked:
+                all_checked = False
+                break
+
+    if all_checked and doc.sales_invoice_export_document_item:
+        for row in doc.sales_invoice_export_document_item:
+            if not row.checked:
+                all_checked = False
+                break
+
+    # if all_checked:
+    #     doc.workflow_state = "Document Submitted & Awaiting Payments"
 
 

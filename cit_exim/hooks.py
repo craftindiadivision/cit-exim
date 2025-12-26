@@ -254,7 +254,7 @@ fixtures=[
     {
     "dt": "Custom Field",
     "filters": [
-        ["dt", "in", ["Sales Order","Address","Supplier","Sales Invoice","Sales Invoice Item","Sales Order Item","Payment Entry","Journal Entry","Company","Item"]]
+        ["dt", "in", ["Sales Order","Address","Supplier","Sales Invoice","Sales Invoice Item","Sales Order Item","Payment Entry","Journal Entry","Company","Item","Purchase Order"]]
     ]
     },
     {
@@ -263,7 +263,7 @@ fixtures=[
         ["name", "in", [
            "Sales Order-main-field_order","Sales Order-shipping_terms-label","Sales Order-po_no-label","Supplier-main-field_order","Sales Order-customer-label","Address-is_shipping_address-depends_on",
            "Address-main-field_order","Journal Entry-voucher_type-options","Contract Term-custom_document_no","Item-main-field_order","Sales Invoice-main-field_order","Address-main-field_order","Item-main-field_order",
-           "Sales Invoice-main-field_order"
+           "Sales Invoice-main-field_order","Purchase Order-main-field_order","Sales Order-main-field_order"
         ]]
     ]
     },
@@ -302,8 +302,10 @@ doc_events = {
         "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
+        # "before_save":"cit_exim.cit_exim.doc_events.sales_invoice.before_save",
         "before_insert":"cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
         "before_submit":"cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
+        
     },
     "Purchase Invoice": {
          "on_submit": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_submit",

@@ -1,41 +1,34 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:item",
- "creation": "2025-11-28 11:06:39.227751",
+ "autoname": "field:title",
+ "creation": "2025-12-24 16:27:58.676230",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "item",
-  "lab_variable",
-  "specification_details"
+  "title",
+  "description_of_conditions"
  ],
  "fields": [
   {
-   "fieldname": "item",
+   "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Item",
+   "label": "Title",
    "unique": 1
   },
   {
-   "fieldname": "lab_variable",
-   "fieldtype": "Table",
-   "label": "Lab variable",
-   "options": "FISH MEAL CHILDTABLE"
-  },
-  {
-   "fieldname": "specification_details",
-   "fieldtype": "Small Text",
-   "label": "Specification Details"
+   "fieldname": "description_of_conditions",
+   "fieldtype": "Text Editor",
+   "label": "Description of Conditions"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-24 10:13:43.467043",
+ "modified": "2025-12-24 16:33:50.625086",
  "modified_by": "Administrator",
  "module": "CIT Exim",
- "name": "Variable Template",
+ "name": "Other Conditions",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
