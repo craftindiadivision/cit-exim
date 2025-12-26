@@ -925,3 +925,35 @@ frappe.ui.form.on("Sales Order Item", {
         });
     }
 });
+
+
+
+
+// FECTH SHIPPING INSTRUCTION 
+
+frappe.ui.form.on("Sales Order", {
+    custom_shipping_instruction: function(frm) {
+
+        // Clear target field if link is empty
+        if (!frm.doc.custom_shipping_instruction) {
+            frm.set_value("custom_description_of_instruction", "");
+            return;
+        }
+
+        frappe.db.get_value(
+            "Shipping Instruction",
+            frm.doc.custom_shipping_instruction,
+            "description_of_instruction",
+            function(r) {
+                if (r && r.description_of_instruction) {
+                    frm.set_value(
+                        "custom_description_of_instruction",
+                        r.description_of_instruction
+                    );
+                } else {
+                    frm.set_value("custom_description_of_instruction", "");
+                }
+            }
+        );
+    }
+});
