@@ -141,3 +141,69 @@ frappe.ui.form.on("Purchase Invoice Item", {
         }
     }
 });
+
+
+
+
+//Template Code without mapping the purchase order
+
+// ================================
+//  LOADING THE TEMPLATES 
+// ================================
+function load_variable_template_pi(frm, template_name) {
+
+    if (!template_name) {
+        frm.clear_table("custom_quality_and_specification");
+        frm.refresh_field("custom_quality_and_specification");
+        frm._template_loaded_for = null;
+        return;
+    }
+
+    if (frm._template_loaded_for === template_name) return;
+    frm._template_loaded_for = template_name;
+
+    frm.clear_table("custom_quality_and_specification");
+
+    frappe.db.get_doc("Variable Template", template_name)
+        .then(doc => {
+            (doc.lab_variable || []).forEach(row => {
+                let child = frm.add_child("custom_quality_and_specification");
+                child.test = row.test;
+                child.value = row.value;
+            });
+
+            frm.refresh_field("custom_quality_and_specification");
+        });
+}
+
+// ================================
+// LOAD FROM ITEM CHANGE (Child Table)
+// ================================
+frappe.ui.form.on("Purchase Invoice Item", {
+    item_code(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        if (!row.item_code) return;
+
+        frappe.db.get_value("Item", row.item_code, "custom_template")
+            .then(r => {
+                let template = r.message?.custom_template;
+
+                if (template) {
+                    frm.set_value("custom_product", template);
+                    load_variable_template_pi(frm, template);
+                } else {
+                    frm.set_value("custom_product", "");
+                    load_variable_template_pi(frm, null);
+                }
+            });
+    }
+});
+
+// ================================
+// MANUAL PRODUCT SELECTION
+// ================================
+frappe.ui.form.on("Purchase Invoice", {
+    custom_product(frm) {
+        load_variable_template_pi(frm, frm.doc.custom_product);
+    }
+});
