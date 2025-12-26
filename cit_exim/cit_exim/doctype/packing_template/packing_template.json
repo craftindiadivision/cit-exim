@@ -1,14 +1,15 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "field:item",
  "creation": "2025-12-19 10:43:51.145320",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
   "item",
-  "packing_details"
+  "packing_details",
+  "packing_details_salescontract"
  ],
  "fields": [
   {
@@ -20,7 +21,7 @@
   {
    "fieldname": "packing_details",
    "fieldtype": "Small Text",
-   "label": "Packing Details"
+   "label": "Packing Details(For Sales Invoice)"
   },
   {
    "bold": 1,
@@ -31,16 +32,21 @@
    "no_copy": 1,
    "options": "PT-",
    "reqd": 1
+  },
+  {
+   "fieldname": "packing_details_salescontract",
+   "fieldtype": "Small Text",
+   "label": "Packing Details(For Sales Contract)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-19 11:21:34.635221",
+ "modified": "2025-12-26 11:18:30.011161",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Packing Template",
- "naming_rule": "By \"Naming Series\" field",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

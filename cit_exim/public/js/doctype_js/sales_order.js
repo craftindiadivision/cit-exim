@@ -885,3 +885,43 @@ frappe.ui.form.on("Sales Order", {
         );
     }
 });
+
+
+//FETCH PACKING DETAILS FROM ITEM MASTER
+frappe.ui.form.on("Sales Order Item", {
+    item_code(frm, cdt, cdn) {
+
+        let row = locals[cdt][cdn];
+
+        // If item removed, clear parent fields
+        if (!row.item_code) {
+            frm.set_value("custom_packing_template", "");
+            frm.set_value("custom_packing_details", "");
+            return;
+        }
+
+        // Fetch values from Item master
+        frappe.db.get_value(
+            "Item",
+            row.item_code,
+            [
+                "custom_name_of_packing",
+                "custom_packing_detailsfor_sales_contract"
+            ]
+        ).then(r => {
+            if (r && r.message) {
+
+                // Set values in Sales Contract (parent)
+                frm.set_value(
+                    "custom_packing_template",
+                    r.message.custom_name_of_packing
+                );
+
+                frm.set_value(
+                    "custom_packing_details",
+                    r.message.custom_packing_detailsfor_sales_contract
+                );
+            }
+        });
+    }
+});

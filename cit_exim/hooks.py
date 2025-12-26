@@ -264,7 +264,7 @@ fixtures=[
         ["name", "in", [
            "Sales Order-main-field_order","Sales Order-shipping_terms-label","Sales Order-po_no-label","Supplier-main-field_order","Sales Order-customer-label","Address-is_shipping_address-depends_on",
            "Address-main-field_order","Journal Entry-voucher_type-options","Contract Term-custom_document_no","Item-main-field_order","Sales Invoice-main-field_order","Address-main-field_order","Item-main-field_order",
-           "Sales Invoice-main-field_order","Purchase Order-main-field_order","Sales Order-main-field_order","Purchase Invoice-main-field_order"
+           "Sales Invoice-main-field_order","Purchase Order-main-field_order","Sales Order-main-field_order","Purchase Invoice-main-field_order","Sales Order-main-field_order","Purchase Order-main-field_order","Item-main-field_order"
         ]]
     ]
     },
