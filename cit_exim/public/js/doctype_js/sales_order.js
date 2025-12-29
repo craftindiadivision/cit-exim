@@ -957,3 +957,35 @@ frappe.ui.form.on("Sales Order", {
         );
     }
 });
+
+
+//code of shipment 
+
+frappe.ui.form.on('Sales Order', {
+    refresh: function(frm) {
+        let currentYear = new Date().getFullYear();
+
+        let options = [
+            currentYear.toString(),
+            (currentYear + 1).toString(),
+            (currentYear + 2).toString()
+        ];
+
+        if (frm.fields_dict.custom_shipment_schedule) {
+            frm.fields_dict.custom_shipment_schedule.grid.update_docfield_property(
+                'fiscal_year',
+                'options',
+                options.join('\n')
+            );
+        }
+    }
+});
+
+// Triggered specifically when a row is added to the child table
+frappe.ui.form.on('Shipment Schedule Child Table', {
+    custom_shipment_schedule_add: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        row.fiscal_year = new Date().getFullYear().toString();
+        frm.refresh_field('custom_shipment_schedule');
+    }
+});
