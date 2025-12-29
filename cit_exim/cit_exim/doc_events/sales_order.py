@@ -54,37 +54,37 @@ def get_customer_billing_address(customer):
 
 
 
+
+
 @frappe.whitelist()
 def get_billing_address_for_customer(customer):
+    """
+    Returns a valid Billing Address linked to the selected customer.
+    """
+
     if not customer:
         return None
 
-    # Search for Billing Address linked to Customer
-    address_list = frappe.get_all(
-        "Address",
-        filters={
-            "address_type": "Billing",
-            "disabled": 0
-        },
-        fields=["name"],
-        order_by="is_primary_address desc, modified desc",
-        limit_page_length=1
-    )
+    # Find billing address linked to this customer
+    address = frappe.db.sql("""
+        SELECT a.name
+        FROM `tabAddress` a
+        INNER JOIN `tabDynamic Link` dl
+            ON dl.parent = a.name
+        WHERE dl.link_doctype = 'Customer'
+          AND dl.link_name = %s
+          AND a.disabled = 0
+          AND (
+                a.address_type = 'Billing'
+                OR a.is_primary_address = 1
+          )
+        ORDER BY
+            a.is_primary_address DESC,
+            a.modified DESC
+        LIMIT 1
+    """, (customer,), as_dict=True)
 
-    # If not found, try all addresses linked to this customer
-    if not address_list:
-        address_list = frappe.get_all(
-            "Address",
-            filters={"disabled": 0},
-            fields=["name"],
-            order_by="is_primary_address desc, modified desc",
-            limit_page_length=1
-        )
-
-    if address_list:
-        return address_list[0].name
-
-    return None
+    return address[0].name if address else None
 
 
 
