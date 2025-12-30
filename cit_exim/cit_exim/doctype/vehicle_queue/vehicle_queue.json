@@ -1,0 +1,184 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:token_number",
+ "creation": "2025-12-30 15:09:37.176185",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_uji0",
+  "amended_from",
+  "company",
+  "warehouse",
+  "branch",
+  "column_break_hylg",
+  "date",
+  "time",
+  "type",
+  "column_break_vmip",
+  "token_number",
+  "weigh_bridge_name",
+  "vehicle_no",
+  "supplier",
+  "customer",
+  "section_break_pvag",
+  "item",
+  "no_of_bags",
+  "column_break_czgp",
+  "gross_weight",
+  "tare_weight",
+  "net_weight"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_uji0",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Vehicle Queue",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "column_break_hylg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Time"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nInward\nOutward"
+  },
+  {
+   "fieldname": "column_break_vmip",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "token_number",
+   "fieldtype": "Data",
+   "label": "Token Number",
+   "unique": 1
+  },
+  {
+   "fieldname": "weigh_bridge_name",
+   "fieldtype": "Data",
+   "label": "Weigh Bridge Name"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Inward\"\n",
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Outward\"\n",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "section_break_pvag",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item ",
+   "options": "Item"
+  },
+  {
+   "fieldname": "no_of_bags",
+   "fieldtype": "Float",
+   "label": "No. of Bags"
+  },
+  {
+   "fieldname": "column_break_czgp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gross_weight",
+   "fieldtype": "Float",
+   "label": "Gross Weight"
+  },
+  {
+   "fieldname": "tare_weight",
+   "fieldtype": "Float",
+   "label": "Tare Weight"
+  },
+  {
+   "fieldname": "net_weight",
+   "fieldtype": "Float",
+   "label": "Net Weight"
+  },
+  {
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "label": "Vehicle No."
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-12-30 15:34:18.972877",
+ "modified_by": "Administrator",
+ "module": "CIT Exim",
+ "name": "Vehicle Queue",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

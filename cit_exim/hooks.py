@@ -353,7 +353,11 @@ doc_events = {
     "Payment Entry": {
         "on_submit": "cit_exim.cit_exim.doc_events.payment_entry.on_submit_update_sales_invoice"
     
+    },
+  
+    
+    "Vehicle Queue": {
+        "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_voucher"
     }
-
-
+   
 }
