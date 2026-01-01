@@ -480,7 +480,7 @@ def before_workflow_action(doc, method=None):
                 all_checked = False
                 break
 
-    # if all_checked:
-    #     doc.workflow_state = "Document Submitted & Awaiting Payments"
+    if all_checked:
+        doc.workflow_state = "BL Issued"
 
 

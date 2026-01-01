@@ -11,16 +11,17 @@
  "fields": [
   {
    "fieldname": "document_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Document Name"
+   "label": "Document Name",
+   "options": "Export Document"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-24 11:56:49.083028",
+ "modified": "2025-12-31 14:53:14.693424",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Document list",

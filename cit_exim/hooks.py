@@ -294,10 +294,12 @@ doctype_js = {
     "Purchase Order":"public/js/doctype_js/purchase_order.js",
     "Purchase Receipt":"public/js/doctype_js/purchase_receipt.js",
     "Purchase Voucher":"public/js/doctype_js/purchase_voucher.js"
-  
-
 }
 
+doctype_list_js = {
+    "Sales Invoice": "public/js/doctype_js/sales_invoice_list.js"
+}
+# /home/user/v15/apps/cit_exim/cit_exim/public/js/doctype_js/sales_invoice_list.js
 
 doc_events = {
     "Sales Invoice": {
