@@ -29,6 +29,7 @@ def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
 
 
 
+
 @frappe.whitelist()
 def get_customer_billing_address(customer):
     """

@@ -9,9 +9,9 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.email.doctype.email_account.email_account import EmailAccount
 
 @frappe.whitelist()
-def si_validate(self, method):
-	if self._action == 'submit':
-		validate_document_checks(self)
+# def si_validate(self, method):
+	# if self._action == 'submit':
+		# validate_document_checks(self)
 
 # @frappe.whitelist()
 # def si_on_submit(self, method):

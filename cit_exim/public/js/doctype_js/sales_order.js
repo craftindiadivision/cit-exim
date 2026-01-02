@@ -91,19 +91,19 @@
 //             };
 //         });
 
-//         // PORT FILTERS
-//         frm.set_query("port_of_loading", () => ({
-//             filters: { custom_is_in_india: 1 }
-//         }));
+        // PORT FILTERS
+        // frm.set_query("port_of_loading", () => ({
+        //     filters: { custom_is_in_india: 1 }
+        // }));
 
-//         frm.set_query("port_of_discharge", () => ({
-//             filters: { custom_is_in_india: 0 }
-//         }));
+        // frm.set_query("port_of_discharge", () => ({
+        //     filters: { custom_is_in_india: 0 }
+        // }));
 
-//         frm.trigger("set_signing_authority_options");
-//         frm.trigger("calculate_shipping_period");
-//         toggle_other_insurance_field(frm);
-//     },
+        // frm.trigger("set_signing_authority_options");
+        // frm.trigger("calculate_shipping_period");
+        // toggle_other_insurance_field(frm);
+    // },
 
 
  
@@ -414,22 +414,6 @@ frappe.ui.form.on("Sales Order", {
         }
     },
 
-    // // AUTO FILL SHIPPING ADDRESS BASED ON CONSIGNEE
-    // custom_consignee(frm) {
-    //     if (!frm.doc.custom_consignee) return;
-
-    //     frm.set_value("shipping_address_name", frm.doc.custom_consignee);
-
-    //     frappe.call({
-    //         method: "frappe.contacts.doctype.address.address.get_address_display",
-    //         args: { address_dict: frm.doc.custom_consignee },
-    //         callback(r) {
-    //             if (r.message) {
-    //                 frm.set_value("shipping_address", r.message);
-    //             }
-    //         }
-    //     });
-    // },
 
 
 
@@ -633,10 +617,6 @@ frappe.ui.form.on("Sales Order", {
     }
 });
 
- 
-                // /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
-
-
 
 
 // /////////////////////////////////////////Address changing based on Buyer and consignee//////////////////////////////////////////////////////////////
@@ -751,6 +731,8 @@ function load_variable_template(frm, template_name) {
             
         });
 }
+
+
 
 
 // ================================
@@ -896,9 +878,11 @@ frappe.ui.form.on("Sales Order Item", {
         // If item removed, clear parent fields
         if (!row.item_code) {
             frm.set_value("custom_packing_template", "");
-            frm.set_value("custom_packing_details", "");
+            frm.set_value("custom_packing_detailsfor_sales_contract", "");
+            frm.set_value("custom_packing_detailsfor_sales_invoice", "");
             return;
         }
+
 
         // Fetch values from Item master
         frappe.db.get_value(
@@ -906,6 +890,7 @@ frappe.ui.form.on("Sales Order Item", {
             row.item_code,
             [
                 "custom_name_of_packing",
+                "custom_details_of_packing",
                 "custom_packing_detailsfor_sales_contract"
             ]
         ).then(r => {
@@ -918,8 +903,12 @@ frappe.ui.form.on("Sales Order Item", {
                 );
 
                 frm.set_value(
-                    "custom_packing_details",
+                    "custom_packing_detailsfor_sales_contract",
                     r.message.custom_packing_detailsfor_sales_contract
+                );
+                 frm.set_value(
+                    "custom_packing_detailsfor_sales_invoice",
+                    r.message.custom_details_of_packing
                 );
             }
         });
@@ -989,3 +978,5 @@ frappe.ui.form.on('Shipment Schedule Child Table', {
         frm.refresh_field('custom_shipment_schedule');
     }
 });
+
+

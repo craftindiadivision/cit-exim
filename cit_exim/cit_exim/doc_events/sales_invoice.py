@@ -3,6 +3,8 @@ from frappe import _
 from frappe.utils import flt
 
 from frappe.model.document import Document
+import json
+from frappe.utils import today
 
 
 
@@ -82,7 +84,7 @@ def validate(doc, method=None):
 def before_submit(self,method):
 	# if self._action == 'submit':
 	print(222222222222)
-	validate_document_checks(self)
+	# validate_document_checks(self)
 	before_workflow_action(self)
 
 
@@ -200,14 +202,14 @@ def meis_calculation(self):
 		self.total_meis = total_meis
 
 
-def validate_document_checks(self):
-	if self.get('sales_invoice_export_document_item') and not all([row.checked for row in self.get('sales_invoice_export_document_item')]):
-		print(3333333333)
-		frappe.throw(_("Not all documents are checked for Export Documents"))
+# def validate_document_checks(self):
+# 	if self.get('sales_invoice_export_document_item') and not all([row.checked for row in self.get('sales_invoice_export_document_item')]):
+# 		print(3333333333)
+# 		frappe.throw(_("Not all documents are checked for Export Documents"))
 
-	elif self.get('sales_invoice_contract_term_check') and not all([row.checked for row in self.get('sales_invoice_contract_term_check')]):
-		print(9999999999)
-		frappe.throw(_("Not all documents are checked for Document Checks"))
+# 	elif self.get('sales_invoice_contract_term_check') and not all([row.checked for row in self.get('sales_invoice_contract_term_check')]):
+# 		print(9999999999)
+# 		frappe.throw(_("Not all documents are checked for Document Checks"))
 
 
 
@@ -697,3 +699,260 @@ def before_workflow_action(doc, method=None):
         doc.workflow_state = "BL Issued"
 
 
+
+
+
+@frappe.whitelist()
+def create_consolidated_invoice(sales_invoices):
+
+    if isinstance(sales_invoices, str):
+        sales_invoices = json.loads(sales_invoices)
+
+    if not sales_invoices:
+        frappe.throw("No Sales Invoices selected")
+
+    #  Check if any selected Sales Invoice is already consolidated
+    # Check if any selected Sales Invoice is already consolidated
+    # Check if any selected Sales Invoice is already used in Consolidated Sales Invoice
+    already_consolidated = []
+
+    for si_name in sales_invoices:
+        exists = frappe.db.exists(
+            "Sales Invoices",          # child table doctype
+            {"sales_invoice": si_name}
+        )
+        if exists:
+            already_consolidated.append(si_name)
+
+    if already_consolidated:
+        frappe.throw(
+            "The following Sales Invoices are already linked to a Consolidated Sales Invoice:<br><b>"
+            + ", ".join(already_consolidated)
+            + "</b>"
+        )
+
+
+    # lowest_si_name = min(sales_invoices)
+    # first_si = frappe.get_doc("Sales Invoice", sales_invoices[0])
+    lowest_si_name = min(sales_invoices)
+    first_si = frappe.get_doc("Sales Invoice", lowest_si_name)
+
+    sales_contracts = set()
+    for si_name in sales_invoices:
+        si = frappe.get_doc("Sales Invoice", si_name)
+        for item in si.items:
+            if item.sales_order:
+                sales_contracts.add(item.sales_order)
+
+    if len(sales_contracts) > 1:
+        frappe.throw(
+            "Selected Sales Invoices contain items from different Sales Contracts. "
+            "Please select invoices belonging to the same Sales Contract."
+        )
+
+    sales_contract = list(sales_contracts)[0] if sales_contracts else None
+
+    if frappe.db.exists("Consolidated Sales Invoice", first_si.name):
+        frappe.throw(
+            f"Consolidated Sales Invoice with name '{first_si.name}' already exists"
+        )
+
+    csi = frappe.new_doc("Consolidated Sales Invoice")
+    csi.name = first_si.name
+
+    csi.customer = first_si.customer
+    # csi.is_consignee_same_as_buyer=first_si.custom_is_consignee_same_as_buyer
+    # csi.consignee=first_si.custom_consignee
+    csi.company = first_si.company
+    csi.currency = first_si.currency
+    csi.conversion_rate = first_si.conversion_rate
+    csi.debit_to = first_si.debit_to
+    csi.cost_center = first_si.cost_center
+    csi.project = first_si.project
+    csi.tax_category = first_si.tax_category
+    csi.shipping_rule = first_si.shipping_rule
+    csi.incoterm = first_si.incoterm
+    csi.taxes_and_charges = first_si.taxes_and_charges
+    csi.customer_address = first_si.customer_address
+    csi.address_display = first_si.address_display
+    csi.gst_category = first_si.gst_category
+    csi.contact_person = first_si.contact_person
+    csi.territory = first_si.territory
+    csi.shipping_address_name = first_si.shipping_address_name
+    csi.shipping_address = first_si.shipping_address
+    csi.dispatch_address_name = first_si.dispatch_address_name
+    csi.company_address = first_si.company_address
+    csi.company_address_display = first_si.company_address_display
+    csi.company_contact_person = first_si.company_contact_person
+    csi.tc_name = first_si.tc_name
+    csi.terms = first_si.terms
+    csi.update_stock = 1 if first_si.update_stock else 0
+    csi.set_warehouse = first_si.set_warehouse
+    csi.posting_date = today()
+
+    for si_name in sales_invoices:
+        csi.append("sales_invoice_reference", {
+        "sales_invoice": si_name
+    })
+   
+
+    # =========================
+    # CONSOLIDATE ITEMS
+    # =========================
+    item_map = {}
+
+    for si_name in sales_invoices:
+        si = frappe.get_doc("Sales Invoice", si_name)
+
+        if si.docstatus != 1:
+            frappe.throw(f"{si.name} must be Submitted")
+
+        if si.is_consolidated:
+            frappe.db.set_value("Sales Invoice", si.name, "is_consolidated", 0)
+            si.is_consolidated = 0
+
+        if si.customer != csi.customer:
+            frappe.throw("All Sales Invoices must have the same Customer")
+
+        if si.company != csi.company:
+            frappe.throw("All Sales Invoices must belong to the same Company")
+
+        for item in si.items:
+            key = item.item_code
+
+            if key in item_map:
+                item_map[key]["qty"] += flt(item.qty)
+                item_map[key]["amount"] += flt(item.amount)
+                item_map[key]["base_amount"] += flt(item.base_amount)
+                item_map[key]["sales_orders"].add(item.sales_order)
+            else:
+                item_map[key] = {
+                    "item_code": item.item_code,
+                    "item_name": item.item_name,
+                    "description": item.description,
+                    "qty": flt(item.qty),
+                    "uom": item.uom,
+                    "stock_uom": item.stock_uom,
+                    "conversion_factor": flt(item.conversion_factor) if item.conversion_factor else 1,
+                    "rate": flt(item.rate),
+                    "base_rate": flt(item.base_rate),
+                    "amount": flt(item.amount),
+                    "base_amount": flt(item.base_amount),
+                    "income_account": item.income_account,
+                    "cost_center": item.cost_center,
+                    "sales_orders": {item.sales_order}
+                }
+
+    for row in item_map.values():
+        csi.append("items", {
+            "item_code": row["item_code"],
+            "item_name": row["item_name"],
+            "description": row["description"],
+            "qty": row["qty"],
+            "uom": row["uom"],
+            "stock_uom": row["stock_uom"],
+            "conversion_factor": row["conversion_factor"],
+            "rate": row["rate"],
+            "base_rate": row["base_rate"],
+            "amount": row["amount"],
+            "base_amount": row["base_amount"],
+            "income_account": row["income_account"],
+            "cost_center": row["cost_center"],
+            "sales_order": ", ".join(filter(None, row.get("sales_orders", [])))
+        })
+
+    # =========================
+    # APPLY TAXES TABLE LOGIC
+    # =========================
+    tax_map = {}
+
+    for tax in first_si.taxes:
+        key = (tax.account_head, tax.charge_type)
+        tax_map[key] = {
+            "charge_type": tax.charge_type,
+            "account_head": tax.account_head,
+            "description": tax.description,
+            "included_in_print_rate": tax.included_in_print_rate,
+            "cost_center": tax.cost_center,
+            "rate": flt(tax.rate),
+            "gst_tax_type": tax.gst_tax_type,
+            "tax_amount": 0,
+            "base_tax_amount": 0,
+            "total": 0,
+            "base_total": 0,
+            "tax_amount_after_discount_amount": 0,
+        }
+
+    for si_name in sales_invoices:
+        si = frappe.get_doc("Sales Invoice", si_name)
+        for tax in si.taxes:
+            key = (tax.account_head, tax.charge_type)
+            if key in tax_map:
+                tax_map[key]["tax_amount"] += flt(tax.tax_amount)
+                tax_map[key]["base_tax_amount"] += flt(tax.base_tax_amount)
+                tax_map[key]["total"] += flt(tax.total)
+                tax_map[key]["base_total"] += flt(tax.base_total)
+                tax_map[key]["tax_amount_after_discount_amount"] += flt(
+                    tax.tax_amount_after_discount_amount
+                )
+
+    for row in tax_map.values():
+        csi.append("taxes", row)
+
+    # =========================
+    # MANUAL TOTALS (FROM SALES INVOICE HEADERS)
+    # =========================
+    total_qty = 0
+    net_total = 0
+    base_total = 0
+    total=0
+    grand_total = 0
+    base_grand_total = 0
+    base_total_taxes_and_charges=0
+    total_taxes_and_charges=0
+    outstanding_amount=0
+    base_net_total=0
+    net_total=0
+
+    for si_name in sales_invoices:
+        si = frappe.get_doc("Sales Invoice", si_name)
+        total_qty += flt(si.total_qty)
+        # net_total += flt(si.net_total)
+        total+=flt(si.total)
+        base_total_taxes_and_charges+=flt(si.base_total_taxes_and_charges)
+        total_taxes_and_charges+=flt(si.total_taxes_and_charges)
+        base_total += flt(si.base_total)
+        grand_total += flt(si.grand_total)
+        base_grand_total += flt(si.base_grand_total)
+        outstanding_amount += flt(si.outstanding_amount)
+        # base_net_total += flt(si.base_net_total)
+        # net_total += flt(si.net_total)
+
+        
+
+
+        
+
+    csi.total_qty = total_qty
+    # csi.net_total = net_total
+    csi.base_total = base_total
+    csi.total=total
+    csi.base_total_taxes_and_charges=base_total_taxes_and_charges
+    csi.total_taxes_and_charges=total_taxes_and_charges
+    csi.grand_total = grand_total
+    csi.base_grand_total = base_grand_total
+    csi.sales_contract = sales_contract
+    csi.outstanding_amount = outstanding_amount
+    # csi.base_net_total = base_net_total
+    csi.net_total = net_total
+
+
+
+    csi.insert(ignore_permissions=True)
+    frappe.db.commit()
+    for si_name in sales_invoices:
+        frappe.db.set_value("Sales Invoice", si_name, "is_consolidated", 1)
+
+    frappe.msgprint(f"Consolidated Sales Invoice {csi.name} created successfully")
+
+    return csi
