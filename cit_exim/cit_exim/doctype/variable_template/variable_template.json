@@ -8,13 +8,15 @@
  "field_order": [
   "item",
   "lab_variable",
-  "specification_details"
+  "specification_details",
+  "shelf_life_condition"
  ],
  "fields": [
   {
    "fieldname": "item",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Item",
+   "options": "Item",
    "unique": 1
   },
   {
@@ -27,12 +29,17 @@
    "fieldname": "specification_details",
    "fieldtype": "Small Text",
    "label": "Specification Details"
+  },
+  {
+   "fieldname": "shelf_life_condition",
+   "fieldtype": "Small Text",
+   "label": "Shelf Life Condition"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-24 10:13:43.467043",
+ "modified": "2026-01-05 09:54:08.194418",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Variable Template",

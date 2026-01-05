@@ -21,10 +21,11 @@
   "vehicle_no",
   "supplier",
   "customer",
-  "section_break_pvag",
+  "section_break_wmlx",
+  "product",
   "item",
+  "column_break_xfke",
   "no_of_bags",
-  "column_break_czgp",
   "gross_weight",
   "tare_weight",
   "net_weight"
@@ -112,23 +113,9 @@
    "options": "Customer"
   },
   {
-   "fieldname": "section_break_pvag",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "item",
-   "fieldtype": "Link",
-   "label": "Item ",
-   "options": "Item"
-  },
-  {
    "fieldname": "no_of_bags",
    "fieldtype": "Float",
    "label": "No. of Bags"
-  },
-  {
-   "fieldname": "column_break_czgp",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "gross_weight",
@@ -149,13 +136,33 @@
    "fieldname": "vehicle_no",
    "fieldtype": "Data",
    "label": "Vehicle No."
+  },
+  {
+   "fieldname": "product",
+   "fieldtype": "Link",
+   "label": "Product",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Table",
+   "label": "Item",
+   "options": "Vehicle Queue Item"
+  },
+  {
+   "fieldname": "section_break_wmlx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_xfke",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-30 15:34:18.972877",
+ "modified": "2026-01-03 20:16:01.673360",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

@@ -697,6 +697,7 @@ function load_variable_template(frm, template_name) {
         frm.clear_table("custom_quality_and_specification");
         frm.refresh_field("custom_quality_and_specification");
         frm.set_value("custom_specification_details", "");
+        frm.set_value("custom_shelf_life_condition","");
         frm._template_loaded_for = null;
         return;
     }
@@ -727,6 +728,10 @@ function load_variable_template(frm, template_name) {
             frm.set_value(
                 "custom_specification_details",
                 doc.specification_details || ""
+            );
+            frm.set_value(
+                "custom_shelf_life_condition",
+                doc.shelf_life_condition || ""
             );
             
         });

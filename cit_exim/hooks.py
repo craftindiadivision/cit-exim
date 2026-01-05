@@ -358,8 +358,12 @@ doc_events = {
     },
   
     
-    "Vehicle Queue": {
+     "Vehicle Queue": {
         "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_voucher"
     }
+
+    #    "Vehicle Queue": {
+    #     "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_documents"
+    # }
    
 }

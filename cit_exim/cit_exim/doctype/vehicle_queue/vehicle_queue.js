@@ -17,3 +17,28 @@ function calculate_net_weight(frm) {
         frm.set_value("net_weight", 0);
     }
 }
+
+
+
+frappe.ui.form.on("Vehicle Queue", {
+    product: function (frm) {
+
+        // If no Item Group selected, remove filter
+        if (!frm.doc.product) {
+            frm.set_query("item", "item", function () {
+                return {};
+            });
+            return;
+        }
+
+        // Set dropdown filter for Item field inside child table
+        frm.set_query("item", "item", function () {
+            return {
+                filters: {
+                    item_group: frm.doc.product,
+                    disabled: 0
+                }
+            };
+        });
+    }
+});
