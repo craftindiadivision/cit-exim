@@ -133,6 +133,64 @@ class VehicleQueue(Document):
             self.net_weight = self.gross_weight - self.tare_weight
         else:
             self.net_weight = 0
+    def on_submit(self):
+        # CONDITION CHECK
+        if self.type != "Inward":
+            return
+
+        if self.product != "RM-Fish Meal":
+            return
+
+        if not self.purchase_order:
+            frappe.throw("Purchase Order is mandatory to create Purchase Receipt")
+
+        self.create_purchase_receipt()
+
+    def create_purchase_receipt(self):
+        # Fetch Purchase Order
+        po = frappe.get_doc("Purchase Order", self.purchase_order)
+
+        # Create Purchase Receipt
+        pr = frappe.new_doc("Purchase Receipt")
+        pr.supplier = po.supplier
+        pr.company = po.company
+
+        # Custom field to link Vehicle Queue
+        pr.custom_vehicle_queue = self.name
+        pr.custom_token_number = self.token_number
+
+        pr.posting_date = frappe.utils.today()
+        pr.posting_time = frappe.utils.nowtime()
+        pr.vehicle_no = self.vehicle_no
+        pr.set_warehouse = self.warehouse
+
+        # Map Items PO → PR
+        for po_item in po.items:
+            pr_item = pr.append("items", {})
+
+            pr_item.item_code = po_item.item_code
+            pr_item.item_name = po_item.item_name
+            pr_item.description = po_item.description
+
+            pr_item.qty = po_item.qty
+            pr_item.uom = po_item.uom
+            pr_item.stock_uom = po_item.stock_uom
+
+            pr_item.rate = po_item.rate
+            pr_item.amount = po_item.amount
+
+            # VERY IMPORTANT LINKS
+            pr_item.purchase_order = po.name
+            pr_item.purchase_order_item = po_item.name
+
+            pr_item.warehouse = po_item.warehouse
+
+        # Insert as Draft
+        pr.insert(ignore_permissions=True)
+
+        frappe.msgprint(
+            f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
+        )
 
 
 def create_purchase_voucher(doc, method=None):
@@ -166,11 +224,11 @@ def create_purchase_voucher(doc, method=None):
     if item_group != "Raw Fish":
         return
 
-    # Prevent duplicate Purchase Voucher
-    if frappe.db.exists("Purchase Voucher", {
-        "vehicle_queue_reference": doc.name
-    }):
-        frappe.throw("Purchase Voucher already exists for this Vehicle Queue")
+    # # Prevent duplicate Purchase Voucher
+    # if frappe.db.exists("Purchase Voucher", {
+    #     "vehicle_queue_reference": doc.name
+    # }):
+    #     frappe.throw("Purchase Voucher already exists for this Vehicle Queue")
 
     # Create Purchase Voucher (Draft)
     pv = frappe.new_doc("Purchase Voucher")
@@ -181,6 +239,8 @@ def create_purchase_voucher(doc, method=None):
     pv.branch = doc.branch
     pv.vehicle_no = doc.vehicle_no
     pv.vendor_name = doc.supplier
+    pv.vehicle_queue = doc.name
+    pv.token_number = doc.token_number
 
     pv.custom_vehicle_queue = doc.name
     pv.vehicle_queue_reference = doc.name
