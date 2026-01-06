@@ -115,3 +115,23 @@ frappe.ui.form.on("Purchase Order", {
         load_variable_template(frm, frm.doc.custom_product);
     }
 });
+
+frappe.ui.form.on("Purchase Order", {
+    refresh(frm) {
+        if (!frm.is_new()) {
+            frm.add_custom_button("Vehicle Queue", () => {
+                frappe.call({
+                    method: "cit_exim.cit_exim.doc_events.purchase_order.create_vehicle_queue",
+                    args: {
+                        purchase_order: frm.doc.name
+                    },
+                    callback: function (r) {
+                        if (!r.exc) {
+                            frappe.set_route("Form", "Vehicle Queue", r.message);
+                        }
+                    }
+                });
+            }, "Create");
+        }
+    }
+});

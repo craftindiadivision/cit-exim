@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:token_number",
+ "autoname": "naming_series:",
  "creation": "2025-12-30 15:09:37.176185",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -11,9 +11,11 @@
   "company",
   "warehouse",
   "branch",
+  "naming_series",
   "column_break_hylg",
   "date",
   "time",
+  "out_time",
   "type",
   "column_break_vmip",
   "token_number",
@@ -22,13 +24,16 @@
   "supplier",
   "customer",
   "section_break_wmlx",
+  "gross_weight",
+  "no_of_bags",
+  "column_break_xfke",
+  "tare_weight",
+  "net_weight",
+  "section_break_etar",
   "product",
   "item",
-  "column_break_xfke",
-  "no_of_bags",
-  "gross_weight",
-  "tare_weight",
-  "net_weight"
+  "reference_section",
+  "purchase_order"
  ],
  "fields": [
   {
@@ -75,7 +80,7 @@
   {
    "fieldname": "time",
    "fieldtype": "Time",
-   "label": "Time"
+   "label": "In Time"
   },
   {
    "fieldname": "type",
@@ -95,8 +100,9 @@
   },
   {
    "fieldname": "weigh_bridge_name",
-   "fieldtype": "Data",
-   "label": "Weigh Bridge Name"
+   "fieldtype": "Link",
+   "label": "Weighing Bridge Name",
+   "options": "Weighing Bridge"
   },
   {
    "depends_on": "eval:doc.type == \"Inward\"\n",
@@ -140,7 +146,7 @@
   {
    "fieldname": "product",
    "fieldtype": "Link",
-   "label": "Product",
+   "label": "Item Group",
    "options": "Item Group"
   },
   {
@@ -156,17 +162,44 @@
   {
    "fieldname": "column_break_xfke",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_etar",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "out_time",
+   "fieldtype": "Time",
+   "label": "Out Time"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "reference_section",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "purchase_order",
+   "fieldtype": "Link",
+   "label": "Purchase Order",
+   "options": "Purchase Order"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "VQ-"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-03 20:16:01.673360",
+ "modified": "2026-01-06 10:15:13.398213",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
- "naming_rule": "By fieldname",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
