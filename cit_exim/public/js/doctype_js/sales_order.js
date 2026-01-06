@@ -985,3 +985,29 @@ frappe.ui.form.on('Shipment Schedule Child Table', {
 });
 
 
+
+// frappe.ui.form.on("Sales Order", {
+//     refresh(frm) {
+
+//         // Prevent duplicate loading
+//         if (frm.doc.custom_banks && frm.doc.custom_banks.length) {
+//             return;
+//         }
+
+//         frappe.db.get_list("Bank", {
+//             fields: ["name"],
+//             limit: 0
+//         }).then(banks => {
+
+//             frm.clear_table("custom_banks");
+
+//             banks.forEach(bank => {
+//                 let row = frm.add_child("custom_banks");
+//                 row.bank = bank.name;
+//             });
+
+//             frm.refresh_field("custom_banks");
+//         });
+//     }
+// });
+

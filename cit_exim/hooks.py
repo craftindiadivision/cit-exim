@@ -265,7 +265,8 @@ fixtures=[
            "Sales Order-main-field_order","Sales Order-shipping_terms-label","Sales Order-po_no-label","Supplier-main-field_order","Sales Order-customer-label","Address-is_shipping_address-depends_on",
            "Address-main-field_order","Journal Entry-voucher_type-options","Contract Term-custom_document_no","Item-main-field_order","Sales Invoice-main-field_order","Address-main-field_order","Item-main-field_order",
            "Sales Invoice-main-field_order","Purchase Order-main-field_order","Sales Order-main-field_order","Purchase Invoice-main-field_order","Sales Order-main-field_order","Purchase Order-main-field_order","Item-main-field_order",
-           "Sales Order-main-field_order","Purchase Voucher-main-field_order","Packing Template-naming_series-options","Sales Order Item-main-field_order","Sales Order-main-field_order"
+           "Sales Order-main-field_order","Purchase Voucher-main-field_order","Packing Template-naming_series-options","Sales Order Item-main-field_order","Sales Order-main-field_order","Sales Invoice-main-field_order","Sales Order-main-field_order",
+           "Sales Order-main-default_print_format","Bank Account-main-field_order","Sales Invoice-main-field_order","Sales Invoice-naming_series-default","Sales Invoice-naming_series-options","Sales Order-naming_series-default","Sales Order-naming_series-options",""
         ]]
     ]
     },
@@ -312,6 +313,13 @@ doc_events = {
         "before_submit":"cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
         
     },
+
+        "Sales Order": {
+        "validate": "cit_exim.cit_exim.doc_events.sales_order.validate"
+        # "before_save": "cit_exim.cit_exim.doc_events.sales_order.before_save"
+    },
+
+    # /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
     "Purchase Invoice": {
          "on_submit": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_cancel",

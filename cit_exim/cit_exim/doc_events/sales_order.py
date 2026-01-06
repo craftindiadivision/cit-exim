@@ -1,4 +1,5 @@
 import frappe
+from frappe.model.document import Document
 
 @frappe.whitelist()
 def get_producers():
@@ -116,3 +117,53 @@ def get_customer_shipping_address(customer):
     """, (customer,), as_dict=True)
 
     return address[0].name if address else None
+
+
+
+
+
+
+import frappe
+
+def validate(doc, method=None):
+    populate_banks(doc)
+
+
+def populate_banks(doc):
+    # Prevent duplicate rows
+    if doc.get("custom_banks"):
+        return
+
+    banks = frappe.get_all(
+        "Bank",
+        fields=["name"],
+        order_by="name"
+    )
+
+    for bank in banks:
+        row = doc.append("custom_banks", {})
+        row.bank = bank.name
+
+
+
+# import frappe
+
+# def before_save(doc, method=None):
+#     populate_banks(doc)
+
+
+# def populate_banks(doc):
+#     # Run only once (prevents duplicates on every save)
+#     if doc.get("custom_banks"):
+#         return
+
+#     banks = frappe.get_all(
+#         "Bank",
+#         fields=["name"],
+#         order_by="name"
+#     )
+
+#     for bank in banks:
+#         doc.append("custom_banks", {
+#             "bank": bank.name
+#         })
