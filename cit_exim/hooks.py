@@ -282,7 +282,7 @@ fixtures=[
 
 ]
 
-
+ 
 doctype_js = {
     "Sales Order": "public/js/doctype_js/sales_order.js",
     "Address":"public/js/doctype_js/address.js",
