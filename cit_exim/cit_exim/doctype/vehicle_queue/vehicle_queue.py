@@ -232,12 +232,8 @@ def create_purchase_voucher(doc, method=None):
     pv.vehicle_no = doc.vehicle_no
     pv.vendor_name = doc.supplier
     pv.vehicle_queue = doc.name
-    pv.token_number = doc.token_number
-
-    pv.custom_vehicle_queue = doc.name
-    pv.vehicle_queue_reference = doc.name
     pv.accepted_warehouse = doc.warehouse
-    pv.weigment_sino = doc.name
+    pv.weigment_sino = doc.token_number
     pv.weigment_location = doc.weigh_bridge_name
 
     # Weight mapping
