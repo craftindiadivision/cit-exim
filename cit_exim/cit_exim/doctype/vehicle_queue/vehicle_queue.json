@@ -23,11 +23,17 @@
   "vehicle_no",
   "supplier",
   "customer",
+  "section_break_uioj",
+  "supplier_invoice_number",
+  "column_break_nkcg",
+  "invoice_qty",
+  "column_break_yryz",
+  "difference_in_qty",
   "section_break_wmlx",
   "gross_weight",
-  "no_of_bags",
   "column_break_xfke",
   "tare_weight",
+  "column_break_qqjq",
   "net_weight",
   "section_break_etar",
   "product",
@@ -101,7 +107,7 @@
   {
    "fieldname": "weigh_bridge_name",
    "fieldtype": "Link",
-   "label": "Weighing Bridge Name",
+   "label": "Weighing Bridge Location",
    "options": "Weighing Bridge"
   },
   {
@@ -117,11 +123,6 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer"
-  },
-  {
-   "fieldname": "no_of_bags",
-   "fieldtype": "Float",
-   "label": "No. of Bags"
   },
   {
    "fieldname": "gross_weight",
@@ -189,13 +190,44 @@
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "VQ-"
+  },
+  {
+   "fieldname": "section_break_uioj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "supplier_invoice_number",
+   "fieldtype": "Data",
+   "label": "Supplier Invoice Number"
+  },
+  {
+   "fieldname": "column_break_nkcg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invoice_qty",
+   "fieldtype": "Float",
+   "label": "Invoice Qty"
+  },
+  {
+   "fieldname": "column_break_yryz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "difference_in_qty",
+   "fieldtype": "Float",
+   "label": "Difference In Qty"
+  },
+  {
+   "fieldname": "column_break_qqjq",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-06 10:15:13.398213",
+ "modified": "2026-01-07 11:42:33.725314",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

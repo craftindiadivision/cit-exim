@@ -1,4 +1,3 @@
-
 # import frappe
 # from frappe.model.document import Document
 
@@ -121,101 +120,6 @@
 # Copyright (c) 2025, craft and contributors
 # For license information, please see license.txt
 
-# import frappe
-# from frappe.model.document import Document
-
-
-# class VehicleQueue(Document):
-
-#     def validate(self):
-#         # Calculate Net Weight
-#         if self.gross_weight is not None and self.tare_weight is not None:
-#             self.net_weight = self.gross_weight - self.tare_weight
-#         else:
-#             self.net_weight = 0
-
-
-# def create_purchase_voucher(doc, method=None):
-#     """
-#     Triggered on Vehicle Queue submit
-#     Conditions:
-#     1. Vehicle Queue must be Submitted
-#     2. Item Group must be 'Raw Fish'
-#     3. Purchase Voucher created in Draft
-#     4. Prevent duplicate creation
-#     """
-
-#     # Ensure submit state
-#     if doc.docstatus != 1:
-#         return
-
-#     # Mandatory validations
-#     if not doc.supplier:
-#         frappe.throw("Supplier is required to create Purchase Voucher")
-
-#     if not doc.item:
-#         frappe.throw("Item is required to create Purchase Voucher")
-
-#     # Vehicle Queue has CHILD TABLE item → take first row
-#     item_code = doc.item[0].item
-
-#     # Fetch Item Group
-#     item_group = frappe.db.get_value("Item", item_code, "item_group")
-
-#     # Condition: Item Group must be 'Raw Fish'
-#     if item_group != "Raw Fish":
-#         return
-
-#     # Prevent duplicate Purchase Voucher 
-#     if frappe.db.exists("Purchase Voucher", {
-#         "vehicle_queue_reference": doc.name
-#     }):
-#         frappe.throw("Purchase Voucher already exists for this Vehicle Queue")
-
-#     # Create Purchase Voucher (Draft)
-#     pv = frappe.new_doc("Purchase Voucher")
-#     pv.supplier = doc.supplier
-#     pv.company_name = doc.company
-#     pv.date = doc.date
-#     pv.time = doc.time
-#     pv.branch = doc.branch
-#     pv.vehicle_no = doc.vehicle_no
-#     pv.vendor_name = doc.supplier
-
-#     pv.custom_vehicle_queue = doc.name
-#     pv.vehicle_queue_reference = doc.name
-#     pv.accepted_warehouse = doc.warehouse
-#     pv.weigment_sino = doc.name
-
-#     # Weight mapping
-#     pv.set("1st_weightkg", doc.gross_weight)
-#     pv.set("2nd_weightkg", doc.tare_weight)
-#     pv.net_weightkg = doc.net_weight
-
-#     # Product Name = Item Group
-#     pv.product_name = item_group
-
-#     # Child table mapping
-#     pv.append("raw_materials", {
-#         "fish_variety": item_code,
-#         "warehouse": doc.warehouse,
-#         "no_of_boxes": doc.no_of_bags,
-#         "gross_weight": doc.gross_weight,
-#         "tare_weight": doc.tare_weight,
-#         "net_weight": doc.net_weight
-#     })
-
-#     pv.insert(ignore_permissions=True)
-#     frappe.db.commit()
-
-#     frappe.msgprint(
-#         f"Purchase Voucher Draft Created : <b>{pv.name}</b>",
-#         alert=True
-#     )
-
-
-
-
 import frappe
 from frappe.model.document import Document
 
@@ -267,12 +171,12 @@ class VehicleQueue(Document):
             pr_item.item_name = po_item.item_name
             pr_item.description = po_item.description
 
-            pr_item.qty = po_item.qty
+            pr_item.qty = self.net_weight
             pr_item.uom = po_item.uom
             pr_item.stock_uom = po_item.stock_uom
 
             pr_item.rate = po_item.rate
-            pr_item.amount = po_item.amount
+            # pr_item.amount = po_item.amount
 
             # VERY IMPORTANT LINKS
             pr_item.purchase_order = po.name
@@ -287,13 +191,12 @@ class VehicleQueue(Document):
             f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
         )
 
-
 def create_purchase_voucher(doc, method=None):
     """
     Triggered on Vehicle Queue submit
     Conditions:
     1. Vehicle Queue must be Submitted
-    2. All Items must belong to Item Group 'Raw Fish'
+    2. Item Group must be 'Raw Fish'
     3. Purchase Voucher created in Draft
     4. Prevent duplicate creation
     """
@@ -306,22 +209,18 @@ def create_purchase_voucher(doc, method=None):
     if not doc.supplier:
         frappe.throw("Supplier is required to create Purchase Voucher")
 
-    if not doc.item or len(doc.item) == 0:
-        frappe.throw("At least one item is required to create Purchase Voucher")
+    if not doc.item:
+        frappe.throw("Item is required to create Purchase Voucher")
 
-    # # Prevent duplicate Purchase Voucher
-    # if frappe.db.exists("Purchase Voucher", {
-    #     "vehicle_queue_reference": doc.name
-    # }):
-    #     frappe.throw("Purchase Voucher already exists for this Vehicle Queue")
+    # Vehicle Queue has CHILD TABLE item → take first row ONLY for validation
+    first_item_code = doc.item[0].item
 
-    # Validate all items belong to 'Raw Fish'
-    for row in doc.item:
-        item_group = frappe.db.get_value("Item", row.item, "item_group")
-        if item_group != "Raw Fish":
-            frappe.throw(
-                f"Item <b>{row.item}</b> does not belong to Item Group 'Raw Fish'"
-            )
+    # Fetch Item Group
+    item_group = frappe.db.get_value("Item", first_item_code, "item_group")
+
+    # Condition: Item Group must be 'Raw Fish'
+    if item_group != "Raw Fish":
+        return
 
     # Create Purchase Voucher (Draft)
     pv = frappe.new_doc("Purchase Voucher")
@@ -339,125 +238,27 @@ def create_purchase_voucher(doc, method=None):
     pv.vehicle_queue_reference = doc.name
     pv.accepted_warehouse = doc.warehouse
     pv.weigment_sino = doc.name
+    pv.weigment_location = doc.weigh_bridge_name
 
-    # Weight mapping (header-level)
+    # Weight mapping
     pv.set("1st_weightkg", doc.gross_weight)
     pv.set("2nd_weightkg", doc.tare_weight)
     pv.net_weightkg = doc.net_weight
 
-    # Product Name (since all are Raw Fish)
-    pv.product_name = "Raw Fish"
+    # Product Name = Item Group
+    pv.product_name = item_group
 
-    # Child table mapping — LOOP THROUGH ALL ITEMS
+    # ----------------------------
+    # Child table mapping (ALL ITEMS)
+    # ----------------------------
     for row in doc.item:
         pv.append("raw_materials", {
-            "fish_variety": row.item,
+            "fish_variety": row.item,        # Vehicle Queue Item
             "warehouse": doc.warehouse,
-            "no_of_boxes": row.no_of_bags if hasattr(row, "no_of_bags") else doc.no_of_bags,
-            "gross_weight": row.gross_weight if hasattr(row, "gross_weight") else doc.gross_weight,
-            "tare_weight": row.tare_weight if hasattr(row, "tare_weight") else doc.tare_weight,
-            "net_weight": (
-                row.gross_weight - row.tare_weight
-                if hasattr(row, "gross_weight") and hasattr(row, "tare_weight")
-                else doc.net_weight
-            )
-        })
-
-    pv.insert(ignore_permissions=True)
-    frappe.db.commit()
-
-    frappe.msgprint(
-        f"Purchase Voucher Draft Created : <b>{pv.name}</b>",
-        alert=True
-    )
-
-
-
-import frappe
-from frappe.model.document import Document
-
-
-class VehicleQueue(Document):
-
-    def validate(self):
-        # Calculate Net Weight
-        if self.gross_weight is not None and self.tare_weight is not None:
-            self.net_weight = self.gross_weight - self.tare_weight
-        else:
-            self.net_weight = 0
-
-
-def create_purchase_voucher(doc, method=None):
-    """
-    Triggered on Vehicle Queue submit
-    Conditions:
-    1. Vehicle Queue must be Submitted
-    2. All Items must belong to Item Group 'Raw Fish'
-    3. Purchase Voucher created in Draft
-    4. Prevent duplicate creation
-    """
-
-    # Ensure submit state
-    if doc.docstatus != 1:
-        return
-
-    # Mandatory validations
-    if not doc.supplier:
-        frappe.throw("Supplier is required to create Purchase Voucher")
-
-    if not doc.item or len(doc.item) == 0:
-        frappe.throw("At least one item is required to create Purchase Voucher")
-
-    # Prevent duplicate Purchase Voucher
-    if frappe.db.exists("Purchase Voucher", {
-        "vehicle_queue_reference": doc.name
-    }):
-        frappe.throw("Purchase Voucher already exists for this Vehicle Queue")
-
-    # Validate all items belong to 'Raw Fish'
-    for row in doc.item:
-        item_group = frappe.db.get_value("Item", row.item, "item_group")
-        if item_group != "Raw Fish":
-            frappe.throw(
-                f"Item <b>{row.item}</b> does not belong to Item Group 'Raw Fish'"
-            )
-
-    # Create Purchase Voucher (Draft)
-    pv = frappe.new_doc("Purchase Voucher")
-    pv.supplier = doc.supplier
-    pv.company_name = doc.company
-    pv.date = doc.date
-    pv.time = doc.time
-    pv.branch = doc.branch
-    pv.vehicle_no = doc.vehicle_no
-    pv.vendor_name = doc.supplier
-
-    pv.custom_vehicle_queue = doc.name
-    pv.vehicle_queue_reference = doc.name
-    pv.accepted_warehouse = doc.warehouse
-    pv.weigment_sino = doc.name
-
-    # Weight mapping (header-level)
-    pv.set("1st_weightkg", doc.gross_weight)
-    pv.set("2nd_weightkg", doc.tare_weight)
-    pv.net_weightkg = doc.net_weight
-
-    # Product Name (since all are Raw Fish)
-    pv.product_name = "Raw Fish"
-
-    # Child table mapping — LOOP THROUGH ALL ITEMS
-    for row in doc.item:
-        pv.append("raw_materials", {
-            "fish_variety": row.item,
-            "warehouse": doc.warehouse,
-            "no_of_boxes": row.no_of_bags if hasattr(row, "no_of_bags") else doc.no_of_bags,
-            "gross_weight": row.gross_weight if hasattr(row, "gross_weight") else doc.gross_weight,
-            "tare_weight": row.tare_weight if hasattr(row, "tare_weight") else doc.tare_weight,
-            "net_weight": (
-                row.gross_weight - row.tare_weight
-                if hasattr(row, "gross_weight") and hasattr(row, "tare_weight")
-                else doc.net_weight
-            )
+            "no_of_boxes": row.no_of_bags,    # Vehicle Queue noof_bags
+            "gross_weight": doc.gross_weight,
+            "tare_weight": doc.tare_weight,
+            "net_weight": doc.net_weight
         })
 
     pv.insert(ignore_permissions=True)

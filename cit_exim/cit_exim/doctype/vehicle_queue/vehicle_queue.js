@@ -42,3 +42,18 @@ frappe.ui.form.on("Vehicle Queue", {
         });
     }
 });
+frappe.ui.form.on("Vehicle Queue", {
+    invoice_qty(frm) {
+        calculate_difference(frm);
+    },
+    net_weight(frm) {
+        calculate_difference(frm);
+    }
+});
+
+function calculate_difference(frm) {
+    let invoice_qty = frm.doc.invoice_qty || 0;
+    let net_weight = frm.doc.net_weight || 0;
+
+    frm.set_value("difference_in_qty", invoice_qty - net_weight);
+}
