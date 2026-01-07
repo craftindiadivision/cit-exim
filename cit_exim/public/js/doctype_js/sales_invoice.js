@@ -74,7 +74,7 @@ cur_frm.set_query("contact_person", function () {
 // -----------------------------------------------------------------------------------------------------------
 
 frappe.ui.form.on("Sales Invoice", {
-    onload: function (frm) {
+    refresh: function (frm) {
         // frm.trigger("set_package");
         if (frm.doc.customer_address || frm.doc.shipping_address_name) {
             frappe.db.get_value("Address", frm.doc.customer_address, "country", function (r) {

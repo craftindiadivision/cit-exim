@@ -8,7 +8,8 @@
  "field_order": [
   "month",
   "fiscal_year",
-  "planned_qty"
+  "planned_qty",
+  "status"
  ],
  "fields": [
   {
@@ -29,13 +30,20 @@
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Planned Qty"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "\nIn-Process\nCompleted"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-05 18:47:38.476473",
+ "modified": "2026-01-07 10:10:16.582685",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Shipment Schedule Child Table",
