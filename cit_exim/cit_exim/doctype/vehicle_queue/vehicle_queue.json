@@ -85,7 +85,7 @@
   },
   {
    "fieldname": "time",
-   "fieldtype": "Time",
+   "fieldtype": "Datetime",
    "label": "In Time"
   },
   {
@@ -170,7 +170,7 @@
   },
   {
    "fieldname": "out_time",
-   "fieldtype": "Time",
+   "fieldtype": "Datetime",
    "label": "Out Time"
   },
   {
@@ -237,7 +237,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-01-07 14:27:59.708257",
+ "modified": "2026-01-07 14:35:48.194055",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
