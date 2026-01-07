@@ -228,7 +228,7 @@ def create_purchase_voucher(doc, method=None):
     pv.company_name = doc.company
     pv.date = doc.date
     pv.time = doc.time
-    pv.branch = doc.branch
+
     pv.vehicle_no = doc.vehicle_no
     pv.vendor_name = doc.supplier
     pv.vehicle_queue = doc.name

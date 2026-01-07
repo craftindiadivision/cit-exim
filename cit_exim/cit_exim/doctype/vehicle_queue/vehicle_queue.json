@@ -10,11 +10,10 @@
   "amended_from",
   "company",
   "warehouse",
-  "branch",
   "naming_series",
   "column_break_hylg",
   "date",
-  "time",
+  "in_time",
   "out_time",
   "type",
   "column_break_vmip",
@@ -69,12 +68,6 @@
    "options": "Warehouse"
   },
   {
-   "fieldname": "branch",
-   "fieldtype": "Link",
-   "label": "Branch",
-   "options": "Branch"
-  },
-  {
    "fieldname": "column_break_hylg",
    "fieldtype": "Column Break"
   },
@@ -82,11 +75,6 @@
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date"
-  },
-  {
-   "fieldname": "time",
-   "fieldtype": "Datetime",
-   "label": "In Time"
   },
   {
    "fieldname": "type",
@@ -222,6 +210,11 @@
   {
    "fieldname": "column_break_qqjq",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "in_time",
+   "fieldtype": "Datetime",
+   "label": "In Time"
   }
  ],
  "grid_page_length": 50,
@@ -237,7 +230,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-01-07 14:35:48.194055",
+ "modified": "2026-01-07 16:10:03.617285",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
