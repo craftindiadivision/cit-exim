@@ -58,5 +58,6 @@ def on_submit_update_sales_invoice(doc, method):
         # Check fully paid
         if si.outstanding_amount == 0:
             si.workflow_state = "Completed Shipment"  # must match workflow
+            si.custom_work_flow_status = "Completed Shipment"
             si.custom_payment_status = 1              # auto-enable checkbox
             si.save(ignore_permissions=True)
