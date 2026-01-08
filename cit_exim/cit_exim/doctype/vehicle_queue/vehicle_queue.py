@@ -237,7 +237,7 @@ def create_purchase_voucher(doc, method=None):
     pv.supplier = doc.supplier
     pv.company_name = doc.company
     pv.date = doc.date
-    pv.time = doc.time
+
 
     pv.vehicle_no = doc.vehicle_no
     pv.vendor_name = doc.supplier
