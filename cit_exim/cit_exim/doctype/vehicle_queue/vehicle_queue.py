@@ -165,21 +165,21 @@ class VehicleQueue(Document):
 
         # Map Items PO → PR
         for po_item in po.items:
-            po_item_order =frappe.db.get_value(
-                "Purchase Order Item",
-                {
-                    "parent":self.purchase_order,
-                    "item_code":po_item.item_code
-                },
-                "name"
-            )
+            # po_item_order =frappe.db.get_value(
+            #     "Purchase Order Item",
+            #     {
+            #         "parent":self.purchase_order,
+            #         "item_code":po_item.item_code
+            #     },
+            #     "name"
+            # )
             pr_item = pr.append("items", {})
 
 
             pr_item.item_code = po_item.item_code
             pr_item.item_name = po_item.item_name
             pr_item.description = po_item.description
-            pr_item.purchase_order_item = po_item_order
+            # pr_item.purchase_order_item = po_item_order
             pr_item.qty = self.net_weight
             pr_item.uom = po_item.uom
             pr_item.stock_uom = po_item.stock_uom
