@@ -5,7 +5,8 @@ from frappe.utils import flt
 from frappe.model.document import Document
 import json
 from frappe.utils import today
-
+import calendar
+from datetime import date
 
 
 
@@ -14,70 +15,107 @@ def before_save(self, method):
 	duty_calculation(self)
 	meis_calculation(self)
 
-
-
-
-# ------------------------------------FETCH THE LOT NO FROM SERIAL AND BATCH AND NO OF PACKAGE FROM ITEM MASTER-----------------------------------------
-
-
 def validate(doc, method=None):
-	
-    print("Starting LOT number auto-fill...")
-
     lot_list = []
 
-    # 1. Collect batch numbers from Serial & Batch Bundles
     for item in doc.items:
         if item.serial_and_batch_bundle:
             bundle = frappe.get_doc("Serial and Batch Bundle", item.serial_and_batch_bundle)
             for entry in bundle.entries:
                 if entry.batch_no:
-                    lot_list.append({
-                        "lot_no": entry.batch_no,
-                    })
+                    lot_list.append({"lot_no": entry.batch_no})
 
-    print("Collected lot_list:", lot_list)
-
-    # Create a set of already existing lot numbers to avoid duplicates
     existing_lots = {row.lot_no for row in doc.container_detail}
 
-    # 2. Add only new batch numbers (avoid duplicates)
     for lot in lot_list:
         if lot["lot_no"] not in existing_lots:
-
-            #  FETCH from Item Master
             item_code = doc.items[0].item_code if doc.items else None
             packages = frappe.db.get_value(
-                "Item",
-                item_code,
-                "custom_no_of_packages_per_lot"
+                "Item", item_code, "custom_no_of_packages_per_lot"
             ) if item_code else None
 
             doc.append("container_detail", {
                 "lot_no": lot["lot_no"],
-                "no_of_packages": packages   #  SET HERE
+                "no_of_packages": packages
             })
 
-            existing_lots.add(lot["lot_no"])
+    # Optional: handle submit-time transition
+    if doc.docstatus == 1:
+        _handle_custom_status_change(doc)
 
-    #  Ensure existing rows also get the value
-    for row in doc.container_detail:
-        if not row.no_of_packages:
-            item_code = doc.items[0].item_code if doc.items else None
-            if item_code:
-                row.no_of_packages = frappe.db.get_value(
-                    "Item",
-                    item_code,
-                    "custom_no_of_packages_per_lot"
-                )
+def on_update_after_submit(doc, method=None):
+    _handle_custom_status_change(doc)
+    
+def _handle_custom_status_change(doc):
+    old_doc = doc.get_doc_before_save()
+    old_status = old_doc.custom_work_flow_status if old_doc else None
+    new_status = doc.custom_work_flow_status
 
-    print("Final container_detail:", doc.container_detail)
-
-
+    if old_status != "Completed Shipment" and new_status == "Completed Shipment":
+        update_sales_contract_from_invoice(doc)
 
 
+def update_sales_contract_from_invoice(sales_invoice):
+ 
+    for si_item in sales_invoice.items:
+        if not si_item.sales_order:
+            continue
 
+        sales_contract = frappe.get_doc("Sales Order", si_item.sales_order)
 
+        if sales_contract.docstatus != 1:
+            continue
+
+        recalculate_shipment_schedule(
+            sales_contract,
+            si_item.item_code,
+            sales_invoice.posting_date
+        )
+
+        sales_contract.save(ignore_permissions=True)
+    
+
+def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
+    month_name = posting_date.strftime("%B")
+    fiscal_year = posting_date.year
+
+    for row in sales_contract.custom_shipment_schedule:
+        if row.month != month_name or int(row.fiscal_year) != fiscal_year:
+            continue
+
+        completed_qty = frappe.db.sql("""
+            SELECT SUM(sii.qty)
+            FROM `tabSales Invoice Item` sii
+            INNER JOIN `tabSales Invoice` si
+                ON si.name = sii.parent
+            WHERE
+                sii.item_code = %s
+                AND sii.sales_order = %s
+                AND si.docstatus = 1
+                AND si.custom_work_flow_status = 'Completed Shipment'
+                AND MONTH(si.posting_date) = %s
+                AND YEAR(si.posting_date) = %s
+        """, (
+            item_code,
+            sales_contract.name,
+            posting_date.month,
+            posting_date.year
+        ))[0][0] or 0
+
+        completed_qty = flt(completed_qty)
+        if completed_qty >= row.planned_qty:
+            row.status = "Completed"
+        elif completed_qty > 0:
+            row.status = "In-Process"
+        elif completed_qty == 0:
+            row.status = None
+
+def get_month_date_range(month_name, year):
+    month_number = list(calendar.month_name).index(month_name)
+    start_date = date(year, month_number, 1)
+    last_day = calendar.monthrange(year, month_number)[1]
+    end_date = date(year, month_number, last_day)
+    return start_date, end_date
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -96,8 +134,9 @@ def on_submit(self, method):
 
 
 def on_cancel(self, method):
-	cancel_export_lic(self)
-	cancel_jv(self)
+    cancel_export_lic(self)
+    cancel_jv(self)
+    update_sales_contract_from_invoice(self)
 
 
 def calculate_total(self):

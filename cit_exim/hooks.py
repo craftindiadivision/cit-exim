@@ -306,6 +306,7 @@ doc_events = {
     "Sales Invoice": {
         "before_save": "cit_exim.cit_exim.doc_events.sales_invoice.before_save",
         "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
+        "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
         # "before_save":"cit_exim.cit_exim.doc_events.sales_invoice.before_save",
