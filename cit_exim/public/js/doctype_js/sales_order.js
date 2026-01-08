@@ -1011,3 +1011,28 @@ frappe.ui.form.on('Shipment Schedule Child Table', {
 //     }
 // });
 
+// show corresponding item from fetched item group
+
+frappe.ui.form.on("Sales Order", {
+    custom_item_group: function (frm) {
+
+        // If Item Group is empty, remove item filter
+        if (!frm.doc.custom_item_group) {
+            frm.set_query("item_code", "items", () => {
+                return {};
+            });
+            return;
+        }
+
+        // Apply item group based filter to item_code dropdown
+        frm.set_query("item_code", "items", () => {
+            return {
+                filters: {
+                    item_group: frm.doc.custom_item_group,
+                    disabled: 0
+                }
+            };
+        });
+    }
+});
+

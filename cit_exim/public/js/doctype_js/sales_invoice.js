@@ -601,3 +601,17 @@ frappe.ui.form.on("Sales Invoice Item", {
 
 
 
+//set readonly the button payment status
+
+frappe.ui.form.on("Sales Invoice", {
+    refresh(frm) {
+        // Make checkbox read-only once payment is completed
+        if (frm.doc.custom_payment_status === 1) {
+            frm.set_df_property(
+                "custom_payment_status",
+                "read_only",
+                1
+            );
+        }
+    }
+});

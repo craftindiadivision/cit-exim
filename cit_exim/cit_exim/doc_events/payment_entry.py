@@ -1,3 +1,5 @@
+
+
 # import frappe
 
 # def on_submit_update_sales_invoice(doc, method):
@@ -13,14 +15,22 @@
 #             if si.docstatus != 1:
 #                 continue
 
-#             # OPTIONAL: Check if fully paid
+#             # Only work for Overseas category
+#             if si.gst_category != "Overseas":
+#                 continue
+
 #             si.reload()
+
+#             # OPTIONAL: Check fully paid
 #             if si.outstanding_amount == 0:
-#                 # Change workflow state
-#                 si.workflow_state = "Completed Shipment"   # must match your workflow state exactly
+#                 si.workflow_state = "Completed Shipment"   # must match workflow exactly
 #                 si.save(ignore_permissions=True)
+# 
 
 
+
+
+# update the status of sales invoice according to completion of payment entry
 
 import frappe
 
@@ -30,20 +40,23 @@ def on_submit_update_sales_invoice(doc, method):
         return
 
     for ref in doc.references:
-        if ref.reference_doctype == "Sales Invoice" and ref.reference_name:
-            si = frappe.get_doc("Sales Invoice", ref.reference_name)
+        if ref.reference_doctype != "Sales Invoice" or not ref.reference_name:
+            continue
 
-            # Ensure invoice is submitted
-            if si.docstatus != 1:
-                continue
+        si = frappe.get_doc("Sales Invoice", ref.reference_name)
 
-            # Only work for Overseas category
-            if si.gst_category != "Overseas":
-                continue
+        # Ensure invoice is submitted
+        if si.docstatus != 1:
+            continue
 
-            si.reload()
+        # Only for Overseas category
+        if si.gst_category != "Overseas":
+            continue
 
-            # OPTIONAL: Check fully paid
-            if si.outstanding_amount == 0:
-                si.workflow_state = "Completed Shipment"   # must match workflow exactly
-                si.save(ignore_permissions=True)
+        si.reload()
+
+        # Check fully paid
+        if si.outstanding_amount == 0:
+            si.workflow_state = "Completed Shipment"  # must match workflow
+            si.custom_payment_status = 1              # auto-enable checkbox
+            si.save(ignore_permissions=True)
