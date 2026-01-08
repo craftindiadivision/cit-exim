@@ -408,7 +408,7 @@ def create_jv_with_gst(self):
             "company": self.company,
             "company_gstin": self.company_gstin,
             "branch": self.branch if branch_enabled else None,
-            "warehouse":self.warehouse,
+
             "cheque_no": self.name,
             "accounts": [
                 {
@@ -424,7 +424,7 @@ def create_jv_with_gst(self):
                     "reference_type": self.doctype,
                     "reference_name": self.name,
                     **({"branch": self.branch} if branch_enabled else {}),
-                    "warehouse":self.warehouse
+
                 },
                 {
                     "account": company_gst_payable_account,
@@ -436,7 +436,7 @@ def create_jv_with_gst(self):
                     "exchange_rate": 1,
                     "cost_center": self.cost_center,
                     **({"branch": self.branch} if branch_enabled else {}),
-                    "warehouse":self.warehouse
+
                 },
             ],
         }
@@ -497,7 +497,7 @@ def create_jv(self):
                             "cost_center": drawback_cost_center,
                             "debit_in_account_currency": self.total_duty_drawback,
                             **({"branch": self.branch} if branch_enabled else {}),
-                            "warehouse":self.warehouse
+
                         },
                     )
 
@@ -508,7 +508,7 @@ def create_jv(self):
                             "cost_center": drawback_cost_center,
                             "credit_in_account_currency": self.total_duty_drawback,
                             **({"branch": self.branch} if branch_enabled else {}),
-                            "warehouse":self.warehouse
+
                         },
                     )
 
@@ -557,7 +557,7 @@ def create_jv(self):
                         "cost_center": meis_cost_center,
                         "debit_in_account_currency": self.total_meis,
                         **({"branch": self.branch} if branch_enabled else {}),
-                        "warehouse":self.warehouse
+
                     },
                 )
 
@@ -568,7 +568,7 @@ def create_jv(self):
                         "cost_center": meis_cost_center,
                         "credit_in_account_currency": self.total_meis,
                         **({"branch": self.branch} if branch_enabled else {}),
-                        "warehouse":self.warehouse
+
                     },
                 )
 

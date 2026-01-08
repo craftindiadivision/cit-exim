@@ -320,10 +320,10 @@ doc_events = {
     },
 
     # /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doc_events/sales_order.py
-    "Purchase Invoice": {
-         "on_submit": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_submit",
-        "on_cancel": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_cancel",
-    },
+    # "Purchase Invoice": {
+    #      "on_submit": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_submit",
+    #     "on_cancel": "cit_exim.cit_exim.doc_events.purchase_invoice.pi_on_cancel",
+    # },
     (
         "Purchase Invoice",
         "Payment Request",
