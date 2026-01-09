@@ -68,7 +68,8 @@ def update_sales_contract_from_invoice(sales_invoice):
 
         recalculate_shipment_schedule(
             sales_contract,
-            si_item.item_code
+            si_item.item_code,
+            sales_invoice.posting_date
         )
 
         sales_contract.save(ignore_permissions=True)
