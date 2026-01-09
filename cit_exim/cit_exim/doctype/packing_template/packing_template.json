@@ -19,7 +19,7 @@
    "unique": 1
   },
   {
-   "fieldname": "packing_details",
+   "fieldname": "packing_details_salesinvoice",
    "fieldtype": "Small Text",
    "label": "Packing Details(For Sales Invoice)"
   },
