@@ -80,6 +80,34 @@ def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
     fiscal_year = posting_date.year
 
     for row in sales_contract.custom_shipment_schedule:
+        if row.month == "Prompt":
+
+            completed_qty = frappe.db.sql("""
+                SELECT SUM(sii.qty)
+                FROM `tabSales Invoice Item` sii
+                INNER JOIN `tabSales Invoice` si
+                    ON si.name = sii.parent
+                WHERE
+                    sii.item_code = %s
+                    AND sii.sales_order = %s
+                    AND si.docstatus = 1
+                    AND si.custom_work_flow_status = 'Completed Shipment'
+            """, (
+                item_code,
+                sales_contract.name
+            ))[0][0] or 0
+
+            completed_qty = flt(completed_qty)
+
+            if completed_qty >= row.planned_qty:
+                row.status = "Completed"
+            elif completed_qty > 0:
+                row.status = "In-Process"
+            else:
+                row.status = None
+
+            continue
+        
         if row.month != month_name or int(row.fiscal_year) != fiscal_year:
             continue
 
