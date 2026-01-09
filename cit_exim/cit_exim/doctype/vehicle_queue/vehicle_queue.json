@@ -7,13 +7,13 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_uji0",
-  "amended_from",
   "company",
+  "in_time",
   "warehouse",
+  "amended_from",
   "naming_series",
   "column_break_hylg",
   "date",
-  "in_time",
   "out_time",
   "type",
   "column_break_vmip",
@@ -89,7 +89,7 @@
   {
    "fieldname": "token_number",
    "fieldtype": "Data",
-   "label": "Token Number",
+   "label": "Ticket Number",
    "unique": 1
   },
   {
@@ -230,7 +230,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-01-07 16:10:03.617285",
+ "modified": "2026-01-09 10:57:58.152121",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
