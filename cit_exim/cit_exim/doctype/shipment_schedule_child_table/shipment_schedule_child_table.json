@@ -32,6 +32,7 @@
    "label": "Planned Qty"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -43,7 +44,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-07 10:10:16.582685",
+ "modified": "2026-01-12 11:08:06.433940",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Shipment Schedule Child Table",
