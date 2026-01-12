@@ -16,12 +16,13 @@
   "date",
   "out_time",
   "type",
+  "supplier",
+  "customer",
   "column_break_vmip",
   "token_number",
   "weigh_bridge_name",
   "vehicle_no",
-  "supplier",
-  "customer",
+  "driver_name",
   "section_break_uioj",
   "supplier_invoice_number",
   "column_break_nkcg",
@@ -215,6 +216,11 @@
    "fieldname": "in_time",
    "fieldtype": "Datetime",
    "label": "In Time"
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name"
   }
  ],
  "grid_page_length": 50,
@@ -230,7 +236,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-01-09 10:57:58.152121",
+ "modified": "2026-01-12 15:27:49.231154",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

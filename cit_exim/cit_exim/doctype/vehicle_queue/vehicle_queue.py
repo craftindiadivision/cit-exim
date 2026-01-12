@@ -245,6 +245,7 @@ def create_purchase_voucher(doc, method=None):
     pv.accepted_warehouse = doc.warehouse
     pv.weigment_sino = doc.token_number
     pv.weigment_location = doc.weigh_bridge_name
+    pv.driver_name=doc.driver_name
 
     # Weight mapping
     pv.set("1st_weightkg", doc.gross_weight)
