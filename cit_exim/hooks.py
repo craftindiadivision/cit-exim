@@ -267,7 +267,7 @@ fixtures=[
            "Sales Invoice-main-field_order","Purchase Order-main-field_order","Sales Order-main-field_order","Purchase Invoice-main-field_order","Sales Order-main-field_order","Purchase Order-main-field_order","Item-main-field_order",
            "Sales Order-main-field_order","Purchase Voucher-main-field_order","Packing Template-naming_series-options","Sales Order Item-main-field_order","Sales Order-main-field_order","Sales Invoice-main-field_order","Sales Order-main-field_order",
            "Sales Order-main-default_print_format","Bank Account-main-field_order","Sales Invoice-main-field_order","Sales Invoice-naming_series-default","Sales Invoice-naming_series-options","Sales Order-naming_series-default","Sales Order-naming_series-options",
-           "Opportunity-main-field_order"
+           "Opportunity-main-field_order","Sales Invoice-exim_packing_details-hidden","Sales Invoice-main-field_order"
         ]]
     ]
     },
@@ -295,7 +295,8 @@ doctype_js = {
     "Purchase Invoice":"public/js/doctype_js/purchase_invoice.js",
     "Purchase Order":"public/js/doctype_js/purchase_order.js",
     "Purchase Receipt":"public/js/doctype_js/purchase_receipt.js",
-    "Purchase Voucher":"public/js/doctype_js/purchase_voucher.js"
+    "Purchase Voucher":"public/js/doctype_js/purchase_voucher.js",
+    "Opportunity":"public/js/doctype_js/opportunity.js"
 }
 
 doctype_list_js = {

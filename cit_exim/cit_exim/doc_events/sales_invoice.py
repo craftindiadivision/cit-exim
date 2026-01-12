@@ -7,6 +7,7 @@ import json
 from frappe.utils import today
 import calendar
 from datetime import date
+from frappe.utils import getdate
 
 
 
@@ -42,6 +43,28 @@ def validate(doc, method=None):
     # Optional: handle submit-time transition
     if doc.docstatus == 1:
         _handle_custom_status_change(doc)
+
+# SET UP THE BL DATE ONLY AFTER THE SHIPPED ON BOARD ADTE
+    """
+    Validate that BL Date is strictly after
+    Shipped On Board Date
+    """
+
+    bl_date = doc.bl_date
+    shipped_date = doc.custom_shipped_on_board_date
+
+    # Validate only when both dates exist
+    if bl_date and shipped_date:
+
+        bl = getdate(bl_date)
+        shipped = getdate(shipped_date)
+
+        # BL Date must be AFTER shipped date
+        if bl <= shipped:
+            frappe.throw(
+                _("BL Date must be after the Shipped On Board Date."),
+                title=_("Invalid Date Order")
+            )
 
 def on_update_after_submit(doc, method=None):
     _handle_custom_status_change(doc)
@@ -1023,3 +1046,11 @@ def create_consolidated_invoice(sales_invoices):
     frappe.msgprint(f"Consolidated Sales Invoice {csi.name} created successfully")
 
     return csi
+
+
+
+
+
+
+
+
