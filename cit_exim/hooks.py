@@ -255,7 +255,7 @@ fixtures=[
     "dt": "Custom Field",
     "filters": [
         ["dt", "in", ["Sales Order","Address","Supplier","Sales Invoice","Sales Invoice Item","Sales Order Item","Payment Entry","Journal Entry","Company","Item","Purchase Order",
-                      "Purchase Invoice","Purchase Receipt"]]
+                      "Purchase Invoice","Purchase Receipt","Opportunity"]]
     ]
     },
     {
@@ -266,7 +266,8 @@ fixtures=[
            "Address-main-field_order","Journal Entry-voucher_type-options","Contract Term-custom_document_no","Item-main-field_order","Sales Invoice-main-field_order","Address-main-field_order","Item-main-field_order",
            "Sales Invoice-main-field_order","Purchase Order-main-field_order","Sales Order-main-field_order","Purchase Invoice-main-field_order","Sales Order-main-field_order","Purchase Order-main-field_order","Item-main-field_order",
            "Sales Order-main-field_order","Purchase Voucher-main-field_order","Packing Template-naming_series-options","Sales Order Item-main-field_order","Sales Order-main-field_order","Sales Invoice-main-field_order","Sales Order-main-field_order",
-           "Sales Order-main-default_print_format","Bank Account-main-field_order","Sales Invoice-main-field_order","Sales Invoice-naming_series-default","Sales Invoice-naming_series-options","Sales Order-naming_series-default","Sales Order-naming_series-options",""
+           "Sales Order-main-default_print_format","Bank Account-main-field_order","Sales Invoice-main-field_order","Sales Invoice-naming_series-default","Sales Invoice-naming_series-options","Sales Order-naming_series-default","Sales Order-naming_series-options",
+           "Opportunity-main-field_order"
         ]]
     ]
     },
