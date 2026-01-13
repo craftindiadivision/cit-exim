@@ -57,3 +57,36 @@ function calculate_difference(frm) {
 
     frm.set_value("difference_in_qty", invoice_qty - net_weight);
 }
+frappe.ui.form.on("Vehicle Queue", {
+  refresh(frm) {
+    if (frm.doc.docstatus === 0) {
+      frm.add_custom_button(
+        ("Purchase Order"),
+        () => {
+          if (!frm.doc.supplier) {
+            frappe.throw(("Please select Supplier"));
+          }
+
+          erpnext.utils.map_current_doc({
+            method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.make_vehicle_queue_from_po",
+            source_doctype: "Purchase Order",
+            target: frm,
+            setters: {
+              supplier: frm.doc.supplier,
+            },
+            get_query_filters: {
+              docstatus: 1,
+              status: ["not in", ["Closed", "On Hold"]],
+              supplier: frm.doc.supplier,
+              company: frm.doc.company,
+            },
+            allow_child_item_selection: true,
+            child_fieldname: "items",
+            child_columns: ["item_code", "item_name"],
+          });
+        },
+        __("Get Items From")
+      );
+    }
+  },
+});

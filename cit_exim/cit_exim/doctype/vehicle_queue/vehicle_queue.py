@@ -275,3 +275,41 @@ def create_purchase_voucher(doc, method=None):
         f"Purchase Voucher Draft Created : <b>{pv.name}</b>",
         alert=True
     )
+import frappe
+import json
+from frappe.utils import flt
+from frappe.model.mapper import get_mapped_doc
+
+
+@frappe.whitelist()
+def make_vehicle_queue_from_po(source_name, target_doc=None, args=None):
+  if args is None:
+    args = {}
+  if isinstance(args, str):
+    args = json.loads(args)
+
+  def update_item(source, target, source_parent):
+    target.item = source.item_code
+
+  def select_item(d):
+    filtered_items = args.get("filtered_children", [])
+    return d.name in filtered_items if filtered_items else True
+
+  doc = get_mapped_doc(
+    "Purchase Order",
+    source_name,
+    {
+      "Purchase Order": {
+        "doctype": "Vehicle Queue",
+        "validation": {"docstatus": ["=", 1]},
+      },
+      "Purchase Order Item": {
+        "doctype": "Vehicle Queue Item",
+        "postprocess": update_item,
+        "condition": lambda d: select_item(d),
+      },
+    },
+    target_doc,
+  )
+
+  return doc
