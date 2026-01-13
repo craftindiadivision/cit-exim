@@ -42,44 +42,23 @@ def validate(doc, method=None):
 
     # Optional: handle submit-time transition
     if doc.docstatus == 1:
-        _handle_custom_status_change(doc)
-
-# SET UP THE BL DATE ONLY AFTER THE SHIPPED ON BOARD ADTE
-    """
-    Validate that BL Date is strictly after
-    Shipped On Board Date
-    """
-
-    bl_date = doc.bl_date
-    shipped_date = doc.custom_shipped_on_board_date
-
-    # Validate only when both dates exist
-    if bl_date and shipped_date:
-
-        bl = getdate(bl_date)
-        shipped = getdate(shipped_date)
-
-        # BL Date must be AFTER shipped date
-        if bl <= shipped:
-            frappe.throw(
-                _("BL Date must be after the Shipped On Board Date."),
-                title=_("Invalid Date Order")
-            )
+        print(4444444444444444444444444444444,doc.docstatus)
+        # _handle_custom_status_change(doc)
+        update_sales_contract_from_invoice(doc)
 
 def on_update_after_submit(doc, method=None):
     _handle_custom_status_change(doc)
     
 def _handle_custom_status_change(doc):
-    old_doc = doc.get_doc_before_save()
-    old_status = old_doc.custom_work_flow_status if old_doc else None
-    new_status = doc.custom_work_flow_status
-
-    if old_status != "Completed Shipment" and new_status == "Completed Shipment":
+    #  Shipment completed after submission
+    if (
+        doc.docstatus == 1
+        and doc.custom_work_flow_status == "Completed Shipment"
+    ):
         update_sales_contract_from_invoice(doc)
 
-
 def update_sales_contract_from_invoice(sales_invoice):
- 
+    print("thisssssssssssss is meeeeeeeee")
     for si_item in sales_invoice.items:
         if not si_item.sales_order:
             continue
@@ -99,11 +78,26 @@ def update_sales_contract_from_invoice(sales_invoice):
     
 
 def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
+    posting_date = getdate(posting_date)
     month_name = posting_date.strftime("%B")
     fiscal_year = posting_date.year
 
     for row in sales_contract.custom_shipment_schedule:
         if row.month == "Prompt":
+
+            submitted_qty = frappe.db.sql("""
+                SELECT SUM(sii.qty)
+                FROM `tabSales Invoice Item` sii
+                INNER JOIN `tabSales Invoice` si
+                    ON si.name = sii.parent
+                WHERE
+                    sii.item_code = %s
+                    AND sii.sales_order = %s
+                    AND si.docstatus = 1
+            """, (
+                item_code,
+                sales_contract.name
+            ))[0][0] or 0
 
             completed_qty = frappe.db.sql("""
                 SELECT SUM(sii.qty)
@@ -120,19 +114,38 @@ def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
                 sales_contract.name
             ))[0][0] or 0
 
+            submitted_qty = flt(submitted_qty)
             completed_qty = flt(completed_qty)
 
-            if completed_qty >= row.planned_qty:
+            if completed_qty >= row.planned_qty and row.planned_qty > 0:
                 row.status = "Completed"
-            elif completed_qty > 0:
+            elif submitted_qty > 0:
                 row.status = "In-Process"
             else:
                 row.status = None
 
             continue
-        
+        # monthly
         if row.month != month_name or int(row.fiscal_year) != fiscal_year:
             continue
+        print("thisssssssssssss is saheeeeeeeeeeeeeer")
+        submitted_qty = frappe.db.sql("""
+            SELECT SUM(sii.qty)
+            FROM `tabSales Invoice Item` sii
+            INNER JOIN `tabSales Invoice` si
+                ON si.name = sii.parent
+            WHERE
+                sii.item_code = %s
+                AND sii.sales_order = %s
+                AND si.docstatus = 1
+                AND MONTH(si.posting_date) = %s
+                AND YEAR(si.posting_date) = %s
+        """, (
+            item_code,
+            sales_contract.name,
+            posting_date.month,
+            posting_date.year
+        ))[0][0] or 0
 
         completed_qty = frappe.db.sql("""
             SELECT SUM(sii.qty)
@@ -153,12 +166,16 @@ def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
             posting_date.year
         ))[0][0] or 0
 
+        submitted_qty = flt(submitted_qty)
+        print(333333333333333333333333333333,submitted_qty)
         completed_qty = flt(completed_qty)
-        if completed_qty >= row.planned_qty:
+        print(555555555555555555555555,completed_qty)
+
+        if completed_qty >= row.planned_qty :
             row.status = "Completed"
-        elif completed_qty > 0:
+        elif submitted_qty > 0:
             row.status = "In-Process"
-        elif completed_qty == 0:
+        else:
             row.status = None
 
 def get_month_date_range(month_name, year):
@@ -178,10 +195,11 @@ def before_submit(self,method):
 
 
 def on_submit(self, method):
-	export_lic(self)
-	create_jv(self)
-	create_brc(self)
-	create_jv_with_gst(self)
+    export_lic(self)
+    create_jv(self)
+    create_brc(self)
+    create_jv_with_gst(self)
+    update_sales_contract_from_invoice(self)
 
 
 def on_cancel(self, method):
