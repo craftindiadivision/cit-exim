@@ -183,7 +183,9 @@ class VehicleQueue(Document):
             pr_item.qty = self.net_weight
             pr_item.uom = po_item.uom
             pr_item.stock_uom = po_item.stock_uom
-
+            po_item_group = frappe.db.get_value("Item", po_item.item_code, "item_group"),
+            lab_template = frappe.db.get_value("Item Group", po_item_group, "custom_test_variable_template")
+            pr_item.custom_test_variable_template = lab_template
             pr_item.rate = po_item.rate
             # pr_item.amount = po_item.amount
 
