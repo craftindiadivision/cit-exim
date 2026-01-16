@@ -35,6 +35,10 @@
   "tare_weight",
   "column_break_qqjq",
   "net_weight",
+  "accounting_dimensions_section",
+  "cost_center",
+  "column_break_odxd",
+  "branch",
   "section_break_etar",
   "product",
   "item",
@@ -65,7 +69,7 @@
   {
    "fieldname": "warehouse",
    "fieldtype": "Link",
-   "label": "Warehouse",
+   "label": "Location",
    "options": "Warehouse"
   },
   {
@@ -90,13 +94,13 @@
   {
    "fieldname": "token_number",
    "fieldtype": "Data",
-   "label": "Ticket Number",
+   "label": "Weighing Bridge Ticket Number",
    "unique": 1
   },
   {
    "fieldname": "weigh_bridge_name",
    "fieldtype": "Link",
-   "label": "Weighing Bridge Location",
+   "label": "Weighing Bridge Name",
    "options": "Weighing Bridge"
   },
   {
@@ -221,6 +225,27 @@
    "fieldname": "driver_name",
    "fieldtype": "Data",
    "label": "Driver Name"
+  },
+  {
+   "fieldname": "accounting_dimensions_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensions"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "column_break_odxd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
   }
  ],
  "grid_page_length": 50,
@@ -236,7 +261,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-01-12 15:27:49.231154",
+ "modified": "2026-01-15 17:45:30.281681",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

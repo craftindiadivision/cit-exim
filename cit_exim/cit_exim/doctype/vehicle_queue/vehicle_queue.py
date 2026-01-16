@@ -153,11 +153,12 @@ class VehicleQueue(Document):
         pr = frappe.new_doc("Purchase Receipt")
         pr.supplier = po.supplier
         pr.company = po.company
-
+        pr.custom_purchase_order_ref = po.name
         # Custom field to link Vehicle Queue
         pr.custom_vehicle_queue = self.name
         pr.custom_token_number = self.token_number
-
+        pr.cost_center = self.cost_center
+        pr.branch = self.branch
         pr.posting_date = frappe.utils.today()
         pr.posting_time = frappe.utils.nowtime()
         pr.vehicle_no = self.vehicle_no
@@ -175,7 +176,6 @@ class VehicleQueue(Document):
             # )
             pr_item = pr.append("items", {})
 
-
             pr_item.item_code = po_item.item_code
             pr_item.item_name = po_item.item_name
             pr_item.description = po_item.description
@@ -190,8 +190,8 @@ class VehicleQueue(Document):
             # pr_item.amount = po_item.amount
 
             # VERY IMPORTANT LINKS
-            pr_item.purchase_order = po.name
-            pr_item.purchase_order_item = po_item.name
+            # pr_item.purchase_order = po.name
+            # pr_item.purchase_order_item = po_item.name
 
             pr_item.warehouse = po_item.warehouse
 
@@ -240,7 +240,8 @@ def create_purchase_voucher(doc, method=None):
     pv.company_name = doc.company
     pv.date = doc.date
 
-
+    pv.cost_center = doc.cost_center
+    pv.branch = doc.branch
     pv.vehicle_no = doc.vehicle_no
     pv.vendor_name = doc.supplier
     pv.vehicle_queue = doc.name
