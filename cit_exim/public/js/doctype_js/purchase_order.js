@@ -139,3 +139,27 @@ frappe.ui.form.on("Purchase Order", {
         }
     }
 });
+frappe.ui.form.on("Purchase Order", {
+    refresh(frm) {
+
+
+        // Show button only for submitted Purchase Orders
+        if (frm.doc.docstatus == 1) {
+
+            frm.add_custom_button(
+                __("PO Receipt Report"),
+                function () {
+                    frappe.set_route(
+                        "query-report",
+                        "Purchase Order Report",
+                        {
+                            company: frm.doc.company,
+                            purchase_order: frm.doc.name
+                        }
+                    );
+                }
+            );
+        }
+    }
+});
+
