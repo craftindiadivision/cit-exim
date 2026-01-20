@@ -12,6 +12,7 @@ def create_vehicle_queue(purchase_order):
     vq.company = po.company
     vq.warehouse = po.set_warehouse
     vq.branch = po.branch
+    vq.cost_center = po.cost_center
     vq.purchase_order = po.name
 
     # SAFE way to set reserved fieldname

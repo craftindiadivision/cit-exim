@@ -23,6 +23,13 @@
   "weigh_bridge_name",
   "vehicle_no",
   "driver_name",
+  "accounting_dimensions_section",
+  "cost_center",
+  "column_break_odxd",
+  "branch",
+  "section_break_etar",
+  "product",
+  "item",
   "section_break_uioj",
   "supplier_invoice_number",
   "column_break_nkcg",
@@ -35,13 +42,6 @@
   "tare_weight",
   "column_break_qqjq",
   "net_weight",
-  "accounting_dimensions_section",
-  "cost_center",
-  "column_break_odxd",
-  "branch",
-  "section_break_etar",
-  "product",
-  "item",
   "reference_section",
   "purchase_order"
  ],
@@ -186,6 +186,7 @@
    "options": "VQ-"
   },
   {
+   "depends_on": "eval:doc.product == \"RM-Fish Meal\"",
    "fieldname": "section_break_uioj",
    "fieldtype": "Section Break"
   },
@@ -227,6 +228,7 @@
    "label": "Driver Name"
   },
   {
+   "collapsible": 1,
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
    "label": "Accounting Dimensions"
@@ -261,7 +263,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-01-15 17:45:30.281681",
+ "modified": "2026-01-20 11:49:07.008741",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
