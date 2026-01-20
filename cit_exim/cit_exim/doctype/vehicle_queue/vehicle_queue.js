@@ -90,3 +90,13 @@ frappe.ui.form.on("Vehicle Queue", {
     }
   },
 });
+frappe.ui.form.on("Vehicle Queue", {
+    vehicle_no(frm) {
+        if (frm.doc.vehicle_no) {
+            frm.set_value(
+                "vehicle_no",
+                frm.doc.vehicle_no.replace(/\s+/g, "").toUpperCase()
+            );
+        }
+    }
+});
