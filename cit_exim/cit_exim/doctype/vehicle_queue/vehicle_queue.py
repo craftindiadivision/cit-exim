@@ -128,6 +128,8 @@ class VehicleQueue(Document):
 
     def validate(self):
         # Calculate Net Weight
+        if self.vehicle_no:
+            self.vehicle_no = self.vehicle_no.replace(" ", "").upper()
         if self.gross_weight is not None and self.tare_weight is not None:
             self.net_weight = self.gross_weight - self.tare_weight
         else:
@@ -179,6 +181,7 @@ class VehicleQueue(Document):
             pr_item.item_code = po_item.item_code
             pr_item.item_name = po_item.item_name
             pr_item.description = po_item.description
+            pr_item.custom_old_item_code = po_item.item_code
             # pr_item.purchase_order_item = po_item_order
             pr_item.qty = self.net_weight
             pr_item.uom = po_item.uom
