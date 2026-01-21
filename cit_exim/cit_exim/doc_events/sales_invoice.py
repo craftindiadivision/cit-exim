@@ -11,6 +11,7 @@ from frappe.utils import getdate
 
 
 
+
 def before_save(self, method):
 	calculate_total(self)
 	duty_calculation(self)
@@ -1143,9 +1144,6 @@ def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
 
 
 
-import frappe
-import json
-from frappe.utils import flt, today
 
 
 @frappe.whitelist()
