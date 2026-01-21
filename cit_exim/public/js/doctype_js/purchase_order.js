@@ -116,13 +116,48 @@ frappe.ui.form.on("Purchase Order", {
     }
 });
 
+// frappe.ui.form.on("Purchase Order", {
+//     refresh(frm) {
+//         frm.clear_custom_buttons();
+//         if (frm.doc.per_received === 100){
+//             return
+//         }
+//         if (!frm.is_new()) {
+//             frm.add_custom_button("Vehicle Queue", () => {
+//                 frappe.call({
+//                     method: "cit_exim.cit_exim.doc_events.purchase_order.create_vehicle_queue",
+//                     args: {
+//                         purchase_order: frm.doc.name
+//                     },
+//                     callback: function (r) {
+//                         if (!r.exc) {
+//                             frappe.set_route("Form", "Vehicle Queue", r.message);
+//                         }
+//                     }
+//                 });
+//             }, "Create");
+//         }
+//     }
+// });
 frappe.ui.form.on("Purchase Order", {
     refresh(frm) {
         frm.clear_custom_buttons();
-        if (frm.doc.per_received === 100){
-            return
-        }
-        if (!frm.is_new()) {
+
+        if (frm.is_new()) return;
+
+        let total_ordered_qty = 0;
+        let total_received_qty = 0;
+
+        (frm.doc.items || []).forEach(item => {
+            total_ordered_qty += flt(item.qty);
+            total_received_qty += flt(item.custom_received_quantity_);
+        });
+
+        // 🔍 Debug (optional)
+        console.log("Ordered:", total_ordered_qty, "Received:", total_received_qty);
+
+        //  Show Vehicle Queue button ONLY if pending qty exists
+        if (total_received_qty < total_ordered_qty) {
             frm.add_custom_button("Vehicle Queue", () => {
                 frappe.call({
                     method: "cit_exim.cit_exim.doc_events.purchase_order.create_vehicle_queue",
@@ -130,7 +165,7 @@ frappe.ui.form.on("Purchase Order", {
                         purchase_order: frm.doc.name
                     },
                     callback: function (r) {
-                        if (!r.exc) {
+                        if (!r.exc && r.message) {
                             frappe.set_route("Form", "Vehicle Queue", r.message);
                         }
                     }

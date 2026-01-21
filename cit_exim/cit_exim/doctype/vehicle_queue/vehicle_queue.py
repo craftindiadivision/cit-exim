@@ -181,6 +181,7 @@ class VehicleQueue(Document):
             pr_item.item_code = po_item.item_code
             pr_item.item_name = po_item.item_name
             pr_item.description = po_item.description
+            pr_item.custom_old_item_code = po_item.item_code
             # pr_item.purchase_order_item = po_item_order
             pr_item.qty = self.net_weight
             pr_item.uom = po_item.uom
