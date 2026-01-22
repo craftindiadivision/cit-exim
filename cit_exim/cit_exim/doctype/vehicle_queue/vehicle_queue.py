@@ -148,7 +148,7 @@ class VehicleQueue(Document):
         self.create_purchase_receipt()
 
     def create_purchase_receipt(self):
-        # Fetch Purchase Order
+    # Fetch Purchase Order
         po = frappe.get_doc("Purchase Order", self.purchase_order)
 
         # Create Purchase Receipt
@@ -156,7 +156,6 @@ class VehicleQueue(Document):
         pr.supplier = po.supplier
         pr.company = po.company
         pr.custom_purchase_order_ref = po.name
-        # Custom field to link Vehicle Queue
         pr.custom_vehicle_queue = self.name
         pr.custom_token_number = self.token_number
         pr.cost_center = self.cost_center
@@ -166,40 +165,59 @@ class VehicleQueue(Document):
         pr.vehicle_no = self.vehicle_no
         pr.set_warehouse = self.warehouse
 
+        # ---------------------------------------------------------
         # Map Items PO → PR
+        # ---------------------------------------------------------
         for po_item in po.items:
-            # po_item_order =frappe.db.get_value(
-            #     "Purchase Order Item",
-            #     {
-            #         "parent":self.purchase_order,
-            #         "item_code":po_item.item_code
-            #     },
-            #     "name"
-            # )
             pr_item = pr.append("items", {})
 
             pr_item.item_code = po_item.item_code
             pr_item.item_name = po_item.item_name
             pr_item.description = po_item.description
             pr_item.custom_old_item_code = po_item.item_code
-            # pr_item.purchase_order_item = po_item_order
             pr_item.qty = self.net_weight
             pr_item.uom = po_item.uom
             pr_item.stock_uom = po_item.stock_uom
-            po_item_group = frappe.db.get_value("Item", po_item.item_code, "item_group"),
-            lab_template = frappe.db.get_value("Item Group", po_item_group, "custom_test_variable_template")
-            pr_item.custom_test_variable_template = lab_template
-            pr_item.rate = po_item.rate
-            # pr_item.amount = po_item.amount
 
-            # VERY IMPORTANT LINKS
+            # Get Item Group and Lab Template
+            po_item_group = frappe.db.get_value(
+                "Item", po_item.item_code, "item_group"
+            )
+            lab_template = frappe.db.get_value(
+                "Item Group", po_item_group, "custom_test_variable_template"
+            )
+            pr_item.custom_test_variable_template = lab_template
+
+            pr_item.rate = po_item.rate
+            pr_item.warehouse = po_item.warehouse
+
+            # Important PO Links
             # pr_item.purchase_order = po.name
             # pr_item.purchase_order_item = po_item.name
 
-            pr_item.warehouse = po_item.warehouse
+        # ---------------------------------------------------------
+        # Map Taxes PO → PR
+        # ---------------------------------------------------------
+        pr.taxes = []
 
+        for po_tax in po.taxes:
+            pr_tax = pr.append("taxes", {})
 
-        # Insert as Draft
+            pr_tax.charge_type = po_tax.charge_type
+            pr_tax.account_head = po_tax.account_head
+            pr_tax.description = po_tax.description
+            pr_tax.rate = po_tax.rate
+            pr_tax.tax_amount = po_tax.tax_amount
+            pr_tax.total = po_tax.total
+            pr_tax.tax_amount_after_discount_amount = po_tax.tax_amount_after_discount_amount
+            pr_tax.base_tax_amount = po_tax.base_tax_amount
+            pr_tax.base_total = po_tax.base_total
+            pr_tax.cost_center = po_tax.cost_center
+            pr_tax.included_in_print_rate = po_tax.included_in_print_rate
+
+        # ---------------------------------------------------------
+        # Insert PR as Draft
+        # ---------------------------------------------------------
         pr.insert(ignore_permissions=True)
 
         frappe.msgprint(
