@@ -41,25 +41,425 @@ def validate(doc, method=None):
                 "no_of_packages": packages
             })
 
-    # Optional: handle submit-time transition
+#     # Optional: handle submit-time transition
+#     if doc.docstatus == 1:
+#         print(4444444444444444444444444444444,doc.docstatus)
+#             # _handle_custom_status_change(doc)
+#         update_sales_contract_from_invoice(doc)
+
+# def on_update_after_submit(doc, method=None):
+#     _handle_custom_status_change(doc)
+    
+# def _handle_custom_status_change(doc):
+#     #  Shipment completed after submission
+#     if (
+#         doc.docstatus == 1
+#         and doc.custom_work_flow_status == "Completed Shipment"
+#     ):
+#         update_sales_contract_from_invoice(doc)
+
+# def update_sales_contract_from_invoice(sales_invoice):
+#     print("thisssssssssssss is meeeeeeeee")
+#     for si_item in sales_invoice.items:
+#         if not si_item.sales_order:
+#             continue
+
+#         sales_contract = frappe.get_doc("Sales Order", si_item.sales_order)
+
+#         if sales_contract.docstatus != 1:
+#             continue
+
+#         recalculate_shipment_schedule(
+#             sales_contract,
+#             si_item.item_code,
+#             sales_invoice.posting_date
+#         )
+
+#         sales_contract.save(ignore_permissions=True)
+    
+
+# def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
+#     posting_date = getdate(posting_date)
+#     month_name = posting_date.strftime("%B")
+#     fiscal_year = posting_date.year
+
+#     for row in sales_contract.custom_shipment_schedule:
+#         if row.month == "Prompt":
+
+#             submitted_qty = frappe.db.sql("""
+#                 SELECT SUM(sii.qty)
+#                 FROM `tabSales Invoice Item` sii
+#                 INNER JOIN `tabSales Invoice` si
+#                     ON si.name = sii.parent
+#                 WHERE
+#                     sii.item_code = %s
+#                     AND sii.sales_order = %s
+#                     AND si.docstatus = 1
+#             """, (
+#                 item_code,
+#                 sales_contract.name
+#             ))[0][0] or 0
+
+#             completed_qty = frappe.db.sql("""
+#                 SELECT SUM(sii.qty)
+#                 FROM `tabSales Invoice Item` sii
+#                 INNER JOIN `tabSales Invoice` si
+#                     ON si.name = sii.parent
+#                 WHERE
+#                     sii.item_code = %s
+#                     AND sii.sales_order = %s
+#                     AND si.docstatus = 1
+#                     AND si.custom_work_flow_status = 'Completed Shipment'
+#             """, (
+#                 item_code,
+#                 sales_contract.name
+#             ))[0][0] or 0
+
+#             submitted_qty = flt(submitted_qty)
+#             completed_qty = flt(completed_qty)
+
+#             if completed_qty >= row.planned_qty and row.planned_qty > 0:
+#                 row.status = "Completed"
+#             elif submitted_qty > 0:
+#                 row.status = "In-Process"
+#             else:
+#                 row.status = None
+
+#             continue
+#         # monthly
+#         if row.month != month_name or int(row.fiscal_year) != fiscal_year:
+#             continue
+#         print("thisssssssssssss is saheeeeeeeeeeeeeer")
+#         submitted_qty = frappe.db.sql("""
+#             SELECT SUM(sii.qty)
+#             FROM `tabSales Invoice Item` sii
+#             INNER JOIN `tabSales Invoice` si
+#                 ON si.name = sii.parent
+#             WHERE
+#                 sii.item_code = %s
+#                 AND sii.sales_order = %s
+#                 AND si.docstatus = 1
+#                 AND MONTH(si.posting_date) = %s
+#                 AND YEAR(si.posting_date) = %s
+#         """, (
+#             item_code,
+#             sales_contract.name,
+#             posting_date.month,
+#             posting_date.year
+#         ))[0][0] or 0
+
+#         completed_qty = frappe.db.sql("""
+#             SELECT SUM(sii.qty)
+#             FROM `tabSales Invoice Item` sii
+#             INNER JOIN `tabSales Invoice` si
+#                 ON si.name = sii.parent
+#             WHERE
+#                 sii.item_code = %s
+#                 AND sii.sales_order = %s
+#                 AND si.docstatus = 1
+#                 AND si.custom_work_flow_status = 'Completed Shipment'
+#                 AND MONTH(si.posting_date) = %s
+#                 AND YEAR(si.posting_date) = %s
+#         """, (
+#             item_code,
+#             sales_contract.name,
+#             posting_date.month,
+#             posting_date.year
+#         ))[0][0] or 0
+
+#         submitted_qty = flt(submitted_qty)
+#         print(333333333333333333333333333333,submitted_qty)
+#         completed_qty = flt(completed_qty)
+#         print(555555555555555555555555,completed_qty)
+
+#         if completed_qty >= row.planned_qty :
+#             row.status = "Completed"
+#         elif submitted_qty > 0:
+#             row.status = "In-Process"
+#         else:
+#             row.status = None
+
+# def get_month_date_range(month_name, year):
+#     month_number = list(calendar.month_name).index(month_name)
+#     start_date = date(year, month_number, 1)
+#     last_day = calendar.monthrange(year, month_number)[1]
+#     end_date = date(year, month_number, last_day)
+#     return start_date, end_date
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# add the refrence code-correct
+
+# import frappe
+# from frappe.utils import flt, getdate
+# import calendar
+# from datetime import date
+
+
+# # -------------------------------------------------------------------
+# # Hooks
+# # -------------------------------------------------------------------
+
+# def on_submit(doc, method=None):
+#     if doc.docstatus == 1:
+#         update_sales_contract_from_invoice(doc)
+
+
+# def on_update_after_submit(doc, method=None):
+#     _handle_custom_status_change(doc)
+
+
+# def _handle_custom_status_change(doc):
+#     if doc.docstatus == 1 and doc.custom_work_flow_status == "Completed Shipment":
+#         update_sales_contract_from_invoice(doc)
+
+
+# # -------------------------------------------------------------------
+# # Main Update Logic
+# # -------------------------------------------------------------------
+
+# def update_sales_contract_from_invoice(sales_invoice):
+#     for si_item in sales_invoice.items:
+#         if not si_item.sales_order:
+#             continue
+
+#         sales_contract = frappe.get_doc("Sales Order", si_item.sales_order)
+
+#         if sales_contract.docstatus != 1:
+#             continue
+
+#         # Clear references if this is the first invoice
+#         clear_reference_if_first_invoice(sales_contract)
+
+#         recalculate_shipment_schedule(
+#             sales_contract=sales_contract,
+#             item_code=si_item.item_code,
+#             posting_date=sales_invoice.posting_date,
+#             invoice_name=sales_invoice.name
+#         )
+
+#         sales_contract.save(ignore_permissions=True)
+
+
+# # -------------------------------------------------------------------
+# # Shipment Schedule Recalculation
+# # -------------------------------------------------------------------
+
+# def recalculate_shipment_schedule(
+#     sales_contract,
+#     item_code,
+#     posting_date,
+#     invoice_name
+# ):
+#     posting_date = getdate(posting_date)
+#     month_name = posting_date.strftime("%B")
+#     fiscal_year = posting_date.year
+
+#     for row in sales_contract.custom_shipment_schedule:
+
+#         previous_status = row.status
+
+#         # ---------------- PROMPT ----------------
+#         if row.month == "Prompt":
+
+#             submitted_qty = frappe.db.sql("""
+#                 SELECT SUM(sii.qty)
+#                 FROM `tabSales Invoice Item` sii
+#                 INNER JOIN `tabSales Invoice` si
+#                     ON si.name = sii.parent
+#                 WHERE
+#                     sii.item_code = %s
+#                     AND sii.sales_order = %s
+#                     AND si.docstatus = 1
+#             """, (item_code, sales_contract.name))[0][0] or 0
+
+#             completed_qty = frappe.db.sql("""
+#                 SELECT SUM(sii.qty)
+#                 FROM `tabSales Invoice Item` sii
+#                 INNER JOIN `tabSales Invoice` si
+#                     ON si.name = sii.parent
+#                 WHERE
+#                     sii.item_code = %s
+#                     AND sii.sales_order = %s
+#                     AND si.docstatus = 1
+#                     AND si.custom_work_flow_status = 'Completed Shipment'
+#             """, (item_code, sales_contract.name))[0][0] or 0
+
+#             submitted_qty = flt(submitted_qty)
+#             completed_qty = flt(completed_qty)
+
+#             if completed_qty >= row.planned_qty and row.planned_qty > 0:
+#                 row.status = "Completed"
+#             elif submitted_qty > 0:
+#                 row.status = "In-Process"
+#             else:
+#                 row.status = None
+
+#             if row.status != previous_status:
+#                 append_invoice_reference(row, invoice_name)
+
+#             continue
+
+#         # ---------------- MONTHLY ----------------
+#         if row.month != month_name or int(row.fiscal_year) != fiscal_year:
+#             continue
+
+#         submitted_qty = frappe.db.sql("""
+#             SELECT SUM(sii.qty)
+#             FROM `tabSales Invoice Item` sii
+#             INNER JOIN `tabSales Invoice` si
+#                 ON si.name = sii.parent
+#             WHERE
+#                 sii.item_code = %s
+#                 AND sii.sales_order = %s
+#                 AND si.docstatus = 1
+#                 AND MONTH(si.posting_date) = %s
+#                 AND YEAR(si.posting_date) = %s
+#         """, (
+#             item_code,
+#             sales_contract.name,
+#             posting_date.month,
+#             posting_date.year
+#         ))[0][0] or 0
+
+#         completed_qty = frappe.db.sql("""
+#             SELECT SUM(sii.qty)
+#             FROM `tabSales Invoice Item` sii
+#             INNER JOIN `tabSales Invoice` si
+#                 ON si.name = sii.parent
+#             WHERE
+#                 sii.item_code = %s
+#                 AND sii.sales_order = %s
+#                 AND si.docstatus = 1
+#                 AND si.custom_work_flow_status = 'Completed Shipment'
+#                 AND MONTH(si.posting_date) = %s
+#                 AND YEAR(si.posting_date) = %s
+#         """, (
+#             item_code,
+#             sales_contract.name,
+#             posting_date.month,
+#             posting_date.year
+#         ))[0][0] or 0
+
+#         submitted_qty = flt(submitted_qty)
+#         completed_qty = flt(completed_qty)
+
+#         if completed_qty >= row.planned_qty and row.planned_qty > 0:
+#             row.status = "Completed"
+#         elif submitted_qty > 0:
+#             row.status = "In-Process"
+#         else:
+#             row.status = None
+
+#         if row.status != previous_status:
+#             append_invoice_reference(row, invoice_name)
+
+
+# # -------------------------------------------------------------------
+# # Helpers
+# # -------------------------------------------------------------------
+
+# def clear_reference_if_first_invoice(sales_contract):
+#     """
+#     Clears copied references only when this Sales Order
+#     is getting its FIRST submitted Sales Invoice.
+#     """
+
+#     invoice_count = frappe.db.sql("""
+#         SELECT COUNT(DISTINCT si.name)
+#         FROM `tabSales Invoice` si
+#         INNER JOIN `tabSales Invoice Item` sii
+#             ON sii.parent = si.name
+#         WHERE
+#             si.docstatus = 1
+#             AND sii.sales_order = %s
+#     """, (sales_contract.name,))[0][0] or 0
+
+#     # If more than one invoice exists, do NOT clear
+#     if invoice_count > 1:
+#         return
+
+#     for row in sales_contract.custom_shipment_schedule:
+#         row.reference = None
+
+
+# def append_invoice_reference(row, invoice_name):
+#     if not invoice_name:
+#         return
+
+#     existing = row.reference or ""
+#     refs = [r.strip() for r in existing.split(",") if r.strip()]
+
+#     if invoice_name not in refs:
+#         refs.append(invoice_name)
+#         row.reference = ", ".join(refs)
+
+
+# def get_month_date_range(month_name, year):
+#     month_number = list(calendar.month_name).index(month_name)
+#     start_date = date(year, month_number, 1)
+#     last_day = calendar.monthrange(year, month_number)[1]
+#     end_date = date(year, month_number, last_day)
+#     return start_date, end_date
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import frappe
+from frappe.utils import flt, getdate
+import calendar
+from datetime import date
+
+
+# -------------------------------------------------------------------
+# Hooks
+# -------------------------------------------------------------------
+
+def on_submit(doc, method=None):
     if doc.docstatus == 1:
-        print(4444444444444444444444444444444,doc.docstatus)
-        # _handle_custom_status_change(doc)
         update_sales_contract_from_invoice(doc)
+
 
 def on_update_after_submit(doc, method=None):
     _handle_custom_status_change(doc)
-    
+
+
+def on_cancel(doc, method=None):
+    if doc.docstatus == 2:
+        remove_invoice_reference_from_sales_order(doc)
+
+
 def _handle_custom_status_change(doc):
-    #  Shipment completed after submission
-    if (
-        doc.docstatus == 1
-        and doc.custom_work_flow_status == "Completed Shipment"
-    ):
+    if doc.docstatus == 1 and doc.custom_work_flow_status == "Completed Shipment":
         update_sales_contract_from_invoice(doc)
 
+
+# -------------------------------------------------------------------
+# Main Update Logic
+# -------------------------------------------------------------------
+
 def update_sales_contract_from_invoice(sales_invoice):
-    print("thisssssssssssss is meeeeeeeee")
     for si_item in sales_invoice.items:
         if not si_item.sales_order:
             continue
@@ -69,21 +469,38 @@ def update_sales_contract_from_invoice(sales_invoice):
         if sales_contract.docstatus != 1:
             continue
 
+        # Clear references if this is the first invoice
+        clear_reference_if_first_invoice(sales_contract)
+
         recalculate_shipment_schedule(
-            sales_contract,
-            si_item.item_code,
-            sales_invoice.posting_date
+            sales_contract=sales_contract,
+            item_code=si_item.item_code,
+            posting_date=sales_invoice.posting_date,
+            invoice_name=sales_invoice.name
         )
 
         sales_contract.save(ignore_permissions=True)
-    
 
-def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
+
+# -------------------------------------------------------------------
+# Shipment Schedule Recalculation
+# -------------------------------------------------------------------
+
+def recalculate_shipment_schedule(
+    sales_contract,
+    item_code,
+    posting_date,
+    invoice_name
+):
     posting_date = getdate(posting_date)
     month_name = posting_date.strftime("%B")
     fiscal_year = posting_date.year
 
     for row in sales_contract.custom_shipment_schedule:
+
+        previous_status = row.status
+
+        # ---------------- PROMPT ----------------
         if row.month == "Prompt":
 
             submitted_qty = frappe.db.sql("""
@@ -95,10 +512,7 @@ def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
                     sii.item_code = %s
                     AND sii.sales_order = %s
                     AND si.docstatus = 1
-            """, (
-                item_code,
-                sales_contract.name
-            ))[0][0] or 0
+            """, (item_code, sales_contract.name))[0][0] or 0
 
             completed_qty = frappe.db.sql("""
                 SELECT SUM(sii.qty)
@@ -110,10 +524,7 @@ def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
                     AND sii.sales_order = %s
                     AND si.docstatus = 1
                     AND si.custom_work_flow_status = 'Completed Shipment'
-            """, (
-                item_code,
-                sales_contract.name
-            ))[0][0] or 0
+            """, (item_code, sales_contract.name))[0][0] or 0
 
             submitted_qty = flt(submitted_qty)
             completed_qty = flt(completed_qty)
@@ -125,11 +536,15 @@ def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
             else:
                 row.status = None
 
+            if row.status != previous_status:
+                append_invoice_reference(row, invoice_name)
+
             continue
-        # monthly
+
+        # ---------------- MONTHLY ----------------
         if row.month != month_name or int(row.fiscal_year) != fiscal_year:
             continue
-        print("thisssssssssssss is saheeeeeeeeeeeeeer")
+
         submitted_qty = frappe.db.sql("""
             SELECT SUM(sii.qty)
             FROM `tabSales Invoice Item` sii
@@ -168,16 +583,85 @@ def recalculate_shipment_schedule(sales_contract, item_code, posting_date):
         ))[0][0] or 0
 
         submitted_qty = flt(submitted_qty)
-        print(333333333333333333333333333333,submitted_qty)
         completed_qty = flt(completed_qty)
-        print(555555555555555555555555,completed_qty)
 
-        if completed_qty >= row.planned_qty :
+        if completed_qty >= row.planned_qty and row.planned_qty > 0:
             row.status = "Completed"
         elif submitted_qty > 0:
             row.status = "In-Process"
         else:
             row.status = None
+
+        if row.status != previous_status:
+            append_invoice_reference(row, invoice_name)
+
+
+# -------------------------------------------------------------------
+# Helpers
+# -------------------------------------------------------------------
+
+def clear_reference_if_first_invoice(sales_contract):
+    """
+    Clears copied references only when this Sales Order
+    is getting its FIRST submitted Sales Invoice.
+    """
+
+    invoice_count = frappe.db.sql("""
+        SELECT COUNT(DISTINCT si.name)
+        FROM `tabSales Invoice` si
+        INNER JOIN `tabSales Invoice Item` sii
+            ON sii.parent = si.name
+        WHERE
+            si.docstatus = 1
+            AND sii.sales_order = %s
+    """, (sales_contract.name,))[0][0] or 0
+
+    if invoice_count > 1:
+        return
+
+    for row in sales_contract.custom_shipment_schedule:
+        row.reference = None
+
+
+def append_invoice_reference(row, invoice_name):
+    if not invoice_name:
+        return
+
+    existing = row.reference or ""
+    refs = [r.strip() for r in existing.split(",") if r.strip()]
+
+    if invoice_name not in refs:
+        refs.append(invoice_name)
+        row.reference = ", ".join(refs)
+
+
+def remove_invoice_reference_from_sales_order(sales_invoice):
+    for si_item in sales_invoice.items:
+        if not si_item.sales_order:
+            continue
+
+        sales_contract = frappe.get_doc("Sales Order", si_item.sales_order)
+
+        if sales_contract.docstatus != 1:
+            continue
+
+        invoice_name = sales_invoice.name
+        changed = False
+
+        for row in sales_contract.custom_shipment_schedule:
+            if not row.reference:
+                continue
+
+            refs = [r.strip() for r in row.reference.split(",") if r.strip()]
+
+            if invoice_name in refs:
+                refs.remove(invoice_name)
+                row.reference = ", ".join(refs) if refs else None
+                changed = True
+
+        if changed:
+            sales_contract.save(ignore_permissions=True)
+
 
 def get_month_date_range(month_name, year):
     month_number = list(calendar.month_name).index(month_name)
@@ -185,6 +669,13 @@ def get_month_date_range(month_name, year):
     last_day = calendar.monthrange(year, month_number)[1]
     end_date = date(year, month_number, last_day)
     return start_date, end_date
+
+
+
+
+
+
+
 
 # ------------------------------------------------------------------------------------------------------------------------
 

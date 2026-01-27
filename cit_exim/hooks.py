@@ -305,17 +305,28 @@ doctype_list_js = {
 # /home/user/v15/apps/cit_exim/cit_exim/public/js/doctype_js/sales_invoice_list.js
 
 doc_events = {
-    "Sales Invoice": {
+    # "Sales Invoice": {
+    #     "before_save": "cit_exim.cit_exim.doc_events.sales_invoice.before_save",
+    #     "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
+    #     "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",
+    #     "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
+    #     "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
+    #     # "before_save":"cit_exim.cit_exim.doc_events.sales_invoice.before_save",
+    #     "before_insert":"cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
+    #     "before_submit":"cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
+        
+    # },
+        "Sales Invoice": {
+        "before_insert": "cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
         "before_save": "cit_exim.cit_exim.doc_events.sales_invoice.before_save",
         "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
-        "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",
+        "before_submit": "cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
+
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
+        "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
-        # "before_save":"cit_exim.cit_exim.doc_events.sales_invoice.before_save",
-        "before_insert":"cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
-        "before_submit":"cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
-        
     },
+
 
         "Sales Order": {
         "validate": "cit_exim.cit_exim.doc_events.sales_order.validate"

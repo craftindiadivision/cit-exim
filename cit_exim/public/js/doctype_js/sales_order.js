@@ -228,6 +228,7 @@
 
 // -----------------------------------------------------------------------------------------------------------------------------
 
+
 cur_frm.cscript.onload = function (frm) {
     // Billing Address Filter
     cur_frm.set_query("customer_address", function () {
