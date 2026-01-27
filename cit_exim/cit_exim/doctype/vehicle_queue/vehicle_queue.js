@@ -100,3 +100,34 @@ frappe.ui.form.on("Vehicle Queue", {
         }
     }
 });
+frappe.ui.form.on("Vehicle Queue", {
+    refresh(frm) {
+        update_no_of_bags_label(frm);
+    },
+    product(frm) {
+        update_no_of_bags_label(frm);
+    }
+});
+
+function update_no_of_bags_label(frm) {
+    setTimeout(() => {
+        if (!frm.fields_dict.item) return;
+
+        const is_fish_meal = frm.doc.product === "RM-Fish Meal";
+
+        // Get grid field
+        const grid = frm.fields_dict.item.grid;
+
+        // Change column label
+        grid.update_docfield_property(
+            "no_of_bags",
+            "label",
+            is_fish_meal ? "No of Bags" : "No of Boxes"
+        );
+
+        // Refresh grid to apply label change
+        grid.refresh();
+    }, 300);
+}
+
+

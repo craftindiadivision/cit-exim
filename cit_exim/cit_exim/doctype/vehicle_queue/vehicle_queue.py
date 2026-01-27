@@ -164,6 +164,7 @@ class VehicleQueue(Document):
         pr.posting_time = frappe.utils.nowtime()
         pr.vehicle_no = self.vehicle_no
         pr.set_warehouse = self.warehouse
+        pr.custom_item_group = self.product
 
         # ---------------------------------------------------------
         # Map Items PO → PR
@@ -275,7 +276,7 @@ def create_purchase_voucher(doc, method=None):
     pv.set("1st_weightkg", doc.gross_weight)
     pv.set("2nd_weightkg", doc.tare_weight)
     pv.net_weightkg = doc.net_weight
-
+    pv.loading_location = doc.loading_location
     # Product Name = Item Group
     pv.product_name = item_group
 
