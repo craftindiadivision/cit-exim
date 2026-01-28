@@ -14910,15 +14910,9 @@
   "length": 0,
   "link_filters": null,
   "mandatory_depends_on": null,
-<<<<<<< HEAD
-  "modified": "2026-01-23 15:49:49.939174",
-  "module": null,
-  "name": "Sales Order-custom_shipment_schedule",
-=======
   "modified": "2024-05-31 15:37:14.675269",
   "module": "CIT Exim",
   "name": "Sales Invoice-total_meis",
->>>>>>> 8c51ab57dadf4e74a1aa5d619a6b0211d797b701
   "no_copy": 0,
   "non_negative": 0,
   "options": null,
