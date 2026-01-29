@@ -179,6 +179,7 @@ class VehicleQueue(Document):
             pr_item.qty = self.net_weight
             pr_item.uom = po_item.uom
             pr_item.stock_uom = po_item.stock_uom
+            pr_item.rejected_warehouse = ""
 
             # Get Item Group and Lab Template
             po_item_group = frappe.db.get_value(
