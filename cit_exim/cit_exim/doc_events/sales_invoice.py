@@ -8,6 +8,7 @@ from frappe.utils import today
 import calendar
 from datetime import date
 from frappe.utils import getdate
+from frappe.utils import nowdate
 
 
 
@@ -443,6 +444,21 @@ def on_submit(doc, method=None):
 
 def on_update_after_submit(doc, method=None):
     _handle_custom_status_change(doc)
+    """
+    This function runs every time a submitted Sales Invoice is updated 
+    (e.g., when the Workflow State changes).
+    """
+    target_state = "Document Submitted & Awaiting Payments"
+
+    # Check if the workflow state matches and the date hasn't been recorded yet
+    if doc.workflow_state == target_state and not doc.custom_submission_date:
+        
+        # We use db_set to bypass validation since the doc is already submitted
+        doc.db_set('custom_submission_date', nowdate())
+        
+        # Optional: notify the user or add a comment
+        doc.add_comment("Info", text=f"Captured submission date as state changed to {target_state}")
+   
 
 
 def on_cancel(doc, method=None):
@@ -1905,3 +1921,9 @@ def create_consolidated_invoice(sales_invoices):
     frappe.msgprint(f"Consolidated Sales Invoice {csi.name} created successfully")
 
     return csi
+
+
+
+
+
+

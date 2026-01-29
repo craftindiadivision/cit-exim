@@ -163,3 +163,10 @@ frappe.ui.form.on("Payment Entry", {
         frm.ignore_doctypes_on_cancel_all = ["Forward Booking"];
     }
 })
+
+frappe.ui.form.on('Payment Entry', {
+    refresh: function(frm) {
+        // Always keep this field read-only as it is system-generated on submit
+        frm.set_df_property('custom_payment_received_date', 'read_only', 1);
+    }
+});

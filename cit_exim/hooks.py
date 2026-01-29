@@ -267,7 +267,7 @@ fixtures=[
            "Sales Invoice-main-field_order","Purchase Order-main-field_order","Sales Order-main-field_order","Purchase Invoice-main-field_order","Sales Order-main-field_order","Purchase Order-main-field_order","Item-main-field_order",
            "Sales Order-main-field_order","Purchase Voucher-main-field_order","Packing Template-naming_series-options","Sales Order Item-main-field_order","Sales Order-main-field_order","Sales Invoice-main-field_order","Sales Order-main-field_order",
            "Sales Order-main-default_print_format","Bank Account-main-field_order","Sales Invoice-main-field_order","Sales Invoice-naming_series-default","Sales Invoice-naming_series-options","Sales Order-naming_series-default","Sales Order-naming_series-options",
-           "Opportunity-main-field_order","Sales Invoice-exim_packing_details-hidden","Sales Invoice-main-field_order","Sales Invoice-main-field_order"
+           "Opportunity-main-field_order","Sales Invoice-exim_packing_details-hidden","Sales Invoice-main-field_order","Sales Invoice-main-field_order","Sales Invoice-main-field_order",
         ]]
     ]
     },
@@ -317,15 +317,25 @@ doc_events = {
         
     # },
         "Sales Invoice": {
+        # "before_insert": "cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
+        # "before_save": "cit_exim.cit_exim.doc_events.sales_invoice.before_save",
+        # "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
+        # "before_submit": "cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
+
+        # "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
+        # "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",
+        # "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
+
         "before_insert": "cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
         "before_save": "cit_exim.cit_exim.doc_events.sales_invoice.before_save",
         "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
         "before_submit": "cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
-
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
         "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
+
     },
+    
 
 
         "Sales Order": {
@@ -363,6 +373,7 @@ doc_events = {
         "on_submit": "cit_exim.cit_exim.doctype.duty_drawback_claim.duty_drawback_claim.create_jv_on_submit"
     },
     "Payment Entry": {
+        "on_submit": "cit_exim.cit_exim.doc_events.payment_entry.on_submit",
         "on_submit": "cit_exim.api.pe_on_submit",
         "before_cancel": "cit_exim.api.pe_on_cancel",
     },

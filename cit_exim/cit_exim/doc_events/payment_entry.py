@@ -61,3 +61,18 @@ def on_submit_update_sales_invoice(doc, method):
             si.custom_work_flow_status = "Completed Shipment"
             si.custom_payment_status = 1              # auto-enable checkbox
             si.save(ignore_permissions=True)
+
+
+import frappe
+from frappe.utils import nowdate
+
+def on_submit(doc, method=None):
+    """
+    Automatically sets the custom_payment_received_date upon submission.
+    """
+    # Set the field to today's date
+    doc.custom_payment_received_date = nowdate()
+    
+    # Since this is the 'on_submit' method, the system will save 
+    # the modified 'doc' object automatically. 
+    # No need for doc.db_set or doc.save() here.
