@@ -119,7 +119,7 @@ frappe.ui.form.on("Purchase Order", {
 frappe.ui.form.on("Purchase Order", {
     refresh(frm) {
         frm.clear_custom_buttons();
-        if (frm.doc.per_received === 100){
+        if (frm.doc.per_received >= 100){
             return
         }
         if (!frm.is_new()) {

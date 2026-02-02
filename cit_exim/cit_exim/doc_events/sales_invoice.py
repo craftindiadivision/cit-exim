@@ -440,7 +440,7 @@ from datetime import date
 def on_submit(doc, method=None):
     if doc.docstatus == 1:
         update_sales_contract_from_invoice(doc)
-
+    
 
 def on_update_after_submit(doc, method=None):
     _handle_custom_status_change(doc)
@@ -458,12 +458,75 @@ def on_update_after_submit(doc, method=None):
         
         # Optional: notify the user or add a comment
         doc.add_comment("Info", text=f"Captured submission date as state changed to {target_state}")
-   
+    
+    update_sales_order_qty(doc)
 
 
+def update_sales_order_qty(doc):
+
+    sales_orders = set()
+
+    # Collect unique Sales Orders from the invoice
+    for item in doc.items:
+        if item.sales_order:
+            sales_orders.add(item.sales_order)
+
+    for sales_order in sales_orders:
+
+        delivered_qty = frappe.db.sql("""
+            SELECT SUM(si_item.qty)
+            FROM `tabSales Invoice Item` si_item
+            JOIN `tabSales Invoice` si
+                ON si.name = si_item.parent
+            WHERE
+                si.docstatus = 1
+                AND si.workflow_state = 'Completed Shipment'
+                AND si_item.sales_order = %s
+        """, sales_order)[0][0] or 0
+
+        total_qty = frappe.db.get_value(
+            "Sales Order",
+            sales_order,
+            "total_qty"
+        ) or 0
+
+        pending_qty = flt(total_qty) - flt(delivered_qty)
+
+        frappe.db.set_value(
+            "Sales Order",
+            sales_order,
+            {
+                "custom_delivered_qty": delivered_qty,
+                "custom_pending_qty": pending_qty
+            }
+        )
 def on_cancel(doc, method=None):
-    if doc.docstatus == 2:
-        remove_invoice_reference_from_sales_order(doc)
+    print("111111111111")
+
+    sales_orders = {item.sales_order for item in doc.items if item.sales_order}
+
+    for sales_order in sales_orders:
+
+        total_qty = frappe.db.get_value(
+            "Sales Order",
+            sales_order,
+            "total_qty"
+        ) or 0
+
+        frappe.db.set_value(
+            "Sales Order",
+            sales_order,
+            {
+                "custom_delivered_qty": 0,
+                "custom_pending_qty": total_qty
+            },
+            update_modified=False,
+            ignore_permissions=True
+        )
+
+    remove_invoice_reference_from_sales_order(doc)
+
+
 
 
 def _handle_custom_status_change(doc):
@@ -711,6 +774,38 @@ def on_submit(self, method):
 
 
 def on_cancel(self, method):
+    sales_order_qty_map = {}
+
+    #  Collect qty per Sales Order from THIS invoice
+    for item in self.items:
+        if not item.sales_order:
+            continue
+
+        sales_order_qty_map.setdefault(item.sales_order, 0)
+        sales_order_qty_map[item.sales_order] += flt(item.qty)
+
+    #  Update Sales Order quantities
+    for sales_order, cancel_qty in sales_order_qty_map.items():
+
+        so = frappe.get_doc("Sales Order", sales_order)
+
+        delivered_qty = flt(so.custom_delivered_qty)
+        pending_qty = flt(so.custom_pending_qty)
+
+        new_delivered = max(delivered_qty - cancel_qty, 0)
+        new_pending = pending_qty + cancel_qty
+
+        frappe.db.set_value(
+            "Sales Order",
+            sales_order,
+            {
+                "custom_delivered_qty": new_delivered,
+                "custom_pending_qty": new_pending
+            },
+            update_modified=False
+        )
+
+    remove_invoice_reference_from_sales_order(self)
     cancel_export_lic(self)
     cancel_jv(self)
     update_sales_contract_from_invoice(self)
