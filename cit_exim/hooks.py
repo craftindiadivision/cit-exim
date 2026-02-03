@@ -268,7 +268,7 @@ fixtures=[
            "Sales Order-main-field_order","Purchase Voucher-main-field_order","Packing Template-naming_series-options","Sales Order Item-main-field_order","Sales Order-main-field_order","Sales Invoice-main-field_order","Sales Order-main-field_order",
            "Sales Order-main-default_print_format","Bank Account-main-field_order","Sales Invoice-main-field_order","Sales Invoice-naming_series-default","Sales Invoice-naming_series-options","Sales Order-naming_series-default","Sales Order-naming_series-options",
            "Opportunity-main-field_order","Sales Invoice-exim_packing_details-hidden","Sales Invoice-main-field_order","Sales Invoice-main-field_order","Sales Invoice-main-field_order","Payment Entry-reference_date-label",
-           "Payment Entry-reference_no-label","Payment Entry-main-field_order","Sales Invoice-main-field_order"
+           "Payment Entry-reference_no-label","Payment Entry-main-field_order","Sales Invoice-main-field_order","Sales Invoice Item-description-allow_on_submit",
         ]]
     ]
     },
