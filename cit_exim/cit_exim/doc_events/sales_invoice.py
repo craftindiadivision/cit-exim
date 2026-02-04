@@ -512,7 +512,7 @@ def on_cancel(doc, method=None):
             sales_order,
             "total_qty"
         ) or 0
-
+                                                                                                           
         frappe.db.set_value(
             "Sales Order",
             sales_order,
