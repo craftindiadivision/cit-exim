@@ -685,3 +685,231 @@ frappe.ui.form.on('Sales Invoice', {
         }
     }
 });
+
+
+
+// frappe.ui.form.on('Sales Invoice', {
+//     refresh(frm) {
+//         if (
+//             frm.doc.docstatus === 1 &&
+//             frm.doc.custom_loading_point === "MUNDRA"
+//         ) {
+//             frm.add_custom_button(
+//                 __('Split Sales Invoice'),
+//                 () => {
+//                     let dialog = new frappe.ui.Dialog({
+//                         title: __('Split Sales Invoice'),
+//                         fields: [
+//                             {
+//                                 fieldname: 'split_count',
+//                                 fieldtype: 'Int',
+//                                 label: __('How Many Sales Invoice Can be Split'),
+//                                 reqd: 1,
+//                                 default: 2,
+//                                 min: 1
+//                             }
+//                         ],
+//                         primary_action_label: __('Create'),
+//                         primary_action(values) {
+//                             frappe.call({
+//                                 method: "cit_exim.cit_exim.doc_events.sales_invoice.split_sales_invoice",
+//                                 args: {
+//                                     sales_invoice: frm.doc.name,
+//                                     split_count: values.split_count
+//                                 },
+//                                 callback: function (r) {
+//                                     if (r.message && r.message.length) {
+//                                         frappe.msgprint({
+//                                             title: __('Success'),
+//                                             message: __('{0} Split Sales Invoices created', [r.message.length]),
+//                                             indicator: 'green'
+//                                         });
+
+//                                         // open first created split invoice
+//                                         frappe.set_route(
+//                                             'Form',
+//                                             'Split Sales Invoice',
+//                                             r.message[0]
+//                                         );
+//                                     }
+//                                 }
+//                             });
+//                             dialog.hide();
+//                         }
+//                     });
+
+//                     dialog.show();
+//                 },
+//                 __('Create')
+//             );
+//         }
+//     }
+// });
+
+
+
+// frappe.ui.form.on('Sales Invoice', {
+//     refresh(frm) {
+//         if (
+//             frm.doc.docstatus === 1 &&
+//             frm.doc.custom_loading_point === "MUNDRA"
+//         ) {
+//             frm.add_custom_button(__('Split Sales Invoice'), () => {
+
+//                 let d = new frappe.ui.Dialog({
+//                     title: __('Split Sales Invoice'),
+//                     fields: [
+//                         {
+//                             fieldname: 'split_count',
+//                             fieldtype: 'Int',
+//                             label: __('How many Sales Invoices Can be Splitted?'),
+//                             reqd: 1,
+//                             min: 1
+//                         }
+//                     ],
+//                     primary_action_label: __('Create'),
+//                     primary_action(values) {
+
+//                         frappe.call({
+//                             method: "cit_exim.cit_exim.doc_events.sales_invoice.split_sales_invoice",
+//                             args: {
+//                                 sales_invoice: frm.doc.name,
+//                                 split_count: values.split_count
+//                             },
+//                             callback(r) {
+//                                 if (r.message) {
+//                                     frappe.msgprint(
+//                                         __('{0} Split Sales Invoices created', [r.message.length])
+//                                     );
+
+//                                     frappe.set_route(
+//                                         'Form',
+//                                         'Split Sales Invoice',
+//                                         r.message[0]
+//                                     );
+//                                 }
+//                             }
+//                         });
+
+//                         d.hide();
+//                     }
+//                 });
+
+//                 d.show();
+//             }, __('Create'));
+//         }
+//     }
+// });
+
+
+
+
+
+frappe.ui.form.on('Sales Invoice', {
+    refresh(frm) {
+        if (
+            frm.doc.docstatus === 1 &&
+            frm.doc.custom_loading_point === "MUNDRA"
+        ) {
+            // Remove button first to prevent duplicates on refresh
+            frm.remove_custom_button(__('Split Sales Invoice'), __('Create'));
+
+            frm.add_custom_button(__('Split Sales Invoice'), () => {
+                let d = new frappe.ui.Dialog({
+                    title: __('Split Sales Invoice'),
+                    fields: [
+                        {
+                            fieldname: 'split_count',
+                            fieldtype: 'Int',
+                            label: __('How many Sales Invoices should this be split into?'),
+                            reqd: 1,
+                            default: 2
+                        }
+                    ],
+                    primary_action_label: __('Split'),
+                    primary_action(values) {
+                        if (values.split_count < 2) {
+                            frappe.msgprint(__('Split count must be 2 or more'));
+                            return;
+                        }
+
+                        frappe.call({
+                            method: "cit_exim.cit_exim.doc_events.sales_invoice.split_sales_invoice",
+                            args: {
+                                sales_invoice: frm.doc.name,
+                                split_count: values.split_count
+                            },
+                            freeze: true,
+                            freeze_message: __("Splitting Invoice..."),
+                            callback(r) {
+                                if (r.message) {
+                                    frappe.msgprint(
+                                        __('{0} Draft Sales Invoices created', [r.message.length])
+                                    );
+                                    // Redirect to the first one created
+                                    frappe.set_route('Form', 'Sales Invoice', r.message[0]);
+                                }
+                            }
+                        });
+                        d.hide();
+                    }
+                });
+                d.show();
+            }, __('Create'));
+        }
+    }
+});
+
+
+
+frappe.ui.form.on('Sales Invoice', {
+    refresh(frm) {
+        if (frm.doc.docstatus === 1 && frm.doc.custom_loading_point === "MUNDRA") {
+            
+            frm.remove_custom_button(__('Split Sales Invoice'), __('Create'));
+
+            frm.add_custom_button(__('Split Sales Invoice'), () => {
+                let d = new frappe.ui.Dialog({
+                    title: __('Split into Separate Records'),
+                    fields: [
+                        {
+                            fieldname: 'split_count',
+                            fieldtype: 'Int',
+                            label: __('Number of Split Records'),
+                            reqd: 1,
+                            default: 2
+                        }
+                    ],
+                    primary_action_label: __('Split'),
+                    primary_action(values) {
+                        if (values.split_count < 2) {
+                            frappe.msgprint(__('Split count must be 2 or more'));
+                            return;
+                        }
+
+                        frappe.call({
+                            method: "cit_exim.cit_exim.doc_events.sales_invoice.split_sales_invoice",
+                            args: {
+                                sales_invoice: frm.doc.name,
+                                split_count: values.split_count
+                            },
+                            freeze: true,
+                            freeze_message: __("Creating Split Records..."),
+                            callback(r) {
+                                if (r.message) {
+                                    frappe.msgprint(
+                                        __('{0} records created in Split Sales Invoice  list', [r.message.length])
+                                    );
+                                    // Redirect to the new DocType list or the first record
+                                    frappe.set_route('List', 'Split Sales Invoice');
+                                }
+                            }
+                        });
+                        d.hide();
+                    }
+                });
+                d.show();
+            }, __('Create'));
+        }
+    }
+});

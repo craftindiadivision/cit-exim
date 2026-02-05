@@ -8,6 +8,7 @@ from frappe.model.mapper import get_mapped_doc
 # from frappe.email.doctype.email_queue.email_queue import QueueBuilder
 from frappe.email.doctype.email_account.email_account import EmailAccount
 
+
 @frappe.whitelist()
 # def si_validate(self, method):
 	# if self._action == 'submit':
@@ -486,3 +487,6 @@ def fwd_uti_cancel(self):
 # 	elif term.due_date_based_on == "Month(s) after the end of the invoice month":
 # 		due_date = add_months(get_last_day(date), term.credit_months)
 # 	return due_date
+
+
+
