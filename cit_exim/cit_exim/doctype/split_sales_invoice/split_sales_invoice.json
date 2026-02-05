@@ -127,7 +127,6 @@
   "custom_carriage_by",
   "bl_date",
   "custom_dc_date",
-  "total_packages",
   "column_break_guql",
   "container_size",
   "country_of_origin",
@@ -2409,12 +2408,6 @@
    "options": "Supplier"
   },
   {
-   "fieldname": "total_packages",
-   "fieldtype": "Float",
-   "hidden": 1,
-   "label": "Total Packages"
-  },
-  {
    "fieldname": "section_break_hjju",
    "fieldtype": "Section Break"
   },
@@ -2440,7 +2433,7 @@
  "icon": "fa fa-file-text",
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-05 11:35:10.964766",
+ "modified": "2026-02-05 15:51:21.814049",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Split Sales Invoice",

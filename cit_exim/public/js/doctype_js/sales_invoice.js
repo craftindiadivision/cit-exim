@@ -861,7 +861,6 @@ frappe.ui.form.on('Sales Invoice', {
 });
 
 
-
 frappe.ui.form.on('Sales Invoice', {
     refresh(frm) {
         if (frm.doc.docstatus === 1 && frm.doc.custom_loading_point === "MUNDRA") {
@@ -913,3 +912,10 @@ frappe.ui.form.on('Sales Invoice', {
         }
     }
 });
+
+
+
+
+
+
+
