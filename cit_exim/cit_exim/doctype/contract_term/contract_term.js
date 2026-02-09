@@ -10,7 +10,7 @@ cur_frm.add_fetch("sales_order", "net_total", "net_total");
 cur_frm.fields_dict.lc_opening_bank.get_query = function(doc) {
 	return {
 		filters: {
-			'bank_type': 'Foreign Bank'
+			// 'bank_type': 'Foreign Bank'
 		}
 	}
 };
