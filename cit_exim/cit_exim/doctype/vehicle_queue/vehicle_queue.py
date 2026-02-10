@@ -146,6 +146,9 @@ class VehicleQueue(Document):
             frappe.throw("Purchase Order is mandatory to create Purchase Receipt")
 
         self.create_purchase_receipt()
+    def on_cancel(self):
+        self.delete_linked_purchase_receipt()
+        self.delete_linked_purchase_voucher()
 
     def create_purchase_receipt(self):
     # Fetch Purchase Order
@@ -225,6 +228,57 @@ class VehicleQueue(Document):
         frappe.msgprint(
             f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
         )
+    def delete_linked_purchase_receipt(self):
+
+        prs = frappe.get_all(
+            "Purchase Receipt",
+            filters={
+                "custom_vehicle_queue": self.name,
+                "docstatus": 0
+            },
+            pluck="name"
+        )
+
+        for pr_name in prs:
+
+            # --------------------------------------------------
+            # 1️⃣ DELETE LINKED LABORATORY REGISTERS FIRST
+            # --------------------------------------------------
+            lab_registers = frappe.get_all(
+                "Laboratory Register",
+                filters={
+                    "reference_name": pr_name,
+                    "docstatus": 0
+                },
+                pluck="name"
+            )
+
+            for lr_name in lab_registers:
+                lr = frappe.get_doc("Laboratory Register", lr_name)
+                lr.delete(ignore_permissions=True)
+
+            # --------------------------------------------------
+            # 2️⃣ DELETE PURCHASE RECEIPT
+            # --------------------------------------------------
+            pr = frappe.get_doc("Purchase Receipt", pr_name)
+            pr.delete(ignore_permissions=True)
+
+    # --------------------------------------------------
+    # DELETE PURCHASE VOUCHER
+    # --------------------------------------------------
+    def delete_linked_purchase_voucher(self):
+        pvs = frappe.get_all(
+            "Purchase Voucher",
+            filters={
+                "vehicle_queue": self.name,
+                "docstatus": 0
+            },
+            pluck="name"
+        )
+
+        for pv_name in pvs:
+            pv = frappe.get_doc("Purchase Voucher", pv_name)
+            pv.delete(ignore_permissions=True)
 
 def create_purchase_voucher(doc, method=None):
     """

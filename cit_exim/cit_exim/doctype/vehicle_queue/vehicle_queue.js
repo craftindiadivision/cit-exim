@@ -7,6 +7,20 @@ frappe.ui.form.on("Vehicle Queue", {
     },
     tare_weight: function(frm) {
         calculate_net_weight(frm);
+    },
+    company: function (frm) {
+        if (frm.doc.company) {
+            frm.set_query("warehouse", function () {
+                return {
+                    filters: {
+                        company: frm.doc.company
+                    }
+                };
+            });
+        } else {
+            // Clear warehouse if company is removed
+            frm.set_value("warehouse", null);
+        }
     }
 });
 
@@ -79,6 +93,7 @@ frappe.ui.form.on("Vehicle Queue", {
               status: ["not in", ["Closed", "On Hold"]],
               supplier: frm.doc.supplier,
               company: frm.doc.company,
+              per_received: ["<", 100]
             },
             allow_child_item_selection: true,
             child_fieldname: "items",
@@ -129,5 +144,7 @@ function update_no_of_bags_label(frm) {
         grid.refresh();
     }, 300);
 }
+
+
 
 
