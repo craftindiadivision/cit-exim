@@ -32,11 +32,24 @@ frappe.query_reports["EXPORT CHART"] = {
             "default": frappe.datetime.get_today(),
             "reqd": 1
         },
-        {
-            "fieldname": "agent",
-            "label": __("Agent"),
-            "fieldtype": "Link",
-            "options": "Supplier" // Or "Customer" depending on your field setup
-        }
+        // {
+        //     "fieldname": "agent",
+        //     "label": __("Agent"),
+        //     "fieldtype": "Link",
+        //     "options": "Supplier" // Or "Customer" depending on your field setup
+        // }
+ {
+    "fieldname": "agent",
+    "label": __("Agent"),
+    "fieldtype": "Link",
+    "options": "Supplier",
+    "get_query": function() {
+        return {
+            filters: {
+                "custom_is_agent": 1
+            }
+        };
+    }
+}
     ]
 };

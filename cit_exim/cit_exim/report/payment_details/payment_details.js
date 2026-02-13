@@ -1,12 +1,6 @@
-// Copyright (c) 2026, craft and contributors
+
+// Copyright (c) 2024, Your Name/Company and contributors
 // For license information, please see license.txt
-
-// frappe.query_reports["PAYMENT DETAILS"] = {
-// 	"filters": [
-
-// 	]
-// };
-
 
 frappe.query_reports["PAYMENT DETAILS"] = {
     "filters": [
@@ -15,28 +9,26 @@ frappe.query_reports["PAYMENT DETAILS"] = {
             "label": __("Company"),
             "fieldtype": "Link",
             "options": "Company",
-            "default": frappe.defaults.get_user_default("Company"),
+            "default": frappe.defaults.get_user_default("company"),
             "reqd": 1
         },
         {
             "fieldname": "from_date",
-            "label": __("From Date"),
+            "label": __("Start Date"),
             "fieldtype": "Date",
-            "default": frappe.datetime.month_start()
+            "default": frappe.datetime.add_months(frappe.datetime.get_today(), -3)
         },
         {
             "fieldname": "to_date",
-            "label": __("To Date"),
+            "label": __("End Date"),
             "fieldtype": "Date",
-            "default": frappe.datetime.month_end()
+            "default": frappe.datetime.get_today()
         },
-		{
-			"fieldname": "custom_work_flow_status",
-			"label": __("Workflow Status"),
-			"fieldtype": "Select",
-			"options": "\nShipment Under Process\nBL Issued\nDocument Submitted & Awaiting Payments\nCompleted Shipment",
-			"default": "BL Issued"
-		}
-
+        {
+            "fieldname": "workflow_status",
+            "label": __("WorkFlow"),
+            "fieldtype": "Select",
+            "options": "\nShipment Under Process\nBL Issued\nDocument Submitted & Awaiting Payments"
+        }
     ]
 };

@@ -126,7 +126,8 @@ def get_data(filters):
             AND cqs.parenttype = 'Sales Order' 
             AND cqs.test = 'PROTEIN'
         WHERE
-            si.docstatus IN (0, 1)
+            si.docstatus IN (1)
+            AND si.custom_payment_status = 1
             {conditions}
         GROUP BY
             si.name
