@@ -1,5 +1,36 @@
 // Copyright (c) 2025, craft and contributors
 // For license information, please see license.txt
+frappe.ui.form.on("Vehicle Queue", {
+    refresh: function(frm) {
+        calculate_totals(frm);
+    }
+});
+frappe.ui.form.on("Vehicle Queue Item", {
+    no_of_bags: function(frm) {
+        calculate_totals(frm);
+    },
+    item_add: function(frm) {
+        calculate_totals(frm);
+    },
+
+    item_remove: function(frm) {
+        calculate_totals(frm);
+    }
+});
+function calculate_totals(frm) {
+    let total_boxes = 0;
+    let total_amount = 0;
+
+    (frm.doc.item || []).forEach(row => {
+        total_boxes += row.no_of_bags || 0;
+    });
+
+    frm.set_value("total_no_of_boxes", total_boxes);
+
+
+    frm.refresh_field("total_no_of_boxes");
+
+}
 
 frappe.ui.form.on("Vehicle Queue", {
     gross_weight: function(frm) {
@@ -7,6 +38,12 @@ frappe.ui.form.on("Vehicle Queue", {
     },
     tare_weight: function(frm) {
         calculate_net_weight(frm);
+    },
+    ice_weight: function(frm) {
+        calculate_net_weight(frm);
+    },
+    total_no_of_boxes: function(frm) {
+        update_avg_per_box(frm);
     },
     company: function (frm) {
         if (frm.doc.company) {
@@ -24,13 +61,46 @@ frappe.ui.form.on("Vehicle Queue", {
     }
 });
 
-function calculate_net_weight(frm) {
-    if(frm.doc.gross_weight != null && frm.doc.tare_weight != null){
-        frm.set_value("net_weight", frm.doc.gross_weight - frm.doc.tare_weight);
-    } else {
-        frm.set_value("net_weight", 0);
-    }
+function update_avg_per_box(frm) {
+
+    let net = frm.doc.net_weight || 0;
+    let total_boxes = frm.doc.total_no_of_boxes || 0;
+
+    if (total_boxes <= 0) return;
+
+    let avg = net / total_boxes;
+
+    // ITEM TABLE ONLY
+    (frm.doc.item || []).forEach(row => {
+
+        // set avg_per_box
+        frappe.model.set_value(row.doctype, row.name, "avg_per_box", avg);
+
+        // calculate net_wt = no_of_boxes * avg_per_box
+        let nb = row.no_of_bags || 0;
+        frappe.model.set_value(row.doctype, row.name, "net_wt", nb * avg);
+
+    });
 }
+
+function calculate_net_weight(frm) {
+
+    let gross = frm.doc.gross_weight || 0;
+    let tare = frm.doc.tare_weight || 0;
+    let ice = frm.doc.ice_weight || 0;
+
+    let net = gross - tare - ice;
+
+    frappe.model.set_value(
+        frm.doctype,
+        frm.doc.name,
+        "net_weight",
+        net
+    );
+
+    update_avg_per_box(frm);
+}
+
 
 
 
@@ -144,7 +214,31 @@ function update_no_of_bags_label(frm) {
         grid.refresh();
     }, 300);
 }
+frappe.ui.form.on("Vehicle Queue", {
+    refresh(frm) {
+        hide_fields_based_on_product(frm);
+    },
+    onload(frm) {
+        hide_fields_based_on_product(frm);
+    },
+    product(frm) {
+        hide_fields_based_on_product(frm);
+    }
+});
 
+function hide_fields_based_on_product(frm) {
 
+    let product = frm.doc.product;
 
+    if (product === "RM-Fish Meal") {
+
+        frm.fields_dict["item"].grid.toggle_display("avg_per_box", false);
+        frm.fields_dict["item"].grid.toggle_display("net_wt", false);
+
+    } else {
+
+        frm.fields_dict["item"].grid.toggle_display("avg_per_box", true);
+        frm.fields_dict["item"].grid.toggle_display("net_wt", true);
+    }
+}
 

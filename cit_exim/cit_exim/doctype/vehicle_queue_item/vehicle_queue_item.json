@@ -7,7 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "item",
-  "no_of_bags"
+  "no_of_bags",
+  "avg_per_box",
+  "net_wt"
  ],
  "fields": [
   {
@@ -22,13 +24,27 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "No of Boxes"
+  },
+  {
+   "depends_on": "eval:parent.product == \"Raw Fish\"",
+   "fieldname": "avg_per_box",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Avg Per Box"
+  },
+  {
+   "depends_on": "eval:parent.product == \"Raw Fish\"",
+   "fieldname": "net_wt",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Net wt"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-25 13:05:20.702859",
+ "modified": "2026-02-13 10:52:44.896752",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue Item",

@@ -31,6 +31,9 @@
   "section_break_etar",
   "product",
   "item",
+  "section_break_hxnf",
+  "total_no_of_boxes",
+  "column_break_tiid",
   "section_break_uioj",
   "supplier_invoice_number",
   "column_break_nkcg",
@@ -41,6 +44,8 @@
   "gross_weight",
   "column_break_xfke",
   "tare_weight",
+  "column_break_msqx",
+  "ice_weight",
   "column_break_qqjq",
   "net_weight",
   "reference_section",
@@ -262,6 +267,29 @@
    "fieldtype": "Link",
    "label": "Loading Location",
    "options": "Loading Location"
+  },
+  {
+   "fieldname": "section_break_hxnf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_no_of_boxes",
+   "fieldtype": "Float",
+   "label": "Total No. of Boxes"
+  },
+  {
+   "fieldname": "column_break_tiid",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_msqx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.product == \"Raw Fish\"",
+   "fieldname": "ice_weight",
+   "fieldtype": "Float",
+   "label": "Ice Weight"
   }
  ],
  "grid_page_length": 50,
@@ -277,7 +305,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-01-24 21:02:30.708706",
+ "modified": "2026-02-13 10:54:54.498073",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

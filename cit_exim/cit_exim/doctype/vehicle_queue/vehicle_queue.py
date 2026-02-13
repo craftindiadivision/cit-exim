@@ -130,8 +130,8 @@ class VehicleQueue(Document):
         # Calculate Net Weight
         if self.vehicle_no:
             self.vehicle_no = self.vehicle_no.replace(" ", "").upper()
-        if self.gross_weight is not None and self.tare_weight is not None:
-            self.net_weight = self.gross_weight - self.tare_weight
+        if self.gross_weight is not None and self.tare_weight is not None and self.ice_weight is not None :
+            self.net_weight = self.gross_weight - self.tare_weight - self.ice_weight
         else:
             self.net_weight = 0
     def on_submit(self):
@@ -330,6 +330,7 @@ def create_purchase_voucher(doc, method=None):
     # Weight mapping
     pv.set("1st_weightkg", doc.gross_weight)
     pv.set("2nd_weightkg", doc.tare_weight)
+    pv.ice_weightkg = doc.ice_weight
     pv.net_weightkg = doc.net_weight
     pv.loading_location = doc.loading_location
     # Product Name = Item Group
