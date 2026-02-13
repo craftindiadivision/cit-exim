@@ -15,14 +15,12 @@ frappe.query_reports["PAYMENT DETAILS"] = {
         {
             "fieldname": "from_date",
             "label": __("Start Date"),
-            "fieldtype": "Date",
-            "default": frappe.datetime.add_months(frappe.datetime.get_today(), -3)
+            "fieldtype": "Date"
         },
         {
             "fieldname": "to_date",
             "label": __("End Date"),
-            "fieldtype": "Date",
-            "default": frappe.datetime.get_today()
+            "fieldtype": "Date"
         },
         {
             "fieldname": "workflow_status",

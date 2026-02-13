@@ -1,21 +1,12 @@
-
-
-# Copyright (c) 2024, Your Name/Company and contributors
-# For license information, please see license.txt
-
 import frappe
-from frappe import _, scrub
-from frappe.utils import today, date_diff, flt
+from frappe import _
+from frappe.utils import today, date_diff
 
 def execute(filters=None):
+    if not filters:
+        filters = {}
     columns = get_columns()
     data = get_data(filters)
-    
-    # Optional: Adding a total row for Amount and Received Amt
-    if data:
-        total_row = calculate_totals(data)
-        data.append(total_row)
-        
     return columns, data
 
 def get_columns():
@@ -25,7 +16,6 @@ def get_columns():
         {"label": _("Buyer"), "fieldname": "buyer", "fieldtype": "Link", "options": "Customer", "width": 150},
         {"label": _("LC/PO"), "fieldname": "lc_po", "fieldtype": "Data", "width": 110},
         {"label": _("PO No"), "fieldname": "po_no", "fieldtype": "Data", "width": 110},
-        {"label": _("Pending Qty"), "fieldname": "pending_qty", "fieldtype": "Float", "width": 100},
         {"label": _("New Inv"), "fieldname": "new_inv", "fieldtype": "Link", "options": "Sales Invoice", "width": 130},
         {"label": _("Qty"), "fieldname": "qty", "fieldtype": "Float", "width": 80},
         {"label": _("Rate"), "fieldname": "rate", "fieldtype": "Currency", "width": 90},
@@ -33,27 +23,36 @@ def get_columns():
         {"label": _("CP"), "fieldname": "cp", "fieldtype": "Data", "width": 80},
         {"label": _("Product"), "fieldname": "product", "fieldtype": "Data", "width": 120},
         {"label": _("Amount"), "fieldname": "amount", "fieldtype": "Currency", "width": 110},
-        {"label": _("Received Amt"), "fieldname": "received_amt", "fieldtype": "Currency", "width": 110},
-        {"label": _("Bank Charges"), "fieldname": "bank_charges", "fieldtype": "Currency", "width": 110},
         {"label": _("POD"), "fieldname": "pod", "fieldtype": "Data", "width": 100},
         {"label": _("Country"), "fieldname": "country", "fieldtype": "Data", "width": 100},
         {"label": _("Submission Dt"), "fieldname": "submission_dt", "fieldtype": "Date", "width": 110},
         {"label": _("ETD"), "fieldname": "etd", "fieldtype": "Date", "width": 110},
-        {"label": _("Aging Days"), "fieldname": "aging_days", "fieldtype": "Int", "width": 90},
-        {"label": _("Bank Name"), "fieldname": "bank_name", "fieldtype": "Data", "width": 130},
-        {"label": _("Payment Date"), "fieldname": "payment_receipt_date", "fieldtype": "Date", "width": 110},
-        {"label": _("Bank Ref No"), "fieldname": "bank_ref_no", "fieldtype": "Data", "width": 120},
+        {"label": _("Bank"), "fieldname": "bank_name", "fieldtype": "Data", "width": 130},
         {"label": _("DHL"), "fieldname": "dhl", "fieldtype": "Data", "width": 100},
+        {"label": _("Reaching dt / Payment receipt Date"), "fieldname": "payment_receipt_date", "fieldtype": "Date", "width": 110},
+        {"label": _("Received Amount"), "fieldname": "received_amt", "fieldtype": "Currency", "width": 110},
+        {"label": _("Bank Charges/Balance"), "fieldname": "bank_charges", "fieldtype": "Currency", "width": 110},
+        {"label": _("Bank Reference No"), "fieldname": "bank_ref_no", "fieldtype": "Data", "width": 120},
+        {"label": _("Aging Days"), "fieldname": "aging_days", "fieldtype": "Int", "width": 90},
+        {"label": _("Pending Qty"), "fieldname": "pending_qty", "fieldtype": "Float", "width": 100},
         {"label": _("Remarks"), "fieldname": "remarks", "fieldtype": "Small Text", "width": 150}
     ]
 
 def get_data(filters):
+    # Mandatory condition: docstatus 0 or 1 and pending payment
     conditions = "si.docstatus IN (0, 1) AND si.custom_payment_status = 0"
     
+    # Apply dynamic filters
     if filters.get("company"):
         conditions += f" AND si.company = {frappe.db.escape(filters.get('company'))}"
-    if filters.get("from_date") and filters.get("to_date"):
-        conditions += f" AND si.posting_date BETWEEN '{filters.get('from_date')}' AND '{filters.get('to_date')}'"
+    
+    if filters.get("from_date"):
+        conditions += f" AND si.posting_date >= '{filters.get('from_date')}'"
+    
+    if filters.get("to_date"):
+        conditions += f" AND si.posting_date <= '{filters.get('to_date')}'"
+    
+    # This must match the fieldname in the .js file
     if filters.get("workflow_status"):
         conditions += f" AND si.custom_work_flow_status = {frappe.db.escape(filters.get('workflow_status'))}"
 
@@ -69,7 +68,6 @@ def get_data(filters):
             items.qty AS qty,
             items.rate AS rate,
             si.commission_rate AS commission_rate,
-            si.name AS invoice_name,
             si.custom_item_group AS product,
             items.amount AS amount,
             pe.paid_amount AS received_amt,
@@ -78,47 +76,34 @@ def get_data(filters):
             si.country_of_destination AS country,
             si.custom_submission_date AS submission_dt,
             si.custom_shipped_on_board_date AS etd,
-            bank.bank AS bank_name,
+            bank_master.bank_name AS bank_name,
             pe.reference_date AS payment_receipt_date,
             pe.reference_no AS bank_ref_no,
             si.custom_dhl AS dhl,
-            si.custom_bl_issued_remarks AS remarks
+            si.custom_bl_issued_remarks AS remarks,
+            MAX(REGEXP_SUBSTR(cqs.value, '[0-9]+(\\\\.[0-9]+)?%')) AS cp
         FROM `tabSales Invoice` si
         INNER JOIN `tabSales Invoice Item` items ON items.parent = si.name
         LEFT JOIN `tabSales Order` so ON items.sales_order = so.name
+        LEFT JOIN `tabFISH MEAL CHILDTABLE` cqs ON cqs.parent = si.name 
+            AND cqs.parenttype = 'Sales Invoice' 
+            AND cqs.test = 'PROTEIN'
         LEFT JOIN `tabPayment Entry Reference` per ON per.reference_name = si.name
         LEFT JOIN `tabPayment Entry` pe ON pe.name = per.parent
-        LEFT JOIN `tabBank Account` bank ON pe.bank_account = bank.name
+        LEFT JOIN `tabBank Account` ba ON pe.bank_account = ba.name
+        LEFT JOIN `tabBank` bank_master ON ba.bank = bank_master.name
         WHERE {conditions}
+        GROUP BY items.name
         ORDER BY si.posting_date DESC
     """
     
     raw_data = frappe.db.sql(query, as_dict=True)
-    
     current_date = today()
+    
     for row in raw_data:
-        # 1. Calculate Aging Days
         if row.submission_dt:
             row.aging_days = date_diff(current_date, row.submission_dt)
         else:
             row.aging_days = 0
-            
-        # 2. Extract CP (Regex applied in Python for better compatibility)
-        import re
-        row.cp = ""
-        # Searching inside remarks or name as a fallback; adjust source field if needed
-        match = re.search(r'[0-9]+(\.[0-9]+)?%', str(row.remarks or ""))
-        if match:
-            row.cp = match.group()
 
     return raw_data
-
-def calculate_totals(data):
-    total_amount = sum(flt(row.get("amount")) for row in data)
-    total_received = sum(flt(row.get("received_amt")) for row in data)
-    
-    return {
-        "pol": "<b>" + _("Total") + "</b>",
-        "amount": total_amount,
-        "received_amt": total_received
-    }
