@@ -374,27 +374,7 @@ doc_events = {
     "Duty DrawBack Claim": {
         "on_submit": "cit_exim.cit_exim.doctype.duty_drawback_claim.duty_drawback_claim.create_jv_on_submit"
     },
-    "Payment Entry": {
-        # "on_submit": "cit_exim.cit_exim.doc_events.payment_entry.on_submit",
-        # "on_submit": "cit_exim.api.pe_on_submit",
-        # "before_cancel": "cit_exim.api.pe_on_cancel",
-        # "on_submit": [
-        #     "cit_exim.cit_exim.doc_events.payment_entry.on_submit",
-        #     "cit_exim.api.update_sales_invoice_status"
-        # ],
-        # "on_cancel": [
-        #     "cit_exim.api.update_sales_invoice_status"
-        # ],
-        # "on_submit": [
-        #     "cit_exim.api.pe_on_submit"
-        # ],
-        # "on_cancel": [
-        #     "cit_exim.api.pe_on_cancel"
-        # ]
 
-        "on_submit": "cit_exim.cit_exim.doc_events.payment_entry.on_submit",
-        "on_cancel": "cit_exim.cit_exim.doc_events.payment_entry.on_cancel"
-    },
     ("Delivery Note", "Sales Invoice"): {
         "validate": "cit_exim.cit_exim.doc_events.igst_calculation.cal_igst",
           
@@ -404,11 +384,17 @@ doc_events = {
     # },
    
     "Payment Entry": {
-        "on_submit": "cit_exim.cit_exim.doc_events.payment_entry.on_submit_update_sales_invoice"
-    
+        "on_submit": [
+            "cit_exim.cit_exim.doc_events.payment_entry.on_submit",
+            "cit_exim.cit_exim.doc_events.payment_entry.on_submit_update_sales_invoice"
+        ],
+        "on_cancel": [
+            "cit_exim.cit_exim.doc_events.payment_entry.on_cancel"
+        ]
     },
-  
-    
+
+
+
      "Vehicle Queue": {
         "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_voucher"
     }
