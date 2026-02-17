@@ -1406,7 +1406,7 @@ def before_workflow_action(doc, method=None):
                 all_checked = False
                 break
 
-    if all_checked:
+    if all_checked and doc.gst_category == "Overseas":
         doc.workflow_state = "BL Issued"
 
 
