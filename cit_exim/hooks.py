@@ -269,7 +269,9 @@ fixtures=[
            "Sales Order-main-default_print_format","Bank Account-main-field_order","Sales Invoice-main-field_order","Sales Invoice-naming_series-default","Sales Invoice-naming_series-options","Sales Order-naming_series-default","Sales Order-naming_series-options",
            "Opportunity-main-field_order","Sales Invoice-exim_packing_details-hidden","Sales Invoice-main-field_order","Sales Invoice-main-field_order","Sales Invoice-main-field_order","Payment Entry-reference_date-label",
            "Payment Entry-reference_no-label","Payment Entry-main-field_order","Sales Invoice-main-field_order","Sales Invoice Item-description-allow_on_submit","Sales Order-main-links_order",
-           "Sales Invoice Item-advanced_authorization_details-hidden","Sales Invoice Item-duty_calculation-depends_on"
+           "Sales Invoice Item-advanced_authorization_details-hidden","Sales Invoice Item-duty_calculation-depends_on","Sales Invoice-main-field_order","Sales Invoice-subscription_section-depends_on","Sales Invoice-section_break2-depends_on",
+           "Sales Invoice-sales_team_section_break-depends_on","Sales Invoice-section_break_49-depends_on","Sales Invoice-loyalty_points_redemption-depends_on"
+           
         ]]
     ]
     },
