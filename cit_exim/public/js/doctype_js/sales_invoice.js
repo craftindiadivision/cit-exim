@@ -912,7 +912,23 @@ frappe.ui.form.on('Sales Invoice', {
         }
     }
 });
-
+frappe.ui.form.on('Sales Invoice', {
+    branch: function(frm) {
+        
+        if (frm.doc.branch) {
+            frappe.db.get_value('Address', {
+                custom_branch: frm.doc.branch,
+                is_your_company_address: 1
+            },
+            'name').then(r => {
+                if (r && r.message && r.message.name) {
+                    frm.set_value('company_address', r.message.name);
+                
+                }
+            });
+        }
+    }
+});
 
 
 
