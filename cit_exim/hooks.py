@@ -270,7 +270,7 @@ fixtures=[
            "Opportunity-main-field_order","Sales Invoice-exim_packing_details-hidden","Sales Invoice-main-field_order","Sales Invoice-main-field_order","Sales Invoice-main-field_order","Payment Entry-reference_date-label",
            "Payment Entry-reference_no-label","Payment Entry-main-field_order","Sales Invoice-main-field_order","Sales Invoice Item-description-allow_on_submit","Sales Order-main-links_order",
            "Sales Invoice Item-advanced_authorization_details-hidden","Sales Invoice Item-duty_calculation-depends_on","Sales Invoice-main-field_order","Sales Invoice-subscription_section-depends_on","Sales Invoice-section_break2-depends_on",
-           "Sales Invoice-sales_team_section_break-depends_on","Sales Invoice-section_break_49-depends_on","Sales Invoice-loyalty_points_redemption-depends_on","Sales Invoice-time_sheet_list-depends_on","Sales Invoice-mode_of_transport-Options","Sales Order-main-links_order","Sales Order-main-links_order"
+           "Sales Invoice-sales_team_section_break-depends_on","Sales Invoice-section_break_49-depends_on","Sales Order-main-links_order","Sales Order-main-links_order","Sales Invoice-is_pos-hidden"
            
         ]]
     ]
