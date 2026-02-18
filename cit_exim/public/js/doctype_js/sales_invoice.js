@@ -934,4 +934,83 @@ frappe.ui.form.on('Sales Invoice', {
 
 
 
+frappe.ui.form.on("Sales Invoice", {
+    customer: function(frm) {
+        frm.set_query("custom_consignee", function() {
+            return {
+                query: "cit_exim.cit_exim.doc_events.sales_invoice.get_consignee_list",
+                filters: {
+                    customer: frm.doc.customer
+                }
+            };
+        });
+    }
+});
+
+// /////////////////////////////////////////Address changing based on Buyer and consignee//////////////////////////////////////////////////////////////
+
+
+
+
+frappe.ui.form.on("Sales Invoice", {
+    custom_consignee: function(frm) {
+        if (!frm.doc.custom_consignee) {
+            frm.set_value("shipping_address_name", "");
+            return;
+        }
+
+        frappe.call({
+            method: "cit_exim.cit_exim.doc_events.sales_invoice.get_customer_shipping_address",
+            args: {
+                customer: frm.doc.customer
+            },
+            callback: function(r) {
+                if (r.message) {
+                    frm.set_value("shipping_address_name", r.message);
+                } else {
+                    frm.set_value("shipping_address_name", "");
+                    frappe.msgprint({
+                        title: "Shipping Address",
+                        message: "No Shipping Address found for this Consignee",
+                        indicator: "orange"
+                    });
+                }
+            }
+        });
+    }
+});
+
+
+frappe.ui.form.on("Sales Invoice", {
+    custom_is_consignee_same_as_buyer(frm) {
+        if (!frm.doc.customer) {
+            frappe.msgprint("Please select a customer first.");
+            frm.set_value("custom_is_consignee_same_as_buyer", 0);
+            return;
+        }
+
+        if (frm.doc.custom_is_consignee_same_as_buyer) {
+            frappe.call({
+                method: "cit_exim.cit_exim.doc_events.sales_invoice.get_billing_address_for_customer",
+
+                args: {
+                   
+                    customer: frm.doc.customer
+                },
+                callback(r) {
+                    if (r.message) {
+                        frm.set_value("customer_address", r.message);
+                        frm.set_value("shipping_address_name", r.message);
+                    } else {
+                        frappe.msgprint("No billing address found for this customer.");
+                    }
+                }
+            });
+        }
+        if(frm.doc.custom_is_consignee_same_as_buyer === 1 && frm.doc.custom_consignee){
+            frm.set_value("shipping_address_name",frm.doc.customer_address)
+        }
+    }
+});
+
 
