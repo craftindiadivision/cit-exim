@@ -19,6 +19,32 @@ def before_save(self, method):
 	meis_calculation(self)
 
 def validate(doc, method=None):
+    if doc.branch:
+        address = frappe.db.get_value(
+            "Address",
+            {
+                "custom_branch": doc.branch,
+                "is_your_company_address": 1
+            },
+            "name"
+        )
+
+        if address:
+            doc.company_address = address
+        else:
+            company_address = frappe.db.get_value(
+                "Dynamic Link",
+                {
+                    "link_doctype": "Company",
+                    "link_name": doc.company,
+                    "parenttype": "Address"
+                },
+                "parent"
+            )
+
+            if company_address:
+                doc.company_address = company_address
+
     lot_list = []
 
     for item in doc.items:
