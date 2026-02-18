@@ -545,22 +545,6 @@
  },
  {
   "default_value": null,
-  "doc_type": "Sales Order",
-  "docstatus": 0,
-  "doctype": "Property Setter",
-  "doctype_or_field": "DocType",
-  "field_name": null,
-  "is_system_generated": 0,
-  "modified": "2026-02-17 17:41:03.096423",
-  "module": null,
-  "name": "Sales Order-main-links_order",
-  "property": "links_order",
-  "property_type": "Small Text",
-  "row_name": null,
-  "value": "[\"c29nh3e8b8\"]"
- },
- {
-  "default_value": null,
   "doc_type": "Sales Invoice",
   "docstatus": 0,
   "doctype": "Property Setter",
@@ -574,5 +558,21 @@
   "property_type": "Text",
   "row_name": null,
   "value": "Road\nAir\nRail\nShip\nTanker"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Sales Order",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocType",
+  "field_name": null,
+  "is_system_generated": 0,
+  "modified": "2026-02-18 14:18:18.697982",
+  "module": null,
+  "name": "Sales Order-main-links_order",
+  "property": "links_order",
+  "property_type": "Small Text",
+  "row_name": null,
+  "value": "[\"c29nh3e8b8\"]"
  }
 ]
