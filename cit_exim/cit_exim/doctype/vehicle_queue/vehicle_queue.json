@@ -13,6 +13,7 @@
   "warehouse",
   "amended_from",
   "naming_series",
+  "purchase_bill_no",
   "column_break_hylg",
   "date",
   "out_time",
@@ -73,7 +74,7 @@
    "options": "Company"
   },
   {
-   "depends_on": "eval:doc.purchase_order",
+   "depends_on": "eval:doc.product == \"RM-Fish Meal\"",
    "fieldname": "warehouse",
    "fieldtype": "Link",
    "label": "Location",
@@ -262,7 +263,7 @@
    "options": "Branch"
   },
   {
-   "depends_on": "eval: doc.purchase_order == null\n\n",
+   "depends_on": "eval:doc.product ==\"Raw Fish\"\n\n",
    "fieldname": "loading_location",
    "fieldtype": "Link",
    "label": "Loading Location",
@@ -290,6 +291,12 @@
    "fieldname": "ice_weight",
    "fieldtype": "Float",
    "label": "Ice Weight"
+  },
+  {
+   "depends_on": "eval:doc.product == \"Raw Fish\"",
+   "fieldname": "purchase_bill_no",
+   "fieldtype": "Data",
+   "label": "Purchase Bill No"
   }
  ],
  "grid_page_length": 50,
@@ -305,7 +312,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-02-13 10:54:54.498073",
+ "modified": "2026-02-19 18:09:29.916357",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

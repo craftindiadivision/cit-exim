@@ -333,6 +333,7 @@ def create_purchase_voucher(doc, method=None):
     pv.ice_weightkg = doc.ice_weight
     pv.net_weightkg = doc.net_weight
     pv.loading_location = doc.loading_location
+    pv.purchase_bill_no = doc.purchase_bill_no
     # Product Name = Item Group
     pv.product_name = item_group
 
@@ -343,7 +344,8 @@ def create_purchase_voucher(doc, method=None):
         pv.append("raw_materials", {
             "fish_variety": row.item,        # Vehicle Queue Item
             "warehouse": doc.warehouse,
-            "no_of_boxes": row.no_of_bags,    # Vehicle Queue noof_bags
+            "no_of_boxes": row.no_of_bags,
+            "count":row.count,
             "gross_weight": doc.gross_weight,
             "tare_weight": doc.tare_weight,
             "net_weight": doc.net_weight

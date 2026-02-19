@@ -212,6 +212,14 @@ function update_no_of_bags_label(frm) {
 
         // Refresh grid to apply label change
         grid.refresh();
+         frm.set_df_property(
+            "total_no_of_boxes",
+            "label",
+            is_fish_meal ? "Total No.of Bags" : "Total No.of Boxes"
+        );
+
+        frm.refresh_field("total_no_of_boxes");
+
     }, 300);
 }
 frappe.ui.form.on("Vehicle Queue", {
