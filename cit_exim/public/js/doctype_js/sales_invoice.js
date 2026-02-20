@@ -861,57 +861,192 @@ frappe.ui.form.on('Sales Invoice', {
 });
 
 
-frappe.ui.form.on('Sales Invoice', {
-    refresh(frm) {
-        if (frm.doc.docstatus === 1 && frm.doc.custom_loading_point === "MUNDRA") {
+// frappe.ui.form.on('Sales Invoice', {
+//     refresh(frm) {
+//         if (frm.doc.docstatus === 1 && frm.doc.custom_loading_point === "MUNDRA") {
             
-            frm.remove_custom_button(__('Split Sales Invoice'), __('Create'));
+//             frm.remove_custom_button(__('Split Sales Invoice'), __('Create'));
 
-            frm.add_custom_button(__('Split Sales Invoice'), () => {
-                let d = new frappe.ui.Dialog({
-                    title: __('Split into Separate Records'),
-                    fields: [
-                        {
-                            fieldname: 'split_count',
-                            fieldtype: 'Int',
-                            label: __('Number of Split Records'),
-                            reqd: 1,
-                            default: 2
-                        }
-                    ],
-                    primary_action_label: __('Split'),
-                    primary_action(values) {
-                        if (values.split_count < 2) {
-                            frappe.msgprint(__('Split count must be 2 or more'));
-                            return;
-                        }
+//             frm.add_custom_button(__('Split Sales Invoice'), () => {
+//                 let d = new frappe.ui.Dialog({
+//                     title: __('Split into Separate Records'),
+//                     fields: [
+//                         {
+//                             fieldname: 'split_count',
+//                             fieldtype: 'Int',
+//                             label: __('Number of Split Records'),
+//                             reqd: 1,
+//                             default: 2
+//                         }
+//                     ],
+//                     primary_action_label: __('Split'),
+//                     primary_action(values) {
+//                         if (values.split_count < 2) {
+//                             frappe.msgprint(__('Split count must be 2 or more'));
+//                             return;
+//                         }
 
-                        frappe.call({
-                            method: "cit_exim.cit_exim.doc_events.sales_invoice.split_sales_invoice",
-                            args: {
-                                sales_invoice: frm.doc.name,
-                                split_count: values.split_count
-                            },
-                            freeze: true,
-                            freeze_message: __("Creating Split Records..."),
-                            callback(r) {
-                                if (r.message) {
-                                    frappe.msgprint(
-                                        __('{0} records created in Split Sales Invoice  list', [r.message.length])
-                                    );
-                                    // Redirect to the new DocType list or the first record
-                                    frappe.set_route('List', 'Split Sales Invoice');
-                                }
-                            }
-                        });
-                        d.hide();
-                    }
-                });
-                d.show();
-            }, __('Create'));
-        }
+//                         frappe.call({
+//                             method: "cit_exim.cit_exim.doc_events.sales_invoice.split_sales_invoice",
+//                             args: {
+//                                 sales_invoice: frm.doc.name,
+//                                 split_count: values.split_count
+//                             },
+//                             freeze: true,
+//                             freeze_message: __("Creating Split Records..."),
+//                             callback(r) {
+//                                 if (r.message) {
+//                                     frappe.msgprint(
+//                                         __('{0} records created in Split Sales Invoice  list', [r.message.length])
+//                                     );
+//                                     // Redirect to the new DocType list or the first record
+//                                     frappe.set_route('List', 'Split Sales Invoice');
+//                                 }
+//                             }
+//                         });
+//                         d.hide();
+//                     }
+//                 });
+//                 d.show();
+//             }, __('Create'));
+//         }
+//     }
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+frappe.ui.form.on('Sales Invoice', {
+    refresh: function(frm) {
+        manage_split_button(frm);
+    },
+    // Triggers whenever the Loading Point field is changed
+    custom_loading_point: function(frm) {
+        manage_split_button(frm);
     }
 });
+
+function manage_split_button(frm) {
+    // 1. Clear existing button to prevent duplicates
+    frm.remove_custom_button(__('Split Sales Invoice'), __('Create'));
+
+    // 2. Conditions: 
+    // - Doc is not Cancelled (docstatus != 2)
+    // - custom_loading_point is exactly "MUNDRA"
+    if (frm.doc.docstatus !== 2 && frm.doc.custom_loading_point === "MUNDRA") {
+        
+        frm.add_custom_button(__('Split Sales Invoice'), () => {
+            
+            // Validation: Ensure the document is saved before splitting
+            if (frm.is_dirty()) {
+                frappe.msgprint(__('Please save the document before splitting.'));
+                return;
+            }
+
+            let d = new frappe.ui.Dialog({
+                title: __('Split into Separate Records'),
+                fields: [
+                    {
+                        fieldname: 'split_count',
+                        fieldtype: 'Int',
+                        label: __('Number of Split Records'),
+                        reqd: 1,
+                        default: 2
+                    }
+                ],
+                primary_action_label: __('Split'),
+                primary_action(values) {
+                    if (values.split_count < 2) {
+                        frappe.msgprint(__('Split count must be 2 or more'));
+                        return;
+                    }
+
+                    frappe.call({
+                        method: "cit_exim.cit_exim.doc_events.sales_invoice.split_sales_invoice",
+                        args: {
+                            sales_invoice: frm.doc.name,
+                            split_count: values.split_count
+                        },
+                        freeze: true,
+                        freeze_message: __("Creating Split Records..."),
+                        callback(r) {
+                            if (r.message) {
+                                frappe.msgprint({
+                                    title: __('Success'),
+                                    indicator: 'green',
+                                    message: __('{0} split records created.', [r.message.length])
+                                });
+                                frappe.set_route('List', 'Split Sales Invoice');
+                            }
+                        }
+                    });
+                    d.hide();
+                }
+            });
+            d.show();
+        }, __('Create'));
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 frappe.ui.form.on('Sales Invoice', {
     branch: function(frm) {
         

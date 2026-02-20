@@ -272,7 +272,7 @@ fixtures=[
            "Sales Invoice Item-advanced_authorization_details-hidden","Sales Invoice Item-duty_calculation-depends_on","Sales Invoice-main-field_order","Sales Invoice-subscription_section-depends_on","Sales Invoice-section_break2-depends_on",
            "Sales Invoice-sales_team_section_break-depends_on","Sales Invoice-section_break_49-depends_on","Sales Order-main-links_order","Sales Order-main-links_order","Sales Invoice-is_pos-hidden","Sales Invoice-mode_of_transport-Options",
            "Sales Order-requirement_of_sample_approval-hidden","Sales Order-main-links_order","Sales Invoice-amount_hedged-hidden","Sales Invoice-natural_hedge-hidden","Sales Invoice-amount_unhedged-hidden","Sales Invoice-container_size-options",
-           "Sales Invoice-mode_of_transport-options"
+           "Sales Invoice-mode_of_transport-options","Split Sales Invoice-container_size-options"
         
            
         ]]

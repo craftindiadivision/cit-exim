@@ -2163,20 +2163,142 @@ def create_consolidated_invoice(sales_invoices):
 #     return new_records
 
 
+# import frappe
+# from frappe.utils import flt, money_in_words
+# import string
+
+# @frappe.whitelist()
+# def split_sales_invoice(sales_invoice, split_count):
+#     source_doc = frappe.get_doc("Sales Invoice", sales_invoice)
+#     split_count = int(split_count)
+
+#     if split_count <= 0:
+#         frappe.throw("Split count must be at least 1")
+
+#     if source_doc.docstatus != 1:
+#         frappe.throw("Only submitted Sales Invoices can be split")
+
+#     target_meta = frappe.get_meta("Split Sales Invoice")
+#     suffixes = list(string.ascii_uppercase)
+#     new_records = []
+    
+#     container_rows = source_doc.get("container_detail") or []
+#     total_rows = len(container_rows)
+#     rows_per_split = total_rows // split_count
+
+#     # Fields that need to be divided by the split count
+#     fields_to_divide = [
+#         "total_qty", "total", "grand_total", "net_total", 
+#         "outstanding_amount", "base_total", "base_net_total", 
+#         "total_net_weight", "base_grand_total", "total_packages"
+#     ]
+
+#     # Fields to completely ignore during the copy loop
+#     # We add "status" here to avoid the "Completed Shipment" error
+#     exclude_fields = [
+#         "name", "docstatus", "items", "container_detail", 
+#         "amended_from", "base_in_words", "in_words", 
+#         "number_of_containers", "status"
+#     ]
+
+#     for i in range(split_count):
+#         if i >= len(suffixes): break 
+        
+#         new_split_doc = frappe.new_doc("Split Sales Invoice")
+        
+#         # --- NAMING ---
+#         suffix = suffixes[i]
+#         name_parts = source_doc.name.split("-")
+#         if len(name_parts) >= 2:
+#             name_parts[1] = f"{name_parts[1]}{suffix}"
+#         else:
+#             name_parts[0] = f"{name_parts[0]}{suffix}"
+#         new_split_doc.name = "-".join(name_parts)
+#         new_split_doc.sales_invoice_reference = source_doc.name
+
+#         # --- COPY PARENT FIELDS & SPLIT TOTALS ---
+#         for field in target_meta.fields:
+#             fname = field.fieldname
+#             if source_doc.get(fname) and fname not in exclude_fields:
+#                 val = source_doc.get(fname)
+#                 if fname in fields_to_divide:
+#                     # Logic: Divide value, but on the last split, take the remainder 
+#                     # to ensure totals match the source exactly.
+#                     divided_val = flt(val) / split_count
+#                     if i == split_count - 1:
+#                         new_split_doc.set(fname, flt(val) - (flt(divided_val) * (split_count - 1)))
+#                     else:
+#                         new_split_doc.set(fname, divided_val)
+#                 else:
+#                     new_split_doc.set(fname, val)
+
+#         # --- FIX STATUS ERROR ---
+#         # Explicitly set status to a value allowed by your "Split Sales Invoice" DocType
+#         new_split_doc.status = "Draft"
+
+#         # --- UPDATE TOTALS IN WORDS ---
+#         company_currency = frappe.get_cached_value('Company', source_doc.company, 'default_currency')
+#         if target_meta.has_field("base_in_words") and new_split_doc.base_grand_total:
+#             new_split_doc.base_in_words = money_in_words(new_split_doc.base_grand_total, company_currency)
+
+#         if target_meta.has_field("in_words") and new_split_doc.grand_total:
+#             new_split_doc.in_words = money_in_words(new_split_doc.grand_total, source_doc.currency)
+
+#         # --- COPY ITEMS (Divided Qty) ---
+#         for item in source_doc.items:
+#             new_item = new_split_doc.append("items", {})
+#             new_item.update(item.as_dict())
+#             new_item.name = None 
+            
+#             # Item qty handling with remainder for the last split
+#             divided_qty = flt(item.qty) / split_count
+#             if i == split_count - 1:
+#                 new_item.qty = flt(item.qty) - (flt(divided_qty) * (split_count - 1))
+#             else:
+#                 new_item.qty = divided_qty
+                
+#             new_item.amount = flt(new_item.qty) * flt(new_item.rate)
+
+#         # --- DISTRIBUTE CONTAINER DETAILS ---
+#         start_idx = i * rows_per_split
+#         if i == split_count - 1:
+#             current_batch = container_rows[start_idx:]
+#         else:
+#             end_idx = start_idx + rows_per_split
+#             current_batch = container_rows[start_idx:end_idx]
+
+#         for row in current_batch:
+#             new_row = new_split_doc.append("container_detail", {})
+#             new_row.update(row.as_dict())
+#             new_row.name = None 
+
+#         new_split_doc.number_of_containers = len(current_batch)
+
+#         # Use set_new_name() if you want Frappe to handle naming, 
+#         # but since you're overriding .name, insert will respect it.
+#         new_split_doc.insert(ignore_permissions=True)
+#         new_records.append(new_split_doc.name)
+
+#     return new_records
+
+
+
 import frappe
 from frappe.utils import flt, money_in_words
 import string
 
 @frappe.whitelist()
 def split_sales_invoice(sales_invoice, split_count):
+    # Fetch source document
     source_doc = frappe.get_doc("Sales Invoice", sales_invoice)
     split_count = int(split_count)
 
-    if split_count <= 0:
-        frappe.throw("Split count must be at least 1")
+    # --- VALIDATIONS ---
+    if split_count <= 1:
+        frappe.throw("Split count must be at least 2")
 
-    if source_doc.docstatus != 1:
-        frappe.throw("Only submitted Sales Invoices can be split")
+    if source_doc.custom_loading_point != "MUNDRA":
+        frappe.throw("Splitting is only allowed for invoices with Loading Point: MUNDRA")
 
     target_meta = frappe.get_meta("Split Sales Invoice")
     suffixes = list(string.ascii_uppercase)
@@ -2186,15 +2308,14 @@ def split_sales_invoice(sales_invoice, split_count):
     total_rows = len(container_rows)
     rows_per_split = total_rows // split_count
 
-    # Fields that need to be divided by the split count
+    # Fields that need to be mathematically divided
     fields_to_divide = [
         "total_qty", "total", "grand_total", "net_total", 
         "outstanding_amount", "base_total", "base_net_total", 
         "total_net_weight", "base_grand_total", "total_packages"
     ]
 
-    # Fields to completely ignore during the copy loop
-    # We add "status" here to avoid the "Completed Shipment" error
+    # Fields to exclude from the automatic copy loop
     exclude_fields = [
         "name", "docstatus", "items", "container_detail", 
         "amended_from", "base_in_words", "in_words", 
@@ -2206,13 +2327,14 @@ def split_sales_invoice(sales_invoice, split_count):
         
         new_split_doc = frappe.new_doc("Split Sales Invoice")
         
-        # --- NAMING ---
+        # --- CUSTOM NAMING LOGIC ---
         suffix = suffixes[i]
         name_parts = source_doc.name.split("-")
         if len(name_parts) >= 2:
             name_parts[1] = f"{name_parts[1]}{suffix}"
         else:
             name_parts[0] = f"{name_parts[0]}{suffix}"
+        
         new_split_doc.name = "-".join(name_parts)
         new_split_doc.sales_invoice_reference = source_doc.name
 
@@ -2223,20 +2345,19 @@ def split_sales_invoice(sales_invoice, split_count):
                 val = source_doc.get(fname)
                 if fname in fields_to_divide:
                     # Logic: Divide value, but on the last split, take the remainder 
-                    # to ensure totals match the source exactly.
                     divided_val = flt(val) / split_count
                     if i == split_count - 1:
-                        new_split_doc.set(fname, flt(val) - (flt(divided_val) * (split_count - 1)))
+                        remainder = flt(val) - (flt(divided_val) * (split_count - 1))
+                        new_split_doc.set(fname, remainder)
                     else:
                         new_split_doc.set(fname, divided_val)
                 else:
                     new_split_doc.set(fname, val)
 
-        # --- FIX STATUS ERROR ---
-        # Explicitly set status to a value allowed by your "Split Sales Invoice" DocType
+        # Ensure status is Draft for the new record
         new_split_doc.status = "Draft"
 
-        # --- UPDATE TOTALS IN WORDS ---
+        # --- RE-GENERATE CURRENCY IN WORDS ---
         company_currency = frappe.get_cached_value('Company', source_doc.company, 'default_currency')
         if target_meta.has_field("base_in_words") and new_split_doc.base_grand_total:
             new_split_doc.base_in_words = money_in_words(new_split_doc.base_grand_total, company_currency)
@@ -2244,13 +2365,12 @@ def split_sales_invoice(sales_invoice, split_count):
         if target_meta.has_field("in_words") and new_split_doc.grand_total:
             new_split_doc.in_words = money_in_words(new_split_doc.grand_total, source_doc.currency)
 
-        # --- COPY ITEMS (Divided Qty) ---
+        # --- COPY ITEMS & DIVIDE QUANTITIES ---
         for item in source_doc.items:
             new_item = new_split_doc.append("items", {})
             new_item.update(item.as_dict())
             new_item.name = None 
             
-            # Item qty handling with remainder for the last split
             divided_qty = flt(item.qty) / split_count
             if i == split_count - 1:
                 new_item.qty = flt(item.qty) - (flt(divided_qty) * (split_count - 1))
@@ -2259,7 +2379,7 @@ def split_sales_invoice(sales_invoice, split_count):
                 
             new_item.amount = flt(new_item.qty) * flt(new_item.rate)
 
-        # --- DISTRIBUTE CONTAINER DETAILS ---
+        # --- DISTRIBUTE CONTAINER DETAILS ROWS ---
         start_idx = i * rows_per_split
         if i == split_count - 1:
             current_batch = container_rows[start_idx:]
@@ -2274,17 +2394,11 @@ def split_sales_invoice(sales_invoice, split_count):
 
         new_split_doc.number_of_containers = len(current_batch)
 
-        # Use set_new_name() if you want Frappe to handle naming, 
-        # but since you're overriding .name, insert will respect it.
+        # Insert into database
         new_split_doc.insert(ignore_permissions=True)
         new_records.append(new_split_doc.name)
 
     return new_records
-
-
-
-
-
 
 
 
