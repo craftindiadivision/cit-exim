@@ -336,6 +336,7 @@ def create_purchase_voucher(doc, method=None):
     pv.purchase_bill_no = doc.purchase_bill_no
     # Product Name = Item Group
     pv.product_name = item_group
+    pv.weighment_location = doc.weighment_location
 
     # ----------------------------
     # Child table mapping (ALL ITEMS)

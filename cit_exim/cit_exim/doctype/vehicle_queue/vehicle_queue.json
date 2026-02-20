@@ -23,6 +23,7 @@
   "column_break_vmip",
   "token_number",
   "weigh_bridge_name",
+  "weighment_location",
   "vehicle_no",
   "driver_name",
   "accounting_dimensions_section",
@@ -297,6 +298,12 @@
    "fieldname": "purchase_bill_no",
    "fieldtype": "Data",
    "label": "Purchase Bill No"
+  },
+  {
+   "fieldname": "weighment_location",
+   "fieldtype": "Link",
+   "label": "Weighment Location",
+   "options": "Weighment Location"
   }
  ],
  "grid_page_length": 50,
@@ -312,7 +319,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-02-19 18:09:29.916357",
+ "modified": "2026-02-20 12:54:12.519923",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
