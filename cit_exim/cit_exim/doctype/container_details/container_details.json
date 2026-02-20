@@ -16,7 +16,9 @@
   "gr_wt_kgs",
   "no_of_packages",
   "custom_seal_no",
-  "token_number"
+  "token_number",
+  "manufacturing_date",
+  "batch_no"
  ],
  "fields": [
   {
@@ -100,11 +102,21 @@
    "fieldname": "token_number",
    "fieldtype": "Data",
    "label": "Weighing Bridge Ticket Number"
+  },
+  {
+   "fieldname": "manufacturing_date",
+   "fieldtype": "Date",
+   "label": "Manufacturing Date"
+  },
+  {
+   "fieldname": "batch_no",
+   "fieldtype": "Data",
+   "label": "Batch No."
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-01-17 20:42:37.091374",
+ "modified": "2026-02-20 16:40:20.193802",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Container Details",

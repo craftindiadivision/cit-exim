@@ -10,6 +10,7 @@
   "fiscal_year",
   "planned_qty",
   "uom",
+  "pod",
   "status",
   "reference"
  ],
@@ -53,13 +54,20 @@
    "fieldname": "reference",
    "fieldtype": "Small Text",
    "label": "Reference"
+  },
+  {
+   "fieldname": "pod",
+   "fieldtype": "Link",
+   "label": "POD",
+   "link_filters": "[[\"Port Details\",\"is_in_india\",\"=\",0]]",
+   "options": "Port Details"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-23 17:01:22.310511",
+ "modified": "2026-02-20 16:36:04.967227",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Shipment Schedule Child Table",

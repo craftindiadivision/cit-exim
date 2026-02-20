@@ -529,22 +529,6 @@
  },
  {
   "default_value": null,
-  "doc_type": "Sales Invoice",
-  "docstatus": 0,
-  "doctype": "Property Setter",
-  "doctype_or_field": "DocField",
-  "field_name": "mode_of_transport",
-  "is_system_generated": 0,
-  "modified": "2026-02-18 18:29:59.298883",
-  "module": null,
-  "name": "Sales Invoice-mode_of_transport-Options",
-  "property": "Options",
-  "property_type": "Small Text",
-  "row_name": null,
-  "value": "Road\nAir\nRail\nShip\nTanker"
- },
- {
-  "default_value": null,
   "doc_type": "Sales Order",
   "docstatus": 0,
   "doctype": "Property Setter",
@@ -622,5 +606,37 @@
   "property_type": "Check",
   "row_name": null,
   "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Sales Invoice",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "container_size",
+  "is_system_generated": 0,
+  "modified": "2026-02-20 16:52:58.787697",
+  "module": null,
+  "name": "Sales Invoice-container_size-options",
+  "property": "options",
+  "property_type": "Text",
+  "row_name": null,
+  "value": "40'\n20'"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Sales Invoice",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "mode_of_transport",
+  "is_system_generated": 0,
+  "modified": "2026-02-20 16:55:37.884015",
+  "module": null,
+  "name": "Sales Invoice-mode_of_transport-options",
+  "property": "options",
+  "property_type": "Text",
+  "row_name": null,
+  "value": "\nRoad\nAir\nRail\nShip\nTanker"
  }
 ]
