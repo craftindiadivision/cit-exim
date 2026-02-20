@@ -26,7 +26,8 @@
    "fieldname": "fiscal_year",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Year"
+   "label": "Year",
+   "options": "\n2026"
   },
   {
    "fieldname": "planned_qty",
@@ -67,7 +68,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-20 16:36:04.967227",
+ "modified": "2026-02-20 22:05:11.937625",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Shipment Schedule Child Table",
