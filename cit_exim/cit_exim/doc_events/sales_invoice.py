@@ -902,44 +902,76 @@ def calculate_total(self):
 
 
 def duty_calculation(self):
-	parent_meta = frappe.get_meta(self.doctype)
+    parent_meta = frappe.get_meta(self.doctype)
 
-	if parent_meta.has_field('total_duty_drawback') and frappe.db.get_value('Address', self.customer_address, 'country') != "India":
-		total_duty_drawback = 0.0
-		for row in self.items:
-			child_meta = frappe.get_meta(row.doctype)
-			if child_meta.has_field('duty_drawback_rate') and row.duty_drawback_rate and row.fob_value:
-				duty_drawback_amount = flt(row.fob_value * row.duty_drawback_rate / 100.0)
-				if child_meta.has_field('duty_drawback_amount'):
-					if row.maximum_cap == 1:
-						if row.capped_amount < duty_drawback_amount:
-							row.duty_drawback_amount = row.capped_amount
-							row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
-						else:
-							row.duty_drawback_amount = duty_drawback_amount
-							row.effective_rate = row.duty_drawback_rate
-					else:
-						row.duty_drawback_amount = duty_drawback_amount
+    # Check if country is not India and field exists
+    if parent_meta.has_field('total_duty_drawback') and frappe.db.get_value('Address', self.customer_address, 'country') != "India":
+        total_duty_drawback = 0.0
+        
+        for row in self.items:
+            child_meta = frappe.get_meta(row.doctype)
+            
+            if child_meta.has_field('duty_drawback_rate') and row.duty_drawback_rate and row.fob_value:
+                # 1. Standard calculation based on % rate
+                duty_drawback_amount = flt(row.fob_value * row.duty_drawback_rate / 100.0)
+                
+                if child_meta.has_field('duty_drawback_amount'):
+                    # --- NEW LOGIC START ---
+                    # If a capped_rate (per kg) is provided, calculate the capped_amount
+                    if child_meta.has_field('capped_rate') and row.capped_rate and row.total_weight:
+                        row.capped_amount = flt(row.total_weight * row.capped_rate)
+                    
 
-			row.igst_taxable_value = flt(row.amount)
-			if child_meta.has_field('duty_drawback_amount'):
-				total_duty_drawback += flt(row.duty_drawback_amount) or 0.0
+                    if row.maximum_cap == 1:
+                        # Compare drawback amount vs the newly calculated capped_amount
+                        if row.capped_amount and row.capped_amount < duty_drawback_amount:
+                            row.duty_drawback_amount = row.capped_amount
+                            row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
+                        else:
+                            row.duty_drawback_amount = duty_drawback_amount
+                            row.effective_rate = row.duty_drawback_rate
+                    else:
+                        row.duty_drawback_amount = duty_drawback_amount
 
-		self.total_duty_drawback = total_duty_drawback
+            row.igst_taxable_value = flt(row.amount)
+            if child_meta.has_field('duty_drawback_amount'):
+                total_duty_drawback += flt(row.duty_drawback_amount) or 0.0
+
+        self.total_duty_drawback = total_duty_drawback
 
 
 def meis_calculation(self):
 	if frappe.db.get_value('Address', self.customer_address, 'country') != "India":
 		total_meis = 0.0
+
 		for row in self.items:
+			rodtep_fob_value = 0.0
+			rodtep_kg_value = 0.0
+
+			# RoDTEP on FOB (%)
 			if row.fob_value and row.meis_rate:
-				meis_value = flt(row.fob_value * row.meis_rate / 100.0)
-				row.meis_value = meis_value
+				rodtep_fob_value = flt(
+					row.fob_value * row.meis_rate / 100
+				)
 
-				total_meis += flt(row.meis_value)
-		
+			# RoDTEP on Per Kg (Capped) — FIXED
+			if row.total_weight and row.custom_rodtep_capped_rate:
+				rodtep_kg_value = flt(
+					row.total_weight * row.custom_rodtep_capped_rate
+				)
+				row.custom_rodtep_capped_amount = rodtep_kg_value
+			else:
+				row.custom_rodtep_capped_amount = 0.0
+
+			# Final RoDTEP = LOWER of FOB % or Kg cap
+			if rodtep_fob_value and rodtep_kg_value:
+				row.meis_value = min(rodtep_fob_value, rodtep_kg_value)
+			else:
+				row.meis_value = rodtep_fob_value or rodtep_kg_value or 0.0
+
+			total_meis += flt(row.meis_value)
+
 		self.total_meis = total_meis
-
 
 # def validate_document_checks(self):
 # 	if self.get('sales_invoice_export_document_item') and not all([row.checked for row in self.get('sales_invoice_export_document_item')]):
@@ -1187,138 +1219,175 @@ def create_jv_with_gst(self):
     meta = frappe.get_meta(self.doctype)
     if meta.has_field("igst_refund_jv"):
         self.db_set("igst_refund_jv", jv.name)
+import frappe
+from frappe import _
+from frappe.utils import flt
+from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
+	is_dimension_enabled,
+)
+
+def is_branch_dimension_enabled():
+	return is_dimension_enabled("Branch")
+
+
+# ---------------------------------------------------
+# DUTY DRAWBACK RECEIVABLE (LESSER OF % vs CAP)
+# ---------------------------------------------------
+def get_duty_drawback_receivable(self):
+	total = 0.0
+	for row in self.items:
+		if row.duty_drawback_amount and row.capped_amount:
+			total += min(
+				flt(row.duty_drawback_amount),
+				flt(row.capped_amount),
+			)
+		else:
+			total += flt(row.duty_drawback_amount or row.capped_amount or 0.0)
+	return flt(total)
+
+
+# ---------------------------------------------------
+# RODTEP RECEIVABLE (LESSER OF % vs CAP)
+# ---------------------------------------------------
+def get_rodtep_receivable(self):
+	total = 0.0
+	for row in self.items:
+		if row.meis_value and row.custom_rodtep_capped_amount:
+			total += min(
+				flt(row.meis_value),
+				flt(row.custom_rodtep_capped_amount),
+			)
+		else:
+			total += flt(row.meis_value or row.custom_rodtep_capped_amount or 0.0)
+	return flt(total)
+
+
+# ---------------------------------------------------
+# CREATE JOURNAL ENTRIES
+# ---------------------------------------------------
 def create_jv(self):
-    if frappe.db.get_value("Address", self.customer_address, "country") != "India":
-        branch_enabled = is_branch_dimension_enabled()
+	# Export only
+	if frappe.db.get_value("Address", self.customer_address, "country") == "India":
+		return
 
-        meta = frappe.get_meta(self.doctype)
+	branch_enabled = is_branch_dimension_enabled()
+	meta = frappe.get_meta(self.doctype)
 
-        # ================= DUTY DRAWBACK =================
-        if meta.has_field("total_duty_drawback"):
-            if self.total_duty_drawback:
-                drawback_receivable_account = frappe.db.get_value(
-                    "Company",
-                    {"company_name": self.company},
-                    "duty_drawback_receivable_account",
-                )
-                drawback_income_account = frappe.db.get_value(
-                    "Company",
-                    {"company_name": self.company},
-                    "duty_drawback_income_account",
-                )
-                drawback_cost_center = frappe.db.get_value(
-                    "Company",
-                    {"company_name": self.company},
-                    "duty_drawback_cost_center",
-                )
+	# =================================================
+	# DUTY DRAWBACK JV
+	# =================================================
+	if meta.has_field("total_duty_drawback") and not self.get("duty_drawback_jv"):
+		duty_drawback_amount = get_duty_drawback_receivable(self)
 
-                if not drawback_receivable_account:
-                    frappe.throw(_("Set Duty Drawback Receivable Account in Company"))
-                elif not drawback_income_account:
-                    frappe.throw(_("Set Duty Drawback Income Account in Company"))
-                elif not drawback_cost_center:
-                    frappe.throw(_("Set Duty Drawback Cost Center in Company"))
-                else:
-                    jv = frappe.new_doc("Journal Entry")
-                    jv.voucher_type = "Duty Drawback Entry"
-                    jv.posting_date = self.posting_date
-                    jv.company = self.company
-                    jv.cheque_no = self.name
-                    jv.cheque_date = self.posting_date
-                    jv.user_remark = (
-                        "Duty draw back against " + self.name + " for " + self.customer
-                    )
+		if duty_drawback_amount:
+			drawback_receivable_account = frappe.db.get_value(
+				"Company", self.company, "duty_drawback_receivable_account"
+			)
+			drawback_income_account = frappe.db.get_value(
+				"Company", self.company, "duty_drawback_income_account"
+			)
+			drawback_cost_center = frappe.db.get_value(
+				"Company", self.company, "duty_drawback_cost_center"
+			)
 
-                    jv.append(
-                        "accounts",
-                        {
-                            "account": drawback_receivable_account,
-                            "cost_center": drawback_cost_center,
-                            "debit_in_account_currency": self.total_duty_drawback,
-                            **({"branch": self.branch} if branch_enabled else {}),
+			if not drawback_receivable_account:
+				frappe.throw(_("Set Duty Drawback Receivable Account in Company"))
+			if not drawback_income_account:
+				frappe.throw(_("Set Duty Drawback Income Account in Company"))
+			if not drawback_cost_center:
+				frappe.throw(_("Set Duty Drawback Cost Center in Company"))
 
-                        },
-                    )
+			jv = frappe.new_doc("Journal Entry")
+			jv.voucher_type = "Duty Drawback Entry"
+			jv.posting_date = self.posting_date
+			jv.company = self.company
+			jv.cheque_no = self.name
+			jv.cheque_date = self.posting_date
+			jv.user_remark = f"Duty Drawback against {self.name} for {self.customer}"
 
-                    jv.append(
-                        "accounts",
-                        {
-                            "account": drawback_income_account,
-                            "cost_center": drawback_cost_center,
-                            "credit_in_account_currency": self.total_duty_drawback,
-                            **({"branch": self.branch} if branch_enabled else {}),
+			jv.append(
+				"accounts",
+				{
+					"account": drawback_receivable_account,
+					"cost_center": drawback_cost_center,
+					"debit_in_account_currency": duty_drawback_amount,
+					**({"branch": self.branch} if branch_enabled else {}),
+				},
+			)
 
-                        },
-                    )
+			jv.append(
+				"accounts",
+				{
+					"account": drawback_income_account,
+					"cost_center": drawback_cost_center,
+					"credit_in_account_currency": duty_drawback_amount,
+					**({"branch": self.branch} if branch_enabled else {}),
+				},
+			)
 
-                    try:
-                        jv.save(ignore_permissions=True)
-                        jv.submit()
-                    except Exception as e:
-                        frappe.throw(str(e))
-                    else:
-                        if meta.has_field("duty_drawback_jv"):
-                            self.db_set("duty_drawback_jv", jv.name)
+			jv.save(ignore_permissions=True)
+			jv.submit()
 
-        # ================= RODTEP / MEIS =================
-        if self.get("total_meis"):
-            meis_receivable_account = frappe.db.get_value(
-                "Company", {"company_name": self.company}, "meis_receivable_account"
-            )
-            meis_income_account = frappe.db.get_value(
-                "Company", {"company_name": self.company}, "meis_income_account"
-            )
-            meis_cost_center = frappe.db.get_value(
-                "Company", {"company_name": self.company}, "meis_cost_center"
-            )
+			if meta.has_field("duty_drawback_jv"):
+				self.db_set("duty_drawback_jv", jv.name)
 
-            if not meis_receivable_account:
-                frappe.throw(_("Set RODTEP Receivable Account in Company"))
-            elif not meis_income_account:
-                frappe.throw(_("Set RODTEP Income Account in Company"))
-            elif not meis_cost_center:
-                frappe.throw(_("Set RODTEP Cost Center in Company"))
-            else:
-                meis_jv = frappe.new_doc("Journal Entry")
-                meis_jv.voucher_type = "RODTEP Entry"
-                meis_jv.posting_date = self.posting_date
-                meis_jv.company = self.company
-                meis_jv.cheque_no = self.name
-                meis_jv.cheque_date = self.posting_date
-                meis_jv.user_remark = (
-                    "RODTEP against " + self.name + " for " + self.customer
-                )
 
-                meis_jv.append(
-                    "accounts",
-                    {
-                        "account": meis_receivable_account,
-                        "cost_center": meis_cost_center,
-                        "debit_in_account_currency": self.total_meis,
-                        **({"branch": self.branch} if branch_enabled else {}),
+	# =================================================
+	# RODTEP / MEIS JV
+	# =================================================
+	if meta.has_field("total_meis") and not self.get("meis_jv"):
+		rodtep_amount = get_rodtep_receivable(self)
 
-                    },
-                )
+		if rodtep_amount:
+			meis_receivable_account = frappe.db.get_value(
+				"Company", self.company, "meis_receivable_account"
+			)
+			meis_income_account = frappe.db.get_value(
+				"Company", self.company, "meis_income_account"
+			)
+			meis_cost_center = frappe.db.get_value(
+				"Company", self.company, "meis_cost_center"
+			)
 
-                meis_jv.append(
-                    "accounts",
-                    {
-                        "account": meis_income_account,
-                        "cost_center": meis_cost_center,
-                        "credit_in_account_currency": self.total_meis,
-                        **({"branch": self.branch} if branch_enabled else {}),
+			if not meis_receivable_account:
+				frappe.throw(_("Set RODTEP Receivable Account in Company"))
+			if not meis_income_account:
+				frappe.throw(_("Set RODTEP Income Account in Company"))
+			if not meis_cost_center:
+				frappe.throw(_("Set RODTEP Cost Center in Company"))
 
-                    },
-                )
+			meis_jv = frappe.new_doc("Journal Entry")
+			meis_jv.voucher_type = "RODTEP Entry"
+			meis_jv.posting_date = self.posting_date
+			meis_jv.company = self.company
+			meis_jv.cheque_no = self.name
+			meis_jv.cheque_date = self.posting_date
+			meis_jv.user_remark = f"RODTEP against {self.name} for {self.customer}"
 
-                try:
-                    meis_jv.save(ignore_permissions=True)
-                    meis_jv.submit()
-                except Exception as e:
-                    frappe.throw(str(e))
-                else:
-                    self.db_set("meis_jv", meis_jv.name)
+			meis_jv.append(
+				"accounts",
+				{
+					"account": meis_receivable_account,
+					"cost_center": meis_cost_center,
+					"debit_in_account_currency": rodtep_amount,
+					**({"branch": self.branch} if branch_enabled else {}),
+				},
+			)
 
+			meis_jv.append(
+				"accounts",
+				{
+					"account": meis_income_account,
+					"cost_center": meis_cost_center,
+					"credit_in_account_currency": rodtep_amount,
+					**({"branch": self.branch} if branch_enabled else {}),
+				},
+			)
+
+			meis_jv.save(ignore_permissions=True)
+			meis_jv.submit()
+
+			self.db_set("meis_jv", meis_jv.name)
 
 def create_brc(self):
 	if frappe.db.get_value('Address', self.customer_address, 'country') != "India" and frappe.db.exists("DocType", "BRC Management"):
@@ -1778,274 +1847,274 @@ def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
 
 
 
-@frappe.whitelist()
-def create_consolidated_invoice(sales_invoices):
+# @frappe.whitelist()
+# def create_consolidated_invoice(sales_invoices):
 
-    if isinstance(sales_invoices, str):
-        sales_invoices = json.loads(sales_invoices)
+#     if isinstance(sales_invoices, str):
+#         sales_invoices = json.loads(sales_invoices)
 
-    if not sales_invoices:
-        frappe.throw("No Sales Invoices selected")
+#     if not sales_invoices:
+#         frappe.throw("No Sales Invoices selected")
 
-    # ---------------------------------------------------------
-    # CHECK IF ANY SALES INVOICE IS ALREADY CONSOLIDATED
-    # ---------------------------------------------------------
-    already_consolidated = []
+#     # ---------------------------------------------------------
+#     # CHECK IF ANY SALES INVOICE IS ALREADY CONSOLIDATED
+#     # ---------------------------------------------------------
+#     already_consolidated = []
 
-    for si_name in sales_invoices:
-        exists = frappe.db.exists(
-            "Sales Invoices",     # child table doctype
-            {"sales_invoice": si_name}
-        )
-        if exists:
-            already_consolidated.append(si_name)
+#     for si_name in sales_invoices:
+#         exists = frappe.db.exists(
+#             "Sales Invoices",     # child table doctype
+#             {"sales_invoice": si_name}
+#         )
+#         if exists:
+#             already_consolidated.append(si_name)
 
-    if already_consolidated:
-        frappe.throw(
-            "The following Sales Invoices are already linked to a Consolidated Sales Invoice:<br><b>"
-            + ", ".join(already_consolidated)
-            + "</b>"
-        )
+#     if already_consolidated:
+#         frappe.throw(
+#             "The following Sales Invoices are already linked to a Consolidated Sales Invoice:<br><b>"
+#             + ", ".join(already_consolidated)
+#             + "</b>"
+#         )
 
-    # ---------------------------------------------------------
-    # PICK BASE SALES INVOICE
-    # ---------------------------------------------------------
-    lowest_si_name = min(sales_invoices)
-    first_si = frappe.get_doc("Sales Invoice", lowest_si_name)
+#     # ---------------------------------------------------------
+#     # PICK BASE SALES INVOICE
+#     # ---------------------------------------------------------
+#     lowest_si_name = min(sales_invoices)
+#     first_si = frappe.get_doc("Sales Invoice", lowest_si_name)
 
-    # ---------------------------------------------------------
-    # ENSURE SINGLE SALES ORDER (SALES CONTRACT)
-    # ---------------------------------------------------------
-    sales_contracts = set()
+#     # ---------------------------------------------------------
+#     # ENSURE SINGLE SALES ORDER (SALES CONTRACT)
+#     # ---------------------------------------------------------
+#     sales_contracts = set()
 
-    for si_name in sales_invoices:
-        si = frappe.get_doc("Sales Invoice", si_name)
-        for item in si.items:
-            if item.sales_order:
-                sales_contracts.add(item.sales_order)
+#     for si_name in sales_invoices:
+#         si = frappe.get_doc("Sales Invoice", si_name)
+#         for item in si.items:
+#             if item.sales_order:
+#                 sales_contracts.add(item.sales_order)
 
-    if len(sales_contracts) > 1:
-        frappe.throw(
-            "Selected Sales Invoices contain items from different Sales Contracts. "
-            "Please select invoices belonging to the same Sales Contract."
-        )
+#     if len(sales_contracts) > 1:
+#         frappe.throw(
+#             "Selected Sales Invoices contain items from different Sales Contracts. "
+#             "Please select invoices belonging to the same Sales Contract."
+#         )
 
-    sales_contract = list(sales_contracts)[0] if sales_contracts else None
+#     sales_contract = list(sales_contracts)[0] if sales_contracts else None
 
-    if frappe.db.exists("Consolidated Sales Invoice", first_si.name):
-        frappe.throw(
-            f"Consolidated Sales Invoice with name '{first_si.name}' already exists"
-        )
+#     if frappe.db.exists("Consolidated Sales Invoice", first_si.name):
+#         frappe.throw(
+#             f"Consolidated Sales Invoice with name '{first_si.name}' already exists"
+#         )
 
-    # ---------------------------------------------------------
-    # CREATE CONSOLIDATED SALES INVOICE
-    # ---------------------------------------------------------
-    csi = frappe.new_doc("Consolidated Sales Invoice")
-    csi.name = first_si.name
+#     # ---------------------------------------------------------
+#     # CREATE CONSOLIDATED SALES INVOICE
+#     # ---------------------------------------------------------
+#     csi = frappe.new_doc("Consolidated Sales Invoice")
+#     csi.name = first_si.name
 
-    # Header mapping
-    csi.customer = first_si.customer
-    csi.company = first_si.company
-    csi.currency = first_si.currency
-    csi.conversion_rate = first_si.conversion_rate
-    csi.debit_to = first_si.debit_to
-    csi.cost_center = first_si.cost_center
-    csi.project = first_si.project
-    csi.tax_category = first_si.tax_category
-    csi.shipping_rule = first_si.shipping_rule
-    csi.incoterm = first_si.incoterm
-    csi.taxes_and_charges = first_si.taxes_and_charges
-    csi.customer_address = first_si.customer_address
-    csi.address_display = first_si.address_display
-    csi.gst_category = first_si.gst_category
-    csi.contact_person = first_si.contact_person
-    csi.territory = first_si.territory
-    csi.shipping_address_name = first_si.shipping_address_name
-    csi.shipping_address = first_si.shipping_address
-    csi.dispatch_address_name = first_si.dispatch_address_name
-    csi.company_address = first_si.company_address
-    csi.company_address_display = first_si.company_address_display
-    csi.company_contact_person = first_si.company_contact_person
-    csi.tc_name = first_si.tc_name
-    csi.terms = first_si.terms
-    csi.update_stock = 1 if first_si.update_stock else 0
-    csi.set_warehouse = first_si.set_warehouse
-    csi.posting_date = today()
-    csi.sales_contract = sales_contract
+#     # Header mapping
+#     csi.customer = first_si.customer
+#     csi.company = first_si.company
+#     csi.currency = first_si.currency
+#     csi.conversion_rate = first_si.conversion_rate
+#     csi.debit_to = first_si.debit_to
+#     csi.cost_center = first_si.cost_center
+#     csi.project = first_si.project
+#     csi.tax_category = first_si.tax_category
+#     csi.shipping_rule = first_si.shipping_rule
+#     csi.incoterm = first_si.incoterm
+#     csi.taxes_and_charges = first_si.taxes_and_charges
+#     csi.customer_address = first_si.customer_address
+#     csi.address_display = first_si.address_display
+#     csi.gst_category = first_si.gst_category
+#     csi.contact_person = first_si.contact_person
+#     csi.territory = first_si.territory
+#     csi.shipping_address_name = first_si.shipping_address_name
+#     csi.shipping_address = first_si.shipping_address
+#     csi.dispatch_address_name = first_si.dispatch_address_name
+#     csi.company_address = first_si.company_address
+#     csi.company_address_display = first_si.company_address_display
+#     csi.company_contact_person = first_si.company_contact_person
+#     csi.tc_name = first_si.tc_name
+#     csi.terms = first_si.terms
+#     csi.update_stock = 1 if first_si.update_stock else 0
+#     csi.set_warehouse = first_si.set_warehouse
+#     csi.posting_date = today()
+#     csi.sales_contract = sales_contract
 
-    # ---------------------------------------------------------
-    # LINK SALES INVOICES
-    # ---------------------------------------------------------
-    for si_name in sales_invoices:
-        csi.append("sales_invoice_reference", {
-            "sales_invoice": si_name
-        })
+#     # ---------------------------------------------------------
+#     # LINK SALES INVOICES
+#     # ---------------------------------------------------------
+#     for si_name in sales_invoices:
+#         csi.append("sales_invoice_reference", {
+#             "sales_invoice": si_name
+#         })
 
-    # ---------------------------------------------------------
-    # FETCH PAYMENT TERMS FROM SALES ORDER
-    # ---------------------------------------------------------
-    if sales_contract:
-        so = frappe.get_doc("Sales Order", sales_contract)
-        csi.payment_terms_template = so.payment_terms_template
+#     # ---------------------------------------------------------
+#     # FETCH PAYMENT TERMS FROM SALES ORDER
+#     # ---------------------------------------------------------
+#     if sales_contract:
+#         so = frappe.get_doc("Sales Order", sales_contract)
+#         csi.payment_terms_template = so.payment_terms_template
 
-        # Copy payment schedule
-        csi.set("payment_schedule", [])
-        for ps in so.payment_schedule:
-            csi.append("payment_schedule", {
-                "payment_term": ps.payment_term,
-                "description": ps.description,
-                "due_date": ps.due_date,
-                "invoice_portion": ps.invoice_portion,
-                "payment_amount": ps.payment_amount,
-                "base_payment_amount": ps.base_payment_amount,
-                "discount_type": ps.discount_type,
-                "discount": ps.discount,
-                "discount_date": ps.discount_date
-            })
+#         # Copy payment schedule
+#         csi.set("payment_schedule", [])
+#         for ps in so.payment_schedule:
+#             csi.append("payment_schedule", {
+#                 "payment_term": ps.payment_term,
+#                 "description": ps.description,
+#                 "due_date": ps.due_date,
+#                 "invoice_portion": ps.invoice_portion,
+#                 "payment_amount": ps.payment_amount,
+#                 "base_payment_amount": ps.base_payment_amount,
+#                 "discount_type": ps.discount_type,
+#                 "discount": ps.discount,
+#                 "discount_date": ps.discount_date
+#             })
 
-    # ---------------------------------------------------------
-    # CONSOLIDATE ITEMS
-    # ---------------------------------------------------------
-    item_map = {}
+#     # ---------------------------------------------------------
+#     # CONSOLIDATE ITEMS
+#     # ---------------------------------------------------------
+#     item_map = {}
 
-    for si_name in sales_invoices:
-        si = frappe.get_doc("Sales Invoice", si_name)
+#     for si_name in sales_invoices:
+#         si = frappe.get_doc("Sales Invoice", si_name)
 
-        if si.docstatus != 1:
-            frappe.throw(f"{si.name} must be Submitted")
+#         if si.docstatus != 1:
+#             frappe.throw(f"{si.name} must be Submitted")
 
-        if si.customer != csi.customer:
-            frappe.throw("All Sales Invoices must have the same Customer")
+#         if si.customer != csi.customer:
+#             frappe.throw("All Sales Invoices must have the same Customer")
 
-        if si.company != csi.company:
-            frappe.throw("All Sales Invoices must belong to the same Company")
+#         if si.company != csi.company:
+#             frappe.throw("All Sales Invoices must belong to the same Company")
 
-        for item in si.items:
-            key = item.item_code
+#         for item in si.items:
+#             key = item.item_code
 
-            if key in item_map:
-                item_map[key]["qty"] += flt(item.qty)
-                item_map[key]["amount"] += flt(item.amount)
-                item_map[key]["base_amount"] += flt(item.base_amount)
-                item_map[key]["sales_orders"].add(item.sales_order)
-            else:
-                item_map[key] = {
-                    "item_code": item.item_code,
-                    "item_name": item.item_name,
-                    "description": item.description,
-                    "qty": flt(item.qty),
-                    "uom": item.uom,
-                    "stock_uom": item.stock_uom,
-                    "conversion_factor": flt(item.conversion_factor) or 1,
-                    "rate": flt(item.rate),
-                    "base_rate": flt(item.base_rate),
-                    "amount": flt(item.amount),
-                    "base_amount": flt(item.base_amount),
-                    "income_account": item.income_account,
-                    "cost_center": item.cost_center,
-                    "sales_orders": {item.sales_order}
-                }
+#             if key in item_map:
+#                 item_map[key]["qty"] += flt(item.qty)
+#                 item_map[key]["amount"] += flt(item.amount)
+#                 item_map[key]["base_amount"] += flt(item.base_amount)
+#                 item_map[key]["sales_orders"].add(item.sales_order)
+#             else:
+#                 item_map[key] = {
+#                     "item_code": item.item_code,
+#                     "item_name": item.item_name,
+#                     "description": item.description,
+#                     "qty": flt(item.qty),
+#                     "uom": item.uom,
+#                     "stock_uom": item.stock_uom,
+#                     "conversion_factor": flt(item.conversion_factor) or 1,
+#                     "rate": flt(item.rate),
+#                     "base_rate": flt(item.base_rate),
+#                     "amount": flt(item.amount),
+#                     "base_amount": flt(item.base_amount),
+#                     "income_account": item.income_account,
+#                     "cost_center": item.cost_center,
+#                     "sales_orders": {item.sales_order}
+#                 }
 
-    for row in item_map.values():
-        csi.append("items", {
-            "item_code": row["item_code"],
-            "item_name": row["item_name"],
-            "description": row["description"],
-            "qty": row["qty"],
-            "uom": row["uom"],
-            "stock_uom": row["stock_uom"],
-            "conversion_factor": row["conversion_factor"],
-            "rate": row["rate"],
-            "base_rate": row["base_rate"],
-            "amount": row["amount"],
-            "base_amount": row["base_amount"],
-            "income_account": row["income_account"],
-            "cost_center": row["cost_center"],
-            "sales_order": ", ".join(filter(None, row["sales_orders"]))
-        })
+#     for row in item_map.values():
+#         csi.append("items", {
+#             "item_code": row["item_code"],
+#             "item_name": row["item_name"],
+#             "description": row["description"],
+#             "qty": row["qty"],
+#             "uom": row["uom"],
+#             "stock_uom": row["stock_uom"],
+#             "conversion_factor": row["conversion_factor"],
+#             "rate": row["rate"],
+#             "base_rate": row["base_rate"],
+#             "amount": row["amount"],
+#             "base_amount": row["base_amount"],
+#             "income_account": row["income_account"],
+#             "cost_center": row["cost_center"],
+#             "sales_order": ", ".join(filter(None, row["sales_orders"]))
+#         })
 
-    # ---------------------------------------------------------
-    # TAX CONSOLIDATION
-    # ---------------------------------------------------------
-    tax_map = {}
+#     # ---------------------------------------------------------
+#     # TAX CONSOLIDATION
+#     # ---------------------------------------------------------
+#     tax_map = {}
 
-    for tax in first_si.taxes:
-        key = (tax.account_head, tax.charge_type)
-        tax_map[key] = {
-            "charge_type": tax.charge_type,
-            "account_head": tax.account_head,
-            "description": tax.description,
-            "included_in_print_rate": tax.included_in_print_rate,
-            "cost_center": tax.cost_center,
-            "rate": flt(tax.rate),
-            "gst_tax_type": tax.gst_tax_type,
-            "tax_amount": 0,
-            "base_tax_amount": 0,
-            "total": 0,
-            "base_total": 0,
-            "tax_amount_after_discount_amount": 0,
-        }
+#     for tax in first_si.taxes:
+#         key = (tax.account_head, tax.charge_type)
+#         tax_map[key] = {
+#             "charge_type": tax.charge_type,
+#             "account_head": tax.account_head,
+#             "description": tax.description,
+#             "included_in_print_rate": tax.included_in_print_rate,
+#             "cost_center": tax.cost_center,
+#             "rate": flt(tax.rate),
+#             "gst_tax_type": tax.gst_tax_type,
+#             "tax_amount": 0,
+#             "base_tax_amount": 0,
+#             "total": 0,
+#             "base_total": 0,
+#             "tax_amount_after_discount_amount": 0,
+#         }
 
-    for si_name in sales_invoices:
-        si = frappe.get_doc("Sales Invoice", si_name)
-        for tax in si.taxes:
-            key = (tax.account_head, tax.charge_type)
-            if key in tax_map:
-                tax_map[key]["tax_amount"] += flt(tax.tax_amount)
-                tax_map[key]["base_tax_amount"] += flt(tax.base_tax_amount)
-                tax_map[key]["total"] += flt(tax.total)
-                tax_map[key]["base_total"] += flt(tax.base_total)
-                tax_map[key]["tax_amount_after_discount_amount"] += flt(
-                    tax.tax_amount_after_discount_amount
-                )
+#     for si_name in sales_invoices:
+#         si = frappe.get_doc("Sales Invoice", si_name)
+#         for tax in si.taxes:
+#             key = (tax.account_head, tax.charge_type)
+#             if key in tax_map:
+#                 tax_map[key]["tax_amount"] += flt(tax.tax_amount)
+#                 tax_map[key]["base_tax_amount"] += flt(tax.base_tax_amount)
+#                 tax_map[key]["total"] += flt(tax.total)
+#                 tax_map[key]["base_total"] += flt(tax.base_total)
+#                 tax_map[key]["tax_amount_after_discount_amount"] += flt(
+#                     tax.tax_amount_after_discount_amount
+#                 )
 
-    for row in tax_map.values():
-        csi.append("taxes", row)
+#     for row in tax_map.values():
+#         csi.append("taxes", row)
 
-    # ---------------------------------------------------------
-    # MANUAL TOTALS
-    # ---------------------------------------------------------
-    total_qty = 0
-    base_total = 0
-    total = 0
-    grand_total = 0
-    base_grand_total = 0
-    base_total_taxes_and_charges = 0
-    total_taxes_and_charges = 0
-    outstanding_amount = 0
+#     # ---------------------------------------------------------
+#     # MANUAL TOTALS
+#     # ---------------------------------------------------------
+#     total_qty = 0
+#     base_total = 0
+#     total = 0
+#     grand_total = 0
+#     base_grand_total = 0
+#     base_total_taxes_and_charges = 0
+#     total_taxes_and_charges = 0
+#     outstanding_amount = 0
 
-    for si_name in sales_invoices:
-        si = frappe.get_doc("Sales Invoice", si_name)
-        total_qty += flt(si.total_qty)
-        total += flt(si.total)
-        base_total += flt(si.base_total)
-        grand_total += flt(si.grand_total)
-        base_grand_total += flt(si.base_grand_total)
-        base_total_taxes_and_charges += flt(si.base_total_taxes_and_charges)
-        total_taxes_and_charges += flt(si.total_taxes_and_charges)
-        outstanding_amount += flt(si.outstanding_amount)
+#     for si_name in sales_invoices:
+#         si = frappe.get_doc("Sales Invoice", si_name)
+#         total_qty += flt(si.total_qty)
+#         total += flt(si.total)
+#         base_total += flt(si.base_total)
+#         grand_total += flt(si.grand_total)
+#         base_grand_total += flt(si.base_grand_total)
+#         base_total_taxes_and_charges += flt(si.base_total_taxes_and_charges)
+#         total_taxes_and_charges += flt(si.total_taxes_and_charges)
+#         outstanding_amount += flt(si.outstanding_amount)
 
-    csi.total_qty = total_qty
-    csi.base_total = base_total
-    csi.total = total
-    csi.grand_total = grand_total
-    csi.base_grand_total = base_grand_total
-    csi.base_total_taxes_and_charges = base_total_taxes_and_charges
-    csi.total_taxes_and_charges = total_taxes_and_charges
-    csi.outstanding_amount = outstanding_amount
+#     csi.total_qty = total_qty
+#     csi.base_total = base_total
+#     csi.total = total
+#     csi.grand_total = grand_total
+#     csi.base_grand_total = base_grand_total
+#     csi.base_total_taxes_and_charges = base_total_taxes_and_charges
+#     csi.total_taxes_and_charges = total_taxes_and_charges
+#     csi.outstanding_amount = outstanding_amount
 
-    # ---------------------------------------------------------
-    # SAVE
-    # ---------------------------------------------------------
-    csi.insert(ignore_permissions=True)
-    frappe.db.commit()
+#     # ---------------------------------------------------------
+#     # SAVE
+#     # ---------------------------------------------------------
+#     csi.insert(ignore_permissions=True)
+#     frappe.db.commit()
 
-    for si_name in sales_invoices:
-        frappe.db.set_value("Sales Invoice", si_name, "is_consolidated", 1)
+#     for si_name in sales_invoices:
+#         frappe.db.set_value("Sales Invoice", si_name, "is_consolidated", 1)
 
-    frappe.msgprint(f"Consolidated Sales Invoice {csi.name} created successfully")
+#     frappe.msgprint(f"Consolidated Sales Invoice {csi.name} created successfully")
 
-    return csi
+#     return csi
 
 
 
@@ -2283,122 +2352,122 @@ def create_consolidated_invoice(sales_invoices):
 
 
 
-import frappe
-from frappe.utils import flt, money_in_words
-import string
+# import frappe
+# from frappe.utils import flt, money_in_words
+# import string
 
-@frappe.whitelist()
-def split_sales_invoice(sales_invoice, split_count):
-    # Fetch source document
-    source_doc = frappe.get_doc("Sales Invoice", sales_invoice)
-    split_count = int(split_count)
+# @frappe.whitelist()
+# def split_sales_invoice(sales_invoice, split_count):
+#     # Fetch source document
+#     source_doc = frappe.get_doc("Sales Invoice", sales_invoice)
+#     split_count = int(split_count)
 
-    # --- VALIDATIONS ---
-    if split_count <= 1:
-        frappe.throw("Split count must be at least 2")
+#     # --- VALIDATIONS ---
+#     if split_count <= 1:
+#         frappe.throw("Split count must be at least 2")
 
-    if source_doc.custom_loading_point != "MUNDRA":
-        frappe.throw("Splitting is only allowed for invoices with Loading Point: MUNDRA")
+#     if source_doc.custom_loading_point != "MUNDRA":
+#         frappe.throw("Splitting is only allowed for invoices with Loading Point: MUNDRA")
 
-    target_meta = frappe.get_meta("Split Sales Invoice")
-    suffixes = list(string.ascii_uppercase)
-    new_records = []
+#     target_meta = frappe.get_meta("Split Sales Invoice")
+#     suffixes = list(string.ascii_uppercase)
+#     new_records = []
     
-    container_rows = source_doc.get("container_detail") or []
-    total_rows = len(container_rows)
-    rows_per_split = total_rows // split_count
+#     container_rows = source_doc.get("container_detail") or []
+#     total_rows = len(container_rows)
+#     rows_per_split = total_rows // split_count
 
-    # Fields that need to be mathematically divided
-    fields_to_divide = [
-        "total_qty", "total", "grand_total", "net_total", 
-        "outstanding_amount", "base_total", "base_net_total", 
-        "total_net_weight", "base_grand_total", "total_packages"
-    ]
+#     # Fields that need to be mathematically divided
+#     fields_to_divide = [
+#         "total_qty", "total", "grand_total", "net_total", 
+#         "outstanding_amount", "base_total", "base_net_total", 
+#         "total_net_weight", "base_grand_total", "total_packages"
+#     ]
 
-    # Fields to exclude from the automatic copy loop
-    exclude_fields = [
-        "name", "docstatus", "items", "container_detail", 
-        "amended_from", "base_in_words", "in_words", 
-        "number_of_containers", "status"
-    ]
+#     # Fields to exclude from the automatic copy loop
+#     exclude_fields = [
+#         "name", "docstatus", "items", "container_detail", 
+#         "amended_from", "base_in_words", "in_words", 
+#         "number_of_containers", "status"
+#     ]
 
-    for i in range(split_count):
-        if i >= len(suffixes): break 
+#     for i in range(split_count):
+#         if i >= len(suffixes): break 
         
-        new_split_doc = frappe.new_doc("Split Sales Invoice")
+#         new_split_doc = frappe.new_doc("Split Sales Invoice")
         
-        # --- CUSTOM NAMING LOGIC ---
-        suffix = suffixes[i]
-        name_parts = source_doc.name.split("-")
-        if len(name_parts) >= 2:
-            name_parts[1] = f"{name_parts[1]}{suffix}"
-        else:
-            name_parts[0] = f"{name_parts[0]}{suffix}"
+#         # --- CUSTOM NAMING LOGIC ---
+#         suffix = suffixes[i]
+#         name_parts = source_doc.name.split("-")
+#         if len(name_parts) >= 2:
+#             name_parts[1] = f"{name_parts[1]}{suffix}"
+#         else:
+#             name_parts[0] = f"{name_parts[0]}{suffix}"
         
-        new_split_doc.name = "-".join(name_parts)
-        new_split_doc.sales_invoice_reference = source_doc.name
+#         new_split_doc.name = "-".join(name_parts)
+#         new_split_doc.sales_invoice_reference = source_doc.name
 
-        # --- COPY PARENT FIELDS & SPLIT TOTALS ---
-        for field in target_meta.fields:
-            fname = field.fieldname
-            if source_doc.get(fname) and fname not in exclude_fields:
-                val = source_doc.get(fname)
-                if fname in fields_to_divide:
-                    # Logic: Divide value, but on the last split, take the remainder 
-                    divided_val = flt(val) / split_count
-                    if i == split_count - 1:
-                        remainder = flt(val) - (flt(divided_val) * (split_count - 1))
-                        new_split_doc.set(fname, remainder)
-                    else:
-                        new_split_doc.set(fname, divided_val)
-                else:
-                    new_split_doc.set(fname, val)
+#         # --- COPY PARENT FIELDS & SPLIT TOTALS ---
+#         for field in target_meta.fields:
+#             fname = field.fieldname
+#             if source_doc.get(fname) and fname not in exclude_fields:
+#                 val = source_doc.get(fname)
+#                 if fname in fields_to_divide:
+#                     # Logic: Divide value, but on the last split, take the remainder 
+#                     divided_val = flt(val) / split_count
+#                     if i == split_count - 1:
+#                         remainder = flt(val) - (flt(divided_val) * (split_count - 1))
+#                         new_split_doc.set(fname, remainder)
+#                     else:
+#                         new_split_doc.set(fname, divided_val)
+#                 else:
+#                     new_split_doc.set(fname, val)
 
-        # Ensure status is Draft for the new record
-        new_split_doc.status = "Draft"
+#         # Ensure status is Draft for the new record
+#         new_split_doc.status = "Draft"
 
-        # --- RE-GENERATE CURRENCY IN WORDS ---
-        company_currency = frappe.get_cached_value('Company', source_doc.company, 'default_currency')
-        if target_meta.has_field("base_in_words") and new_split_doc.base_grand_total:
-            new_split_doc.base_in_words = money_in_words(new_split_doc.base_grand_total, company_currency)
+#         # --- RE-GENERATE CURRENCY IN WORDS ---
+#         company_currency = frappe.get_cached_value('Company', source_doc.company, 'default_currency')
+#         if target_meta.has_field("base_in_words") and new_split_doc.base_grand_total:
+#             new_split_doc.base_in_words = money_in_words(new_split_doc.base_grand_total, company_currency)
 
-        if target_meta.has_field("in_words") and new_split_doc.grand_total:
-            new_split_doc.in_words = money_in_words(new_split_doc.grand_total, source_doc.currency)
+#         if target_meta.has_field("in_words") and new_split_doc.grand_total:
+#             new_split_doc.in_words = money_in_words(new_split_doc.grand_total, source_doc.currency)
 
-        # --- COPY ITEMS & DIVIDE QUANTITIES ---
-        for item in source_doc.items:
-            new_item = new_split_doc.append("items", {})
-            new_item.update(item.as_dict())
-            new_item.name = None 
+#         # --- COPY ITEMS & DIVIDE QUANTITIES ---
+#         for item in source_doc.items:
+#             new_item = new_split_doc.append("items", {})
+#             new_item.update(item.as_dict())
+#             new_item.name = None 
             
-            divided_qty = flt(item.qty) / split_count
-            if i == split_count - 1:
-                new_item.qty = flt(item.qty) - (flt(divided_qty) * (split_count - 1))
-            else:
-                new_item.qty = divided_qty
+#             divided_qty = flt(item.qty) / split_count
+#             if i == split_count - 1:
+#                 new_item.qty = flt(item.qty) - (flt(divided_qty) * (split_count - 1))
+#             else:
+#                 new_item.qty = divided_qty
                 
-            new_item.amount = flt(new_item.qty) * flt(new_item.rate)
+#             new_item.amount = flt(new_item.qty) * flt(new_item.rate)
 
-        # --- DISTRIBUTE CONTAINER DETAILS ROWS ---
-        start_idx = i * rows_per_split
-        if i == split_count - 1:
-            current_batch = container_rows[start_idx:]
-        else:
-            end_idx = start_idx + rows_per_split
-            current_batch = container_rows[start_idx:end_idx]
+#         # --- DISTRIBUTE CONTAINER DETAILS ROWS ---
+#         start_idx = i * rows_per_split
+#         if i == split_count - 1:
+#             current_batch = container_rows[start_idx:]
+#         else:
+#             end_idx = start_idx + rows_per_split
+#             current_batch = container_rows[start_idx:end_idx]
 
-        for row in current_batch:
-            new_row = new_split_doc.append("container_detail", {})
-            new_row.update(row.as_dict())
-            new_row.name = None 
+#         for row in current_batch:
+#             new_row = new_split_doc.append("container_detail", {})
+#             new_row.update(row.as_dict())
+#             new_row.name = None 
 
-        new_split_doc.number_of_containers = len(current_batch)
+#         new_split_doc.number_of_containers = len(current_batch)
 
-        # Insert into database
-        new_split_doc.insert(ignore_permissions=True)
-        new_records.append(new_split_doc.name)
+#         # Insert into database
+#         new_split_doc.insert(ignore_permissions=True)
+#         new_records.append(new_split_doc.name)
 
-    return new_records
+#     return new_records
 
 
 
@@ -2543,4 +2612,11 @@ def get_customer_shipping_address(customer):
     """, (customer,), as_dict=True)
 
     return address[0].name if address else None
+
+
+
+
+
+
+    
 
