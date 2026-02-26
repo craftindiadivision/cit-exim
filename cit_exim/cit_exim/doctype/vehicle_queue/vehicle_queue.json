@@ -32,6 +32,7 @@
   "branch",
   "section_break_etar",
   "product",
+  "mixed_items",
   "item",
   "section_break_hxnf",
   "total_no_of_boxes",
@@ -75,7 +76,7 @@
    "options": "Company"
   },
   {
-   "depends_on": "eval:doc.product == \"RM-Fish Meal\"",
+   "depends_on": "eval:doc.product == \"RM-Fish Meal\"|| doc.product == \"Fish Oil\" || doc.product == \"Soluble Paste\"\n",
    "fieldname": "warehouse",
    "fieldtype": "Link",
    "label": "Location",
@@ -304,6 +305,13 @@
    "fieldtype": "Link",
    "label": "Weighment Location",
    "options": "Weighment Location"
+  },
+  {
+   "depends_on": "eval:doc.product == \"Raw Fish\"",
+   "fieldname": "mixed_items",
+   "fieldtype": "Table",
+   "label": "Mixed Items",
+   "options": "Mixed Items Details"
   }
  ],
  "grid_page_length": 50,
@@ -319,7 +327,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-02-20 12:54:12.519923",
+ "modified": "2026-02-24 17:52:47.663272",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
