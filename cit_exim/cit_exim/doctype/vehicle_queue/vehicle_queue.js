@@ -109,14 +109,32 @@ frappe.ui.form.on("Vehicle Queue", {
 
         // If no Item Group selected, remove filter
         if (!frm.doc.product) {
+
+            // Item table
             frm.set_query("item", "item", function () {
                 return {};
             });
+
+            // Mixed Items table
+            frm.set_query("item", "mixed_items", function () {
+                return {};
+            });
+
             return;
         }
 
-        // Set dropdown filter for Item field inside child table
+        // Filter for Item table
         frm.set_query("item", "item", function () {
+            return {
+                filters: {
+                    item_group: frm.doc.product,
+                    disabled: 0
+                }
+            };
+        });
+
+        //  Added filter for Mixed Items table
+        frm.set_query("item", "mixed_items", function () {
             return {
                 filters: {
                     item_group: frm.doc.product,
@@ -141,40 +159,40 @@ function calculate_difference(frm) {
 
     frm.set_value("difference_in_qty", invoice_qty - net_weight);
 }
-frappe.ui.form.on("Vehicle Queue", {
-  refresh(frm) {
-    if (frm.doc.docstatus === 0) {
-      frm.add_custom_button(
-        ("Purchase Order"),
-        () => {
-          if (!frm.doc.supplier) {
-            frappe.throw(("Please select Supplier"));
-          }
+// frappe.ui.form.on("Vehicle Queue", {
+//   refresh(frm) {
+//     if (frm.doc.docstatus === 0) {
+//       frm.add_custom_button(
+//         ("Purchase Order"),
+//         () => {
+//           if (!frm.doc.supplier) {
+//             frappe.throw(("Please select Supplier"));
+//           }
 
-          erpnext.utils.map_current_doc({
-            method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.make_vehicle_queue_from_po",
-            source_doctype: "Purchase Order",
-            target: frm,
-            setters: {
-              supplier: frm.doc.supplier,
-            },
-            get_query_filters: {
-              docstatus: 1,
-              status: ["not in", ["Closed", "On Hold"]],
-              supplier: frm.doc.supplier,
-              company: frm.doc.company,
-              per_received: ["<", 100]
-            },
-            allow_child_item_selection: true,
-            child_fieldname: "items",
-            child_columns: ["item_code", "item_name"],
-          });
-        },
-        __("Get Items From")
-      );
-    }
-  },
-});
+//           erpnext.utils.map_current_doc({
+//             method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.make_vehicle_queue_from_po",
+//             source_doctype: "Purchase Order",
+//             target: frm,
+//             setters: {
+//               supplier: frm.doc.supplier,
+//             },
+//             get_query_filters: {
+//               docstatus: 1,
+//               status: ["not in", ["Closed", "On Hold"]],
+//               supplier: frm.doc.supplier,
+//               company: frm.doc.company,
+//               per_received: ["<", 100]
+//             },
+//             allow_child_item_selection: true,
+//             child_fieldname: "items",
+//             child_columns: ["item_code", "item_name"],
+//           });
+//         },
+//         __("Get Items From")
+//       );
+//     }
+//   },
+// });
 frappe.ui.form.on("Vehicle Queue", {
     vehicle_no(frm) {
         if (frm.doc.vehicle_no) {
@@ -250,3 +268,269 @@ function hide_fields_based_on_product(frm) {
     }
 }
 
+frappe.ui.form.on("Vehicle Queue Item", {
+    item: function(frm, cdt, cdn) {
+
+        let row = locals[cdt][cdn];
+
+        if (row.item) {
+
+            // Fetch Item Group from Item master
+            frappe.db.get_value("Item", row.item, "item_group")
+                .then(r => {
+                    if (r.message) {
+                        
+                        // Set Item Group into parent field "product"
+                        frm.set_value("product", r.message.item_group);
+                    }
+                });
+        }
+    }
+});
+
+frappe.ui.form.on("Vehicle Queue", {
+    refresh: function(frm) {
+        calculate_and_append(frm);
+    }
+});
+
+frappe.ui.form.on("Mixed Items Details", {
+
+    percentage: function(frm, cdt, cdn) {
+        calculate_and_append(frm);
+    },
+
+    noof_boxes: function(frm, cdt, cdn) {
+        calculate_and_append(frm);
+    },
+
+    item: function(frm, cdt, cdn) {
+        calculate_and_append(frm);
+    },
+
+    mixed_items_remove: function(frm, cdt, cdn) {
+
+        // Get remaining mixed item names
+        let remaining_items = (frm.doc.mixed_items || []).map(d => d.item);
+
+        // Remove rows from item table not present in mixed_items
+        frm.doc.item = (frm.doc.item || []).filter(d => {
+            return remaining_items.includes(d.item);
+        });
+
+        frm.refresh_field("item");
+
+        // Recalculate total
+        calculate_total(frm);
+    }
+});
+
+
+function calculate_and_append(frm) {
+
+    if (!frm.doc.mixed_items || frm.doc.mixed_items.length === 0) {
+        calculate_total(frm);
+        return;
+    }
+
+    frm.doc.mixed_items.forEach(row => {
+
+        if (row.item && row.percentage && row.noof_boxes) {
+
+            let calculated_boxes = (row.percentage / 100) * row.noof_boxes;
+
+            let existing_row = (frm.doc.item || []).find(d => d.item === row.item);
+
+            if (existing_row) {
+                existing_row.no_of_bags = calculated_boxes;
+            } else {
+                let new_row = frm.add_child("item");
+                new_row.item = row.item;
+                new_row.no_of_bags = calculated_boxes;
+                new_row.mixed_item = 1;
+            }
+        }
+    });
+
+    frm.refresh_field("item");
+
+    // Calculate total after updating items
+    calculate_total(frm);
+}
+
+
+function calculate_total(frm) {
+
+    let total = 0;
+
+    if (frm.doc.item && frm.doc.item.length > 0) {
+        frm.doc.item.forEach(row => {
+            total += flt(row.no_of_bags);
+        });
+    }
+
+    frm.set_value("total_no_of_boxes", total);
+}
+
+// //////////////////Pop up//////////////////////////
+frappe.ui.form.on("Vehicle Queue", {
+  refresh(frm) {
+    if (frm.doc.docstatus !== 0) return;
+
+    frm.add_custom_button("Purchase Order", () => {
+      if (!frm.doc.supplier) {
+        frappe.throw("Please select Supplier");
+      }
+
+      const dialog = new frappe.ui.Dialog({
+        title: "Select Purchase Order Items",
+        size: "extra-large",
+        fields: [
+          {
+            fieldname: "po_items",
+            fieldtype: "Table",
+            cannot_add_rows: true,
+            in_place_edit: false,
+            fields: [
+              // selection checkbox
+              {
+                fieldtype: "Check",
+                fieldname: "select",
+                label: "Select",
+                in_list_view: 1
+              },
+
+              // LIST VIEW (ONLY THESE)
+              {
+                fieldtype: "Link",
+                fieldname: "purchase_order",
+                label: "PO Number",
+                options: "Purchase Order",
+                in_list_view: 1,
+                read_only: 1
+              },
+              {
+                fieldtype: "Date",
+                fieldname: "transaction_date",
+                label: "PO Date",
+                in_list_view: 1,
+                read_only: 1
+              },
+              {
+                fieldtype: "Float",
+                fieldname: "pending_qty",
+                label: "Pending Qty",
+                in_list_view: 1,
+                read_only: 1
+              },
+              {
+                fieldtype: "Currency",
+                fieldname: "rate",
+                label: "Price",
+                in_list_view: 1,
+                read_only: 1
+              },
+
+              // ROW EDIT (PEN ICON VIEW)
+              {
+                fieldtype: "Data",
+                fieldname: "supplier",
+                label: "Supplier",
+                read_only: 1
+              },
+              {
+                fieldtype: "Link",
+                fieldname: "item_code",
+                label: "Item Code",
+                options: "Item",
+                read_only: 1
+              },
+              {
+                fieldtype: "Data",
+                fieldname: "item_name",
+                label: "Item Name",
+                read_only: 1
+              },
+              {
+                fieldtype: "Float",
+                fieldname: "ordered_qty",
+                label: "Ordered Quantity",
+                read_only: 1
+              },
+              {
+                fieldtype: "Float",
+                fieldname: "received_qty",
+                label: "Received Quantity",
+                read_only: 1
+              }
+            ]
+          }
+        ],
+
+        primary_action_label: "Add Items",
+        primary_action(values) {
+          const selected = values.po_items.filter(row => row.select);
+
+          if (!selected.length) {
+            frappe.msgprint("Please select at least one item");
+            return;
+          }
+
+          selected.forEach(row => {
+            const child = frm.add_child("item");
+            child.purchase_order = row.purchase_order;
+            child.item = row.item_code;
+
+          });
+          frm.doc.product = frappe.db.get_value("Item", selected[0].item_code, "item_group").then(r => {
+            if (r && r.message) {
+              frm.set_value("product", r.message.item_group);
+            }
+          });
+
+          frm.refresh_field("item");
+          dialog.hide();
+        }
+      });
+
+      frappe.call({
+        method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_po_items",
+        args: {
+          supplier: frm.doc.supplier,
+          company: frm.doc.company
+        },
+        callback(r) {
+          if (r.message?.length) {
+            dialog.fields_dict.po_items.df.data = r.message;
+            dialog.fields_dict.po_items.grid.refresh();
+            dialog.show();
+            
+          } else {
+            frappe.msgprint("No pending Purchase Orders found");
+          }
+        }
+      });
+
+    }, __("Get Items From"));
+  }
+});
+
+frappe.ui.form.on("Vehicle Queue Item", {
+  item(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+
+    if (!row.item) {
+      row.product = "";
+      frm.refresh_field("item");
+      return;
+    }
+
+    frappe.db.get_value("Item", row.item, "item_group")
+      .then(r => {
+        if (r && r.message) {
+          row.product = r.message.item_group;
+          frm.refresh_field("item");
+        }
+      });
+  }
+});

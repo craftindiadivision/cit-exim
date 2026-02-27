@@ -11,7 +11,9 @@
   "avg_per_box",
   "net_wt",
   "count",
-  "purchase_order"
+  "purchase_order",
+  "mixed_item",
+  "lab_test_completed"
  ],
  "fields": [
   {
@@ -53,13 +55,28 @@
    "fieldtype": "Link",
    "label": "Purchase Order",
    "options": "Purchase Order"
+  },
+  {
+   "default": "0",
+   "fieldname": "mixed_item",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Mixed Item",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "lab_test_completed",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Lab Test Completed"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-26 09:51:42.581200",
+ "modified": "2026-02-27 14:55:37.389558",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue Item",

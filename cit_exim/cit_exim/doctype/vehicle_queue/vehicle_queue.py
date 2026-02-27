@@ -122,6 +122,10 @@
 
 import frappe
 from frappe.model.document import Document
+import json
+from frappe.utils import flt
+from frappe.model.mapper import get_mapped_doc
+
 
 
 class VehicleQueue(Document):
@@ -139,11 +143,11 @@ class VehicleQueue(Document):
         if self.type != "Inward":
             return
 
-        if self.product != "RM-Fish Meal":
+        if self.product not in ["RM-Fish Meal", "Soluble Paste", "Fish Oil"]:
             return
 
-        if not self.purchase_order:
-            frappe.throw("Purchase Order is mandatory to create Purchase Receipt")
+        # if not self.purchase_order:
+        #     frappe.throw("Purchase Order is mandatory to create Purchase Receipt")
 
         self.create_purchase_receipt()
     def on_cancel(self):
@@ -151,83 +155,148 @@ class VehicleQueue(Document):
         self.delete_linked_purchase_voucher()
 
     def create_purchase_receipt(self):
-    # Fetch Purchase Order
-        po = frappe.get_doc("Purchase Order", self.purchase_order)
 
-        # Create Purchase Receipt
-        pr = frappe.new_doc("Purchase Receipt")
-        pr.supplier = po.supplier
-        pr.company = po.company
-        pr.custom_purchase_order_ref = po.name
-        pr.custom_vehicle_queue = self.name
-        pr.custom_token_number = self.token_number
-        pr.cost_center = self.cost_center
-        pr.branch = self.branch
-        pr.posting_date = frappe.utils.today()
-        pr.posting_time = frappe.utils.nowtime()
-        pr.vehicle_no = self.vehicle_no
-        pr.set_warehouse = self.warehouse
-        pr.custom_item_group = self.product
+        if self.purchase_order:
 
-        # ---------------------------------------------------------
-        # Map Items PO → PR
-        # ---------------------------------------------------------
-        for po_item in po.items:
-            pr_item = pr.append("items", {})
+            po = frappe.get_doc("Purchase Order", self.purchase_order)
 
-            pr_item.item_code = po_item.item_code
-            pr_item.item_name = po_item.item_name
-            pr_item.description = po_item.description
-            pr_item.custom_old_item_code = po_item.item_code
-            pr_item.qty = self.net_weight
-            pr_item.uom = po_item.uom
-            pr_item.stock_uom = po_item.stock_uom
-            pr_item.rejected_warehouse = ""
+            pr = frappe.new_doc("Purchase Receipt")
+            pr.supplier = po.supplier
+            pr.company = po.company
+            pr.custom_purchase_order_ref = po.name
+            pr.custom_vehicle_queue = self.name
+            pr.custom_token_number = self.token_number
+            pr.cost_center = self.cost_center
+            pr.branch = self.branch
+            pr.posting_date = frappe.utils.today()
+            pr.posting_time = frappe.utils.nowtime()
+            pr.vehicle_no = self.vehicle_no
+            pr.set_warehouse = self.warehouse
+            pr.custom_item_group = self.product
 
-            # Get Item Group and Lab Template
-            po_item_group = frappe.db.get_value(
-                "Item", po_item.item_code, "item_group"
-            )
-            lab_template = frappe.db.get_value(
-                "Item Group", po_item_group, "custom_test_variable_template"
-            )
-            pr_item.custom_test_variable_template = lab_template
+            # Map Items PO → PR
+            for po_item in po.items:
+                pr_item = pr.append("items", {})
 
-            pr_item.rate = po_item.rate
-            pr_item.warehouse = po_item.warehouse
+                pr_item.item_code = po_item.item_code
+                pr_item.item_name = po_item.item_name
+                pr_item.description = po_item.description
+                pr_item.custom_old_item_code = po_item.item_code
+                pr_item.qty = self.net_weight
+                pr_item.uom = po_item.uom
+                pr_item.stock_uom = po_item.stock_uom
+                pr_item.rate = po_item.rate
+                pr_item.warehouse = po_item.warehouse
+                pr_item.rejected_warehouse = ""
+                # Get Lab Template
+                po_item_group = frappe.db.get_value(
+                    "Item", po_item.item_code, "item_group"
+                )
+                lab_template = frappe.db.get_value(
+                    "Item Group", po_item_group, "custom_test_variable_template"
+                )
+                pr_item.custom_test_variable_template = lab_template
 
-            # Important PO Links
-            # pr_item.purchase_order = po.name
-            # pr_item.purchase_order_item = po_item.name
+            # Map Taxes PO → PR
+            for po_tax in po.taxes:
+                pr_tax = pr.append("taxes", {})
+                pr_tax.charge_type = po_tax.charge_type
+                pr_tax.account_head = po_tax.account_head
+                pr_tax.description = po_tax.description
+                pr_tax.rate = po_tax.rate
+                pr_tax.tax_amount = po_tax.tax_amount
+                pr_tax.total = po_tax.total
+                pr_tax.tax_amount_after_discount_amount = po_tax.tax_amount_after_discount_amount
+                pr_tax.base_tax_amount = po_tax.base_tax_amount
+                pr_tax.base_total = po_tax.base_total
+                pr_tax.cost_center = po_tax.cost_center
+                pr_tax.included_in_print_rate = po_tax.included_in_print_rate
+            pr.insert(ignore_permissions=True)
 
-        # ---------------------------------------------------------
-        # Map Taxes PO → PR
-        # ---------------------------------------------------------
-        pr.taxes = []
+            frappe.msgprint(
+                    f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
+                )
 
-        for po_tax in po.taxes:
-            pr_tax = pr.append("taxes", {})
+        else:
 
-            pr_tax.charge_type = po_tax.charge_type
-            pr_tax.account_head = po_tax.account_head
-            pr_tax.description = po_tax.description
-            pr_tax.rate = po_tax.rate
-            pr_tax.tax_amount = po_tax.tax_amount
-            pr_tax.total = po_tax.total
-            pr_tax.tax_amount_after_discount_amount = po_tax.tax_amount_after_discount_amount
-            pr_tax.base_tax_amount = po_tax.base_tax_amount
-            pr_tax.base_total = po_tax.base_total
-            pr_tax.cost_center = po_tax.cost_center
-            pr_tax.included_in_print_rate = po_tax.included_in_print_rate
+            pr = frappe.new_doc("Purchase Receipt")
+            pr.supplier = self.supplier
+            pr.company = self.company
+            pr.custom_vehicle_queue = self.name
+            pr.custom_token_number = self.token_number
+            pr.cost_center = self.cost_center
+            pr.branch = self.branch
+            pr.posting_date = frappe.utils.today()
+            pr.posting_time = frappe.utils.nowtime()
+            pr.vehicle_no = self.vehicle_no
+            pr.set_warehouse = self.warehouse
+            pr.custom_item_group = self.product
 
-        # ---------------------------------------------------------
-        # Insert PR as Draft
-        # ---------------------------------------------------------
-        pr.insert(ignore_permissions=True)
+            # -------------------------------------------------
+            # LOOP VEHICLE QUEUE ITEM TABLE
+            # -------------------------------------------------
+            vehicle_remaining = self.net_weight
+              # Vehicle Queue Item table
+                
+            for vq_item in self.item:   # child table name
+                if vehicle_remaining <= 0:
+                    break
 
-        frappe.msgprint(
-            f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
-        )
+                if not vq_item.purchase_order:
+                    continue
+                print(vehicle_remaining,"vehicle remaining")
+                po = frappe.get_doc("Purchase Order", vq_item.purchase_order)
+
+                # Match PO item
+                po_item = next(
+                    (i for i in po.items if i.item_code == vq_item.item),
+                    None
+                )
+
+                if not po_item:
+                    continue
+                po_received_qty = po.per_received / 100 * po_item.qty
+                print(po_received_qty,"po received qty")
+                po_pending = po_item.qty - (po_received_qty or 0)
+                print(po_pending,"po pending qty")
+                if po_pending <= 0:
+                    continue
+
+                allocate_qty = min(po_pending, vehicle_remaining)
+                print(allocate_qty,"allocate qty")
+                pr_item = pr.append("items", {})
+
+                pr_item.item_code = vq_item.item
+                pr_item.qty = allocate_qty
+                # pr_item.uom = vq_item.uom
+                # pr_item.stock_uom = vq_item.uom
+                # pr_item.rate = vq_item.rate or 0
+                pr_item.warehouse = self.warehouse
+                pr_item.rejected_warehouse = ""
+                if vq_item.purchase_order:
+                    pr_item.custom_purchase_order_ref = vq_item.purchase_order
+
+                # Fetch Lab Template
+                item_group = frappe.db.get_value(
+                    "Item", vq_item.item, "item_group"
+                )
+
+                lab_template = frappe.db.get_value(
+                    "Item Group", item_group, "custom_test_variable_template"
+                )
+
+                pr_item.custom_test_variable_template = lab_template
+                vehicle_remaining -= allocate_qty
+                print(vehicle_remaining,"vehicle remaining after allocation")
+
+                # ---------------------------------------------------------
+                # Insert PR
+                # ---------------------------------------------------------
+            pr.insert(ignore_permissions=True)
+
+            frappe.msgprint(
+                    f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
+                )
     def delete_linked_purchase_receipt(self):
 
         prs = frappe.get_all(
@@ -242,7 +311,7 @@ class VehicleQueue(Document):
         for pr_name in prs:
 
             # --------------------------------------------------
-            # 1️⃣ DELETE LINKED LABORATORY REGISTERS FIRST
+            #  DELETE LINKED LABORATORY REGISTERS FIRST
             # --------------------------------------------------
             lab_registers = frappe.get_all(
                 "Laboratory Register",
@@ -258,7 +327,7 @@ class VehicleQueue(Document):
                 lr.delete(ignore_permissions=True)
 
             # --------------------------------------------------
-            # 2️⃣ DELETE PURCHASE RECEIPT
+            #  DELETE PURCHASE RECEIPT
             # --------------------------------------------------
             pr = frappe.get_doc("Purchase Receipt", pr_name)
             pr.delete(ignore_permissions=True)
@@ -349,7 +418,8 @@ def create_purchase_voucher(doc, method=None):
             "count":row.count,
             "gross_weight": doc.gross_weight,
             "tare_weight": doc.tare_weight,
-            "net_weight": doc.net_weight
+            "net_weight": doc.net_weight,
+            "mixed_item":row.mixed_item
         })
 
     pv.insert(ignore_permissions=True)
@@ -359,41 +429,70 @@ def create_purchase_voucher(doc, method=None):
         f"Purchase Voucher Draft Created : <b>{pv.name}</b>",
         alert=True
     )
-import frappe
-import json
-from frappe.utils import flt
-from frappe.model.mapper import get_mapped_doc
 
+
+# @frappe.whitelist()
+# def make_vehicle_queue_from_po(source_name, target_doc=None, args=None):
+#   if args is None:
+#     args = {}
+#   if isinstance(args, str):
+#     args = json.loads(args)
+
+#   def update_item(source, target, source_parent):
+#     target.item = source.item_code
+
+#   def select_item(d):
+#     filtered_items = args.get("filtered_children", [])
+#     return d.name in filtered_items if filtered_items else True
+
+#   doc = get_mapped_doc(
+#     "Purchase Order",
+#     source_name,
+#     {
+#       "Purchase Order": {
+#         "doctype": "Vehicle Queue",
+#         "validation": {"docstatus": ["=", 1]},
+#       },
+#       "Purchase Order Item": {
+#         "doctype": "Vehicle Queue Item",
+#         "postprocess": update_item,
+#         "condition": lambda d: select_item(d),
+#       },
+#     },
+#     target_doc,
+#   )
+
+#   return doc
 
 @frappe.whitelist()
-def make_vehicle_queue_from_po(source_name, target_doc=None, args=None):
-  if args is None:
-    args = {}
-  if isinstance(args, str):
-    args = json.loads(args)
+def get_pending_po_items(supplier, company):
+    po_items = frappe.db.sql("""
+        SELECT
+            po.name AS purchase_order,
+            po.transaction_date,
+            po.supplier,
+            poi.item_code,
+            poi.item_name,
+            poi.qty AS ordered_qty,
 
-  def update_item(source, target, source_parent):
-    target.item = source.item_code
+            -- calculated received qty based on PO percentage
+            ((po.per_received / 100) * poi.qty) AS calculated_received_qty,
 
-  def select_item(d):
-    filtered_items = args.get("filtered_children", [])
-    return d.name in filtered_items if filtered_items else True
+            -- calculated pending qty
+            (poi.qty - ((po.per_received / 100) * poi.qty)) AS pending_qty,
 
-  doc = get_mapped_doc(
-    "Purchase Order",
-    source_name,
-    {
-      "Purchase Order": {
-        "doctype": "Vehicle Queue",
-        "validation": {"docstatus": ["=", 1]},
-      },
-      "Purchase Order Item": {
-        "doctype": "Vehicle Queue Item",
-        "postprocess": update_item,
-        "condition": lambda d: select_item(d),
-      },
-    },
-    target_doc,
-  )
+            poi.rate
+        FROM `tabPurchase Order` po
+        INNER JOIN `tabPurchase Order Item` poi
+            ON poi.parent = po.name
+        WHERE
+            po.docstatus = 1
+            AND po.status NOT IN ('Closed', 'On Hold')
+            AND po.per_received < 100
+            AND po.supplier = %s
+            AND po.company = %s
+            AND (poi.qty - ((po.per_received / 100) * poi.qty)) > 0
+        ORDER BY po.transaction_date, po.name
+    """, (supplier, company), as_dict=True)
 
-  return doc
+    return po_items
