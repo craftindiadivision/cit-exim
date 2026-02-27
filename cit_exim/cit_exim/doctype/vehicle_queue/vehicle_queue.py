@@ -168,8 +168,8 @@ class VehicleQueue(Document):
             pr.custom_token_number = self.token_number
             pr.cost_center = self.cost_center
             pr.branch = self.branch
-            pr.posting_date = frappe.utils.today()
-            pr.posting_time = frappe.utils.nowtime()
+            pr.posting_date = self.date
+            pr.posting_time = self.in_time.time()
             pr.vehicle_no = self.vehicle_no
             pr.set_warehouse = self.warehouse
             pr.custom_item_group = self.product
@@ -226,7 +226,7 @@ class VehicleQueue(Document):
             pr.custom_token_number = self.token_number
             pr.cost_center = self.cost_center
             pr.branch = self.branch
-            pr.posting_date = frappe.utils.today()
+            pr.posting_date = self.date()
             pr.posting_time = frappe.utils.nowtime()
             pr.vehicle_no = self.vehicle_no
             pr.set_warehouse = self.warehouse
