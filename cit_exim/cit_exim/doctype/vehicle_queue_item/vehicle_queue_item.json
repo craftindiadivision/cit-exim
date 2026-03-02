@@ -34,14 +34,16 @@
    "fieldname": "avg_per_box",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Avg Per Box"
+   "label": "Avg Per Box",
+   "precision": "2"
   },
   {
    "depends_on": "eval:parent.product == \"Raw Fish\"",
    "fieldname": "net_wt",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Net wt"
+   "label": "Net wt",
+   "precision": "2"
   },
   {
    "depends_on": "eval:parent.product == \"Raw Fish\"",
@@ -76,7 +78,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-02-27 14:55:37.389558",
+ "modified": "2026-03-02 16:11:56.334243",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue Item",
