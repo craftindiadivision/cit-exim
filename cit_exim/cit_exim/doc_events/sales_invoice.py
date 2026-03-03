@@ -1222,12 +1222,12 @@ def create_jv_with_gst(self):
 import frappe
 from frappe import _
 from frappe.utils import flt
-from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
-	is_dimension_enabled,
-)
+# from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
+# 	is_dimension_enabled,
+# )
 
-def is_branch_dimension_enabled():
-	return is_dimension_enabled("Branch")
+# def is_branch_dimension_enabled():
+# 	return is_dimension_enabled("Branch")
 
 
 # ---------------------------------------------------
