@@ -256,15 +256,17 @@ function hide_fields_based_on_product(frm) {
 
     let product = frm.doc.product;
 
-    if (product === "RM-Fish Meal") {
-
-        frm.fields_dict["item"].grid.toggle_display("avg_per_box", false);
-        frm.fields_dict["item"].grid.toggle_display("net_wt", false);
-
-    } else {
+    if (product === "Raw Fish") {
 
         frm.fields_dict["item"].grid.toggle_display("avg_per_box", true);
         frm.fields_dict["item"].grid.toggle_display("net_wt", true);
+        frm.fields_dict["item"].grid.toggle_display("count", true);
+
+    } else {
+
+        frm.fields_dict["item"].grid.toggle_display("avg_per_box", false);
+        frm.fields_dict["item"].grid.toggle_display("net_wt", false);
+        frm.fields_dict["item"].grid.toggle_display("count", false);
     }
 }
 

@@ -168,8 +168,8 @@ class VehicleQueue(Document):
             pr.custom_token_number = self.token_number
             pr.cost_center = self.cost_center
             pr.branch = self.branch
-            pr.posting_date = self.date
-            pr.posting_time = self.in_time.time()
+            pr.posting_date = frappe.utils.today()
+            pr.posting_time = frappe.utils.nowtime()
             pr.vehicle_no = self.vehicle_no
             pr.set_warehouse = self.warehouse
             pr.custom_item_group = self.product
@@ -217,8 +217,8 @@ class VehicleQueue(Document):
                     f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
                 )
 
-        else:
-
+        elif any(d.purchase_order for d in self.item):
+            
             pr = frappe.new_doc("Purchase Receipt")
             pr.supplier = self.supplier
             pr.company = self.company
@@ -226,7 +226,7 @@ class VehicleQueue(Document):
             pr.custom_token_number = self.token_number
             pr.cost_center = self.cost_center
             pr.branch = self.branch
-            pr.posting_date = self.date()
+            pr.posting_date = frappe.utils.today()
             pr.posting_time = frappe.utils.nowtime()
             pr.vehicle_no = self.vehicle_no
             pr.set_warehouse = self.warehouse
@@ -267,7 +267,10 @@ class VehicleQueue(Document):
                 pr_item = pr.append("items", {})
 
                 pr_item.item_code = vq_item.item
-                pr_item.qty = allocate_qty
+                if not vq_item.purchase_order:
+                    pr_item.qty = self.net_weight
+                else: 
+                    pr_item.qty = allocate_qty
                 # pr_item.uom = vq_item.uom
                 # pr_item.stock_uom = vq_item.uom
                 # pr_item.rate = vq_item.rate or 0
@@ -288,12 +291,64 @@ class VehicleQueue(Document):
                 pr_item.custom_test_variable_template = lab_template
                 vehicle_remaining -= allocate_qty
                 print(vehicle_remaining,"vehicle remaining after allocation")
+                if vq_item.purchase_order:
+                    for po_tax in po.taxes:
+                        pr_tax = pr.append("taxes", {})
+                        pr_tax.charge_type = po_tax.charge_type
+                        pr_tax.account_head = po_tax.account_head
+                        pr_tax.description = po_tax.description
+                        pr_tax.rate = po_tax.rate
+                        pr_tax.tax_amount = po_tax.tax_amount
+                        pr_tax.total = po_tax.total
+                        pr_tax.tax_amount_after_discount_amount = po_tax.tax_amount_after_discount_amount
+                        pr_tax.base_tax_amount = po_tax.base_tax_amount
+                        pr_tax.base_total = po_tax.base_total
+                        pr_tax.cost_center = po_tax.cost_center
+                        pr_tax.included_in_print_rate = po_tax.included_in_print_rate
+                    
 
                 # ---------------------------------------------------------
                 # Insert PR
                 # ---------------------------------------------------------
             pr.insert(ignore_permissions=True)
 
+            frappe.msgprint(
+                    f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
+                )
+        else:
+            pr = frappe.new_doc("Purchase Receipt")
+            pr.supplier = self.supplier
+            pr.company = self.company
+            pr.custom_vehicle_queue = self.name
+            pr.custom_token_number = self.token_number
+            pr.cost_center = self.cost_center
+            pr.branch = self.branch
+            pr.posting_date = frappe.utils.today()
+            pr.posting_time = frappe.utils.nowtime()
+            pr.vehicle_no = self.vehicle_no
+            pr.set_warehouse = self.warehouse
+            pr.custom_item_group = self.product
+
+            for vq_item in self.item:
+
+                pr_item = pr.append("items", {})
+                pr_item.item_code = vq_item.item
+                pr_item.qty = vq_item.net_wt
+                # pr_item.rate = vq_item.rate  # MUST exist
+                pr_item.uom = frappe.db.get_value("Item", vq_item.item, "stock_uom")
+                pr_item.stock_uom = pr_item.uom
+                pr_item.warehouse = self.warehouse
+                item_group = frappe.db.get_value(
+                    "Item", vq_item.item, "item_group"
+                )
+
+                lab_template = frappe.db.get_value(
+                    "Item Group", item_group, "custom_test_variable_template"
+                )
+
+                pr_item.custom_test_variable_template = lab_template
+
+            pr.insert(ignore_permissions=True)
             frappe.msgprint(
                     f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
                 )
