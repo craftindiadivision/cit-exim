@@ -291,7 +291,7 @@ fixtures=[
 
 ]
 
- 
+
 doctype_js = {
     "Sales Order": "public/js/doctype_js/sales_order.js",
     "Address":"public/js/doctype_js/address.js",
@@ -304,7 +304,7 @@ doctype_js = {
     "Purchase Order":"public/js/doctype_js/purchase_order.js",
     "Purchase Receipt":"public/js/doctype_js/purchase_receipt.js",
     "Purchase Voucher":"public/js/doctype_js/purchase_voucher.js",
-    "Opportunity":"public/js/doctype_js/opportunity.js"
+    "Opportunity":"public/js/doctype_js/opportunity.js",
 }
 
 doctype_list_js = {
@@ -341,13 +341,19 @@ doc_events = {
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
         "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",
         "on_cancel": "cit_exim.cit_exim.doc_events.sales_invoice.on_cancel",
-       
+        # "on_update": "cit_exim.cit_exim.doc_events.sales_invoice.sync_consolidated_invoice",
+        # "on_update": "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.sync_status_from_sales_invoice",
+        # "on_submit": "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.sync_status_from_sales_invoice",
+        # "on_cancel": "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.sync_status_from_sales_invoice",
+        # "on_update_after_submit": "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.sync_status_from_sales_invoice",
+        # "validate": "cit_exim.cit_exim.doc_events.sales_invoice.sync_linked_sales_invoices",
+        # "on_update": "cit_exim.cit_exim.doc_events.sales_invoice.sync_linked_sales_invoices",
 
     },
     
 
 
-        "Sales Order": {
+    "Sales Order": {
         "validate": "cit_exim.cit_exim.doc_events.sales_order.validate"
         # "before_save": "cit_exim.cit_exim.doc_events.sales_order.before_save"
     },
