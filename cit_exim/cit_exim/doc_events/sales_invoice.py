@@ -1505,8 +1505,10 @@ def before_workflow_action(doc, method=None):
                 all_checked = False
                 break
 
-    if all_checked and doc.gst_category == "Overseas":
-        doc.workflow_state = "BL Issued"
+    if doc.gst_category == "Overseas" and not all_checked:
+        frappe.throw(
+            "All Contract Terms and Export Document items must be checked before proceeding."
+        )
 
 
 
