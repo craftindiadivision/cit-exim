@@ -21,6 +21,7 @@ def before_save(self, method):
 
 
 def validate(doc, method=None):
+
     if doc.branch:
         address = frappe.db.get_value(
             "Address",
@@ -46,29 +47,59 @@ def validate(doc, method=None):
 
             if company_address:
                 doc.company_address = company_address
-
+    if not doc.items:
+        return
+    print('aaaaaaaaaaaaaaaaaaaaaaaaaa')
     lot_list = []
 
     for item in doc.items:
-        if item.serial_and_batch_bundle:
-            bundle = frappe.get_doc("Serial and Batch Bundle", item.serial_and_batch_bundle)
-            for entry in bundle.entries:
-                if entry.batch_no:
-                    lot_list.append({"lot_no": entry.batch_no})
+        if not item.serial_and_batch_bundle:
+            continue
+
+        bundle = frappe.get_doc(
+            "Serial and Batch Bundle",
+            item.serial_and_batch_bundle
+        )
+
+        conversion_factor = frappe.db.get_value(
+            "UOM Conversion Detail",
+            {
+                "parent": item.item_code,
+                "uom": "Packet"
+            },
+            "conversion_factor"
+        )
+
+        if not conversion_factor:
+            frappe.throw(
+                f"Packet UOM conversion not defined for Item {item.item_code}"
+            )
+
+        for entry in bundle.entries:
+            if not entry.batch_no:
+                continue
+
+            # IMPORTANT: entry.qty is negative for outward stock
+            batch_qty = abs(flt(entry.qty))  # normalize
+
+            lot_list.append({
+                "lot_no": entry.batch_no,
+                "batch_qty": batch_qty,
+                "conversion_factor": conversion_factor
+            })
 
     existing_lots = {row.lot_no for row in doc.container_detail}
 
     for lot in lot_list:
-        if lot["lot_no"] not in existing_lots:
-            item_code = doc.items[0].item_code if doc.items else None
-            packages = frappe.db.get_value(
-                "Item", item_code, "custom_no_of_packages_per_lot"
-            ) if item_code else None
+        if lot["lot_no"] in existing_lots:
+            continue
 
-            doc.append("container_detail", {
-                "lot_no": lot["lot_no"],
-                "no_of_packages": packages
-            })
+        no_of_packages = flt(lot["batch_qty"]) / flt(lot["conversion_factor"])
+
+        doc.append("container_detail", {
+            "lot_no": lot["lot_no"],
+            "no_of_packages": int(no_of_packages)
+        })
 
 #     # Optional: handle submit-time transition
 #     if doc.docstatus == 1:
