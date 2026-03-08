@@ -11,7 +11,7 @@
  "is_standard": "Yes",
  "letter_head": "mukka letter head",
  "letterhead": null,
- "modified": "2026-02-20 17:34:12.677259",
+ "modified": "2026-03-07 11:19:43.115050",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Weighing Bridge Report-RM-Fish Meal",
@@ -34,7 +34,7 @@
    "role": "Purchase Master Manager"
   },
   {
-   "role": "Vehicle Queue Operator"
+   "role": "RM Fish Meal Vehicle Operator"
   }
  ],
  "timeout": 0

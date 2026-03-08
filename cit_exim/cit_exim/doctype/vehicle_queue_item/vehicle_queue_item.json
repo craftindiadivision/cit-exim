@@ -11,6 +11,8 @@
   "avg_per_box",
   "net_wt",
   "count",
+  "rate",
+  "amount",
   "purchase_order",
   "mixed_item",
   "lab_test_completed"
@@ -74,13 +76,25 @@
    "fieldtype": "Check",
    "hidden": 1,
    "label": "Lab Test Completed"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Rate"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Amount"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-03 14:46:37.988586",
+ "modified": "2026-03-08 20:48:47.614985",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue Item",

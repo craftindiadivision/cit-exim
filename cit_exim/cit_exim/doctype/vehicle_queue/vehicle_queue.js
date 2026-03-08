@@ -261,12 +261,15 @@ function hide_fields_based_on_product(frm) {
         frm.fields_dict["item"].grid.toggle_display("avg_per_box", true);
         frm.fields_dict["item"].grid.toggle_display("net_wt", true);
         frm.fields_dict["item"].grid.toggle_display("count", true);
+        // frm.fields_dict["item"].grid.toggle_display("rate", false);
+
 
     } else {
 
         frm.fields_dict["item"].grid.toggle_display("avg_per_box", false);
         frm.fields_dict["item"].grid.toggle_display("net_wt", false);
         frm.fields_dict["item"].grid.toggle_display("count", false);
+
     }
 }
 
@@ -482,6 +485,7 @@ frappe.ui.form.on("Vehicle Queue", {
             const child = frm.add_child("item");
             child.purchase_order = row.purchase_order;
             child.item = row.item_code;
+            child.rate = row.rate;
 
           });
           frm.doc.product = frappe.db.get_value("Item", selected[0].item_code, "item_group").then(r => {
@@ -536,3 +540,57 @@ frappe.ui.form.on("Vehicle Queue Item", {
       });
   }
 });
+
+frappe.ui.form.on("Vehicle Queue", {
+
+    invoice_qty: function(frm) {
+        calculate_supplier_invoice(frm);
+        calculate_child_values(frm);
+    },
+
+    net_weight: function(frm) {
+        calculate_child_values(frm);
+    }
+
+});
+
+
+frappe.ui.form.on("Vehicle Queue Item", {
+
+    rate: function(frm, cdt, cdn) {
+        calculate_supplier_invoice(frm);
+        calculate_child_values(frm);
+    }
+
+});
+
+
+function calculate_supplier_invoice(frm) {
+
+    if(frm.doc.invoice_qty && frm.doc.item && frm.doc.item.length > 0){
+
+        let rate = frm.doc.item[0].rate || 0;
+        let amount = frm.doc.invoice_qty * rate;
+
+        frm.set_value("supplier_invoice_amount", amount);
+    }
+
+}
+
+
+function calculate_child_values(frm){
+
+    let supplier_invoice_amount = frm.doc.supplier_invoice_amount || 0;
+    let net_weight = frm.doc.net_weight || 0;
+
+    (frm.doc.item || []).forEach(function(row){
+
+        row.amount = net_weight * (row.rate || 0);
+
+        doc.difference_in_amount = supplier_invoice_amount - row.amount;
+
+    });
+
+    frm.refresh_field("item");
+
+}

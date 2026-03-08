@@ -11,7 +11,7 @@
  "is_standard": "Yes",
  "letter_head": "mukka letter head",
  "letterhead": null,
- "modified": "2026-02-20 17:34:30.835017",
+ "modified": "2026-03-07 11:20:02.406683",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Weighing Bridge Report-Raw Fish",
@@ -34,7 +34,7 @@
    "role": "Purchase Master Manager"
   },
   {
-   "role": "Vehicle Queue Operator"
+   "role": "Raw Fish Vehicle Operator"
   }
  ],
  "timeout": 0

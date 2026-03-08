@@ -23,6 +23,7 @@ def get_columns():
     return [
         {"label": "Vehicle Queue", "fieldname": "vehicle_queue", "fieldtype": "Link", "options": "Vehicle Queue", "width": 180},
         {"label": "Loading Location", "fieldname": "loading_location", "fieldtype": "Link", "options": "Loading Location", "width": 160},
+        {"label": "Unloading Location", "fieldname": "warehouse", "fieldtype": "Link", "options": "Warehouse", "width": 160},
         {"label": "Type", "fieldname": "type", "fieldtype": "Data", "width": 90},
         {"label": "Token No", "fieldname": "token_number", "fieldtype": "Data", "width": 100},
         {"label": "Date", "fieldname": "date", "fieldtype": "Date", "width": 100},
@@ -31,8 +32,9 @@ def get_columns():
         {"label": "Vehicle No", "fieldname": "vehicle_no", "fieldtype": "Data", "width": 130},
         {"label": "Supplier", "fieldname": "supplier", "fieldtype": "Link", "options": "Supplier", "width": 180},
         {"label": "Item", "fieldname": "item", "fieldtype": "Link", "options": "Item", "width": 140},
+        {"label": "Qty", "fieldname": "qty", "fieldtype": "Float", "width": 90},
         {"label": "Purchase Receipt", "fieldname": "purchase_receipt", "fieldtype": "Link", "options": "Purchase Receipt", "width": 160},
-        {"label": "Qty", "fieldname": "qty", "fieldtype": "Float", "width": 90}
+
     ]
 
 
@@ -43,6 +45,10 @@ def get_data(filters):
     if filters.get("company"):
         conditions += " AND vq.company = %(company)s"
         values["company"] = filters["company"]
+
+    if filters.get("warehouse"):
+        conditions += " AND vq.warehouse = %(warehouse)s"
+        values["warehouse"] = filters["warehouse"]
 
     if filters.get("vehicle_queue"):
         conditions += " AND vq.name = %(vehicle_queue)s"
@@ -63,7 +69,8 @@ def get_data(filters):
     query = f"""
         SELECT
             vq.name AS vehicle_queue,
-            vq.loading_location AS loading_location,
+            vq.loading_location,
+            vq.warehouse,
             vq.type,
             vq.token_number,
             vq.date,
@@ -71,56 +78,52 @@ def get_data(filters):
             vq.out_time,
             vq.vehicle_no,
             vq.supplier,
-            pri.item_code AS item,
+            vqi.item AS item,
             pr.name AS purchase_receipt,
-            pri.qty
+            vqi.net_wt AS qty
         FROM `tabVehicle Queue` vq
+
+        LEFT JOIN `tabVehicle Queue Item` vqi
+            ON vqi.parent = vq.name
+
         LEFT JOIN `tabPurchase Receipt` pr
             ON pr.custom_vehicle_queue = vq.name
             AND pr.docstatus = 1
-        LEFT JOIN `tabPurchase Receipt Item` pri
-            ON pri.parent = pr.name
+
         WHERE
             vq.docstatus < 2
             AND vq.product = %(raw_fish)s
             {conditions}
+
         ORDER BY
-            vq.name,
-            pr.posting_date
+            vq.name
     """
 
     values["raw_fish"] = RAW_FISH_PRODUCT
 
     data = frappe.db.sql(query, values, as_dict=True)
-    return add_vehicle_queue_totals(data)
-def add_vehicle_queue_totals(data):
+
+    return format_data(data)
+
+
+def format_data(data):
     result = []
     current_vq = None
     current_pr = None
-    total_qty = 0
 
     for row in data:
+
         # New Vehicle Queue
         if current_vq != row["vehicle_queue"]:
-            if current_vq:
-                result.append({
-                    "vehicle_queue": "Total",
-                    "qty": total_qty
-                })
-                total_qty = 0
-
             current_vq = row["vehicle_queue"]
             current_pr = row["purchase_receipt"]
-            total_qty += row.get("qty") or 0
             result.append(row)
             continue
 
-        # Same Vehicle Queue
-        total_qty += row.get("qty") or 0
-
-        # Hide Vehicle Queue repeated fields
+        # Hide repeated Vehicle Queue fields
         row["vehicle_queue"] = ""
         row["loading_location"] = ""
+        row["warehouse"] = ""
         row["type"] = ""
         row["token_number"] = ""
         row["date"] = ""
@@ -129,19 +132,12 @@ def add_vehicle_queue_totals(data):
         row["vehicle_no"] = ""
         row["supplier"] = ""
 
-        # Same Purchase Receipt → hide PR field
+        # Hide repeated Purchase Receipt
         if current_pr == row["purchase_receipt"]:
             row["purchase_receipt"] = ""
         else:
             current_pr = row["purchase_receipt"]
 
         result.append(row)
-
-    # Final Vehicle Queue total
-    if current_vq:
-        result.append({
-            "vehicle_queue": "Total",
-            "qty": total_qty
-        })
 
     return result

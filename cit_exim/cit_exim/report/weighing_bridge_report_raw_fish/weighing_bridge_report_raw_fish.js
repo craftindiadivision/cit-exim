@@ -24,6 +24,12 @@ frappe.query_reports["Weighing Bridge Report-Raw Fish"] = {
             }
         },
         {
+            fieldname: "warehouse",
+            label: __("Warehouse"),
+            fieldtype: "Link",
+            options: "Warehouse"
+        },
+        {
             fieldname: "supplier",
             label: __("Supplier"),
             fieldtype: "Link",
