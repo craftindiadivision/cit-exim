@@ -21,7 +21,7 @@ def before_save(self, method):
 
 
 def validate(doc, method=None):
-
+    
     if doc.branch:
         address = frappe.db.get_value(
             "Address",
@@ -80,7 +80,7 @@ def validate(doc, method=None):
                 continue
 
             # IMPORTANT: entry.qty is negative for outward stock
-            batch_qty = abs(flt(entry.qty))  # normalize
+            batch_qty = abs(flt(entry.qty))  #  normalize
 
             lot_list.append({
                 "lot_no": entry.batch_no,
@@ -100,6 +100,527 @@ def validate(doc, method=None):
             "lot_no": lot["lot_no"],
             "no_of_packages": int(no_of_packages)
         })
+
+
+def sync_workflow_from_sales_invoice(doc, method):
+    # if doc.custom_loading_point != "Mudra":
+    #      return
+    # if (doc.custom_loading_point or "").lower() != "mudra":
+    #     return
+
+    # If invoice is not linked to consolidated invoice → stop
+    if not doc.custom_consolidated_invoice_reference:
+        return
+
+    consolidated_name = doc.custom_consolidated_invoice_reference
+    new_state = doc.workflow_state
+    new_docstatus = doc.docstatus
+
+    # Prevent recursive execution
+    if frappe.flags.in_consolidated_sync:
+        return
+
+    frappe.flags.in_consolidated_sync = True
+
+    try:
+
+        # -------------------------------
+        # Prepare extra fields (Form level)
+        # -------------------------------
+        form_updates = {
+            "workflow_state": new_state,
+            "docstatus": new_docstatus
+        }
+
+        if doc.bl_no:
+            form_updates["bl_no"] = doc.bl_no
+
+        if doc.bl_date:
+            form_updates["bl_date"] = doc.bl_date
+        if doc.vessel_no:
+             form_updates["vessel_no"] = doc.vessel_no
+        if doc.custom_shipped_on_board_date:
+             form_updates["custom_shipped_on_board_date"] = doc.custom_shipped_on_board_date
+        if doc.port_address:
+             form_updates["port_address"] = doc.port_address
+        if doc.total_fob_value:
+             form_updates["total_fob_value"] = doc.total_fob_value
+
+        if doc.freight:
+             form_updates["freight"] = doc.freight
+
+        if doc.insurance:
+             form_updates["insurance"] = doc.insurance
+        if doc.freight_calculated:
+             form_updates["freight_calculated"] = doc.freight_calculated
+
+        if doc.total_duty_drawback:
+             form_updates["total_duty_drawback"] = doc.total_duty_drawback
+        if doc.total_meis:
+             form_updates["total_meis"] = doc.total_meis
+        if doc.duty_drawback_jv:
+             form_updates["duty_drawback_jv"] = doc.duty_drawback_jv
+        if doc.meis_jv:
+             form_updates["meis_jv"] = doc.meis_jv
+        if doc.custom_lab_test_remarks:
+             form_updates["custom_lab_test_remarks"] = doc.custom_lab_test_remarks
+        if doc.shipping_terms:
+             form_updates["shipping_terms"] = doc.shipping_terms
+        if doc.port_of_loading:
+             form_updates["port_of_loading"] = doc.port_of_loading
+        if doc.port_of_discharge:
+             form_updates["port_of_discharge"] = doc.port_of_discharge
+        if doc.pre_carriage_by:
+             form_updates["pre_carriage_by"] = doc.pre_carriage_by
+        if doc.bl_no:
+             form_updates["bl_no"] = doc.bl_no
+        if doc.custom_dclc:
+             form_updates["custom_dclc"] = doc.custom_dclc
+        if doc.custom_dc_no:
+             form_updates["custom_dc_no"] = doc.custom_dc_no
+        if doc.custom_lc_no:
+             form_updates["custom_lc_no"] = doc.custom_lc_no
+        if doc.vessel_no:
+             form_updates["vessel_no"] = doc.vessel_no
+        if doc.custom_loading_point:
+             form_updates["custom_loading_point"] = doc.custom_loading_point
+        if doc.final_destination:
+             form_updates["final_destination"] = doc.final_destination
+        if doc.custom_carriage_by:
+             form_updates["custom_carriage_by"] = doc.custom_carriage_by
+        if doc.bl_date:
+             form_updates["bl_date"] = doc.bl_date
+        if doc.custom_dhl:
+             form_updates["custom_dhl"] = doc.custom_dhl
+        if doc.custom_dc_date:
+             form_updates["custom_dc_date"] = doc.custom_dc_date
+        if doc.custom_lc_date:
+             form_updates["custom_lc_date"] = doc.custom_lc_date
+        if doc.container_size:
+             form_updates["container_size"] = doc.container_size
+        if doc.country_of_origin:
+             form_updates["country_of_origin"] = doc.country_of_origin
+        if doc.country_of_destination:
+             form_updates["country_of_destination"] = doc.country_of_destination
+        if doc.number_of_containers:
+             form_updates["number_of_containers"] = doc.number_of_containers
+        if doc.custom_shipped_on_board_date:
+             form_updates["custom_shipped_on_board_date"] = doc.custom_shipped_on_board_date
+        if doc.movement:
+             form_updates["movement"] = doc.movement
+        if doc.custom_submission_date:
+             form_updates["custom_submission_date"] = doc.custom_submission_date
+        if doc.custom_bl_issued_remarks:
+             form_updates["custom_bl_issued_remarks"] = doc.custom_bl_issued_remarks
+       
+        if doc.contract_and_lc:
+            form_updates["contract_and_lc"] = doc.contract_and_lc
+
+        if doc.custom_document_checked:
+            form_updates["custom_document_checked"] = doc.custom_document_checked
+
+        if doc.set_warehouse:
+            form_updates["set_warehouse"] = doc.set_warehouse
+      
+
+        # -------------------------------
+        # Update Consolidated Invoice
+        # -------------------------------
+        frappe.db.set_value(
+            "Consolidated Sales Invoice",
+            consolidated_name,
+            form_updates,
+            update_modified=False
+        )
+
+
+        # -------------------------------
+        # Get all related Sales Invoices
+        # -------------------------------
+        invoices = frappe.get_all(
+            "Sales Invoice",
+            filters={
+                "custom_consolidated_invoice_reference": consolidated_name
+            },
+            pluck="name"
+        )
+
+
+        # -------------------------------
+        # Update all split invoices
+        # -------------------------------
+        for inv in invoices:
+
+            # Skip current invoice
+            if inv == doc.name:
+                continue
+
+            frappe.db.set_value(
+                "Sales Invoice",
+                inv,
+                form_updates,
+                update_modified=False
+            )
+
+
+        # -------------------------------
+        # Sync Item Table Fields
+        # -------------------------------
+        for item in doc.items:
+
+            item_updates = {}
+
+            if item.duty_drawback_rate:
+                item_updates["duty_drawback_rate"] = item.duty_drawback_rate
+
+            if item.capped_rate:
+                item_updates["capped_rate"] = item.capped_rate
+            
+            if item.meis_rate:
+                item_updates["meis_rate"] = item.meis_rate
+
+            if item.custom_rodtep_capped_rate:
+                item_updates["custom_rodtep_capped_rate"] = item.custom_rodtep_capped_rate
+
+            if item.freight:
+                item_updates["freight"] = item.freight
+
+            if item.insurance:
+                item_updates["insurance"] = item.insurance
+
+            if item.duty_drawback_amount:
+                item_updates["duty_drawback_amount"] = item.duty_drawback_amount
+
+            if item.capped_amount:
+                item_updates["capped_amount"] = item.capped_amount
+
+            if item.meis_value:
+                item_updates["meis_value"] = item.meis_value
+
+            if item.custom_rodtep_capped_amount:
+                item_updates["custom_rodtep_capped_amount"] = item.custom_rodtep_capped_amount
+
+            if item.fob_value:
+                item_updates["fob_value"] = item.fob_value
+
+            if item.description:
+                item_updates["description"] = item.description
+
+            if not item_updates:
+                continue
+
+
+
+
+            # Update other invoices items
+            other_items = frappe.get_all(
+                "Sales Invoice Item",
+                filters={
+                    "parent": ["in", invoices],
+                    "item_code": item.item_code
+                },
+                fields=["name"]
+            )
+
+            for oi in other_items:
+                frappe.db.set_value(
+                    "Sales Invoice Item",
+                    oi.name,
+                    item_updates,
+                    update_modified=False
+                )
+
+
+            # Update consolidated invoice items
+            cons_items = frappe.get_all(
+                "Consolidated Sales Invoice Item",
+                filters={
+                    "parent": consolidated_name,
+                    "item_code": item.item_code
+                },
+                fields=["name"]
+            )
+
+            for ci in cons_items:
+                frappe.db.set_value(
+                    "Consolidated Sales Invoice Item",
+                    ci.name,
+                    item_updates,
+                    update_modified=False
+                )
+
+        # ------------FOR CONTAINER DETAIL---------------
+
+        for container in doc.container_detail:
+
+            container_updates = {}
+
+            if container.container_no:
+                container_updates["container_no"] = container.container_no
+
+            if container.size:
+                container_updates["size"] = container.size
+
+            if container.lot_no:
+                container_updates["lot_no"] = container.lot_no
+
+            if container.shipping_line_seal_no:
+                container_updates["shipping_line_seal_no"] = container.shipping_line_seal_no
+
+            if container.nt_wt_kgs:
+                container_updates["nt_wt_kgs"] = container.nt_wt_kgs
+
+            if container.gr_wt_kgs:
+                container_updates["gr_wt_kgs"] = container.gr_wt_kgs
+
+            if container.no_of_packages:
+                container_updates["no_of_packages"] = container.no_of_packages
+
+            if container.manufacturing_date:
+                container_updates["manufacturing_date"] = container.manufacturing_date
+
+            if container.batch_name:
+                container_updates["batch_name"] = container.batch_name
+
+
+    
+            # -------------------------------
+            # Update container rows in Consolidated Invoice
+            # -------------------------------
+            cons_containers = frappe.get_all(
+                "Container Details",
+                filters={
+                    "parent": consolidated_name,
+                    "lot_no": container.lot_no
+                },
+                fields=["name"]
+            )
+
+            for cc in cons_containers:
+                frappe.db.set_value(
+                    "Container Details",
+                    cc.name,
+                    container_updates,
+                    update_modified=False
+                )
+
+# ------------FOR Sales Invoice Contract Term Check----------------
+
+        for contract_terms in doc.sales_invoice_contract_term_check:
+
+            contract_term_updates = {}
+
+            if contract_terms.contract_term:
+                contract_term_updates["contract_term"] = contract_terms.contract_term
+
+            if contract_terms.document_check:
+                contract_term_updates["document_check"] = contract_terms.document_check
+
+            if contract_terms.checked is not None:
+                contract_term_updates["checked"] = contract_terms.checked
+
+            if not contract_term_updates:
+                continue
+
+
+            # Update other Sales Invoice contract terms
+            other_contract_terms = frappe.get_all(
+                "Sales Invoice Contract Term Check",
+                filters={
+                    "parent": ["in", invoices],
+                    "contract_term": contract_terms.contract_term
+                },
+                fields=["name"]
+            )
+
+            for oct in other_contract_terms:
+                frappe.db.set_value(
+                    "Sales Invoice Contract Term Check",
+                    oct.name,
+                    contract_term_updates,
+                    update_modified=False
+                )
+
+
+            # Update Consolidated Sales Invoice contract terms
+            cons_contract_terms = frappe.get_all(
+                "Sales Invoice Contract Term Check",
+                filters={
+                    "parent": consolidated_name,
+                    "contract_term": contract_terms.contract_term
+                },
+                fields=["name"]
+            )
+
+            for cct in cons_contract_terms:
+                frappe.db.set_value(
+                    "Sales Invoice Contract Term Check",
+                    cct.name,
+                    contract_term_updates,
+                    update_modified=False
+                )
+
+    #-----------------FOR Sales Invoice Export Document Item -----------
+
+
+        for export_doc in doc.sales_invoice_export_document_item:
+
+            export_updates = {}
+
+            if export_doc.contract_term:
+                export_updates["contract_term"] = export_doc.contract_term
+
+            if export_doc.export_document:
+                export_updates["export_document"] = export_doc.export_document
+
+            if export_doc.number:
+                export_updates["number"] = export_doc.number
+
+            if export_doc.checked is not None:
+                export_updates["checked"] = export_doc.checked
+
+            if not export_updates:
+                continue
+
+
+        # Update other Sales Invoice export documents
+            other_export_docs = frappe.get_all(
+                "Sales Invoice Export Document Item",
+                filters={
+                    "parent": ["in", invoices],
+                    "export_document": export_doc.export_document
+                },
+                fields=["name"]
+            )
+
+            for oed in other_export_docs:
+                frappe.db.set_value(
+                    "Sales Invoice Export Document Item",
+                    oed.name,
+                    export_updates,
+                    update_modified=False
+                )
+
+
+            # Update Consolidated Sales Invoice export documents
+            cons_export_docs = frappe.get_all(
+                "Sales Invoice Export Document Item",
+                filters={
+                    "parent": consolidated_name,
+                    "export_document": export_doc.export_document
+                },
+                fields=["name"]
+            )
+
+            for ced in cons_export_docs:
+                frappe.db.set_value(
+                    "Sales Invoice Export Document Item",
+                    ced.name,
+                    export_updates,
+                    update_modified=False
+                )
+
+    finally:
+        frappe.flags.in_consolidated_sync = False
+
+            
+    # lot_list = []
+
+    # for item in doc.items:
+    #     if item.serial_and_batch_bundle:
+    #         bundle = frappe.get_doc("Serial and Batch Bundle", item.serial_and_batch_bundle)
+    #         for entry in bundle.entries:
+    #             if entry.batch_no:
+    #                 lot_list.append({"lot_no": entry.batch_no})
+
+    # existing_lots = {row.lot_no for row in doc.container_detail}
+
+    # for lot in lot_list:
+    #     if lot["lot_no"] not in existing_lots:
+    #         item_code = doc.items[0].item_code if doc.items else None
+    #         packages = frappe.db.get_value(
+    #             "Item", item_code, "custom_no_of_packages_per_lot"
+    #         ) if item_code else None
+
+    #         doc.append("container_detail", {
+    #             "lot_no": lot["lot_no"],
+    #             "no_of_packages": packages
+    #         })
+
+
+
+
+# def validate(doc, method=None):
+#     if not doc.items:
+#         return
+#     print('aaaaaaaaaaaaaaaaaaaaaaaaaa')
+#     lot_list = []
+
+#     for item in doc.items:
+#         if not item.serial_and_batch_bundle:
+#             continue
+
+#         bundle = frappe.get_doc(
+#             "Serial and Batch Bundle",
+#             item.serial_and_batch_bundle
+#         )
+
+#         conversion_factor = frappe.db.get_value(
+#             "UOM Conversion Detail",
+#             {
+#                 "parent": item.item_code,
+#                 "uom": "Packet"
+#             },
+#             "conversion_factor"
+#         )
+
+#         if not conversion_factor:
+#             frappe.throw(
+#                 f"Packet UOM conversion not defined for Item {item.item_code}"
+#             )
+
+#         for entry in bundle.entries:
+#             if not entry.batch_no:
+#                 continue
+
+#             # IMPORTANT: entry.qty is negative for outward stock
+#             batch_qty = abs(flt(entry.qty))  # ✅ normalize
+
+#             lot_list.append({
+#                 "lot_no": entry.batch_no,
+#                 "batch_qty": batch_qty,
+#                 "conversion_factor": conversion_factor
+#             })
+
+#     existing_lots = {row.lot_no for row in doc.container_detail}
+
+#     for lot in lot_list:
+#         if lot["lot_no"] in existing_lots:
+#             continue
+
+#         no_of_packages = flt(lot["batch_qty"]) / flt(lot["conversion_factor"])
+
+#         doc.append("container_detail", {
+#             "lot_no": lot["lot_no"],
+#             "no_of_packages": int(no_of_packages)
+#         })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #     # Optional: handle submit-time transition
 #     if doc.docstatus == 1:
@@ -474,18 +995,6 @@ def validate(doc, method=None):
 #     return start_date, end_date
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 import frappe
 from frappe.utils import flt, getdate
 import calendar
@@ -499,9 +1008,15 @@ from datetime import date
 def on_submit(doc, method=None):
     if doc.docstatus == 1:
         update_sales_contract_from_invoice(doc)
+
+
+def on_update(doc, method=None):
+    sync_linked_sales_invoices(doc)
+
     
 
 def on_update_after_submit(doc, method=None):
+    print("on update after submit is working........")
     _handle_custom_status_change(doc)
     """
     This function runs every time a submitted Sales Invoice is updated 
@@ -827,9 +1342,10 @@ def before_submit(self,method):
 def on_submit(self, method):
     export_lic(self)
     create_jv(self)
-    create_brc(self)
+    # create_brc(self)
     create_jv_with_gst(self)
     update_sales_contract_from_invoice(self)
+
 
 
 def on_cancel(self, method):
@@ -1420,17 +1936,17 @@ def create_jv(self):
 
 			self.db_set("meis_jv", meis_jv.name)
 
-def create_brc(self):
-	if frappe.db.get_value('Address', self.customer_address, 'country') != "India" and frappe.db.exists("DocType", "BRC Management"):
-		brc = frappe.new_doc("BRC Management")
-		brc.invoice_no = self.name
-		if not self.is_return and self.shipping_bill_number and self.shipping_bill_date and self.rounded_total:
-			brc.append("shipping_bill_details", {
-				"shipping_bill": self.shipping_bill_number,
-				"shipping_date": self.shipping_bill_date,
-				"shipping_bill_amount": self.rounded_total
-			})
-		brc.save(ignore_permissions=True)
+# def create_brc(self):
+# 	if frappe.db.get_value('Address', self.customer_address, 'country') != "India" and frappe.db.exists("DocType", "BRC Management"):
+# 		brc = frappe.new_doc("BRC Management")
+# 		brc.invoice_no = self.name
+# 		if not self.is_return and self.shipping_bill_number and self.shipping_bill_date and self.rounded_total:
+# 			brc.append("shipping_bill_details", {
+# 				"shipping_bill": self.shipping_bill_number,
+# 				"shipping_date": self.shipping_bill_date,
+# 				"shipping_bill_amount": self.rounded_total
+# 			})
+# 		brc.save(ignore_permissions=True)
 
 
 def cancel_export_lic(self):
@@ -1519,6 +2035,25 @@ def copy_selected_producers(doc, sales_order):
 #             child.selected = row.selected
 
 
+
+
+# def before_workflow_action(doc, method=None):
+#     all_checked = True
+
+#     if doc.sales_invoice_contract_term_check:
+#         for row in doc.sales_invoice_contract_term_check:
+#             if not row.checked:
+#                 all_checked = False
+#                 break
+
+#     if all_checked and doc.sales_invoice_export_document_item:
+#         for row in doc.sales_invoice_export_document_item:
+#             if not row.checked:
+#                 all_checked = False
+#                 break
+
+#     if all_checked and doc.gst_category == "Overseas":
+#         doc.workflow_state = "BL Issued"
 
 
 def before_workflow_action(doc, method=None):
@@ -2179,31 +2714,31 @@ def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
 #     if source_doc.docstatus != 1:
 #         frappe.throw("Only submitted Sales Invoices can be split")
 
-#     target_meta = frappe.get_meta("Split Sales Invoice")
-#     suffixes = list(string.ascii_uppercase)
-#     new_records = []
+    # target_meta = frappe.get_meta("Split Sales Invoice")
+    # suffixes = list(string.ascii_uppercase)
+    # new_records = []
     
-#     container_rows = source_doc.get("container_detail") or []
-#     total_rows = len(container_rows)
+    # container_rows = source_doc.get("container_detail") or []
+    # total_rows = len(container_rows)
     
-#     # Calculate how many container rows per split
-#     rows_per_split = total_rows // split_count
+    # # Calculate how many container rows per split
+    # rows_per_split = total_rows // split_count
 
-#     for i in range(split_count):
-#         if i >= len(suffixes): break 
+    # for i in range(split_count):
+    #     if i >= len(suffixes): break 
         
-#         new_split_doc = frappe.new_doc("Split Sales Invoice")
+    #     new_split_doc = frappe.new_doc("Split Sales Invoice")
         
-#         # --- NAMING ---
-#         suffix = suffixes[i]
-#         name_parts = source_doc.name.split("-")
-#         if len(name_parts) >= 2:
-#             name_parts[1] = f"{name_parts[1]}{suffix}"
-#         else:
-#             name_parts[0] = f"{name_parts[0]}{suffix}"
-#         new_split_doc.name = "-".join(name_parts)
+    #     # --- NAMING ---
+    #     suffix = suffixes[i]
+    #     name_parts = source_doc.name.split("-")
+    #     if len(name_parts) >= 2:
+    #         name_parts[1] = f"{name_parts[1]}{suffix}"
+    #     else:
+    #         name_parts[0] = f"{name_parts[0]}{suffix}"
+    #     new_split_doc.name = "-".join(name_parts)
 
-#         new_split_doc.sales_invoice_reference = source_doc.name
+    #     new_split_doc.sales_invoice_reference = source_doc.name
 
 #         # --- COPY PARENT FIELDS & SPLIT TOTALS ---
 #         fields_to_divide = [
@@ -2650,6 +3185,137 @@ def get_customer_shipping_address(customer):
 
 
 
+# ---------------------------------------------------------
+# GET COMMON FIELDS BETWEEN SALES INVOICES
+# ---------------------------------------------------------
 
-    
+def get_shared_fields():
+    meta = frappe.get_meta("Sales Invoice")
 
+    excluded = {
+        "name",
+        "owner",
+        "creation",
+        "modified",
+        "modified_by",
+        "idx"
+    }
+
+    return [
+        df.fieldname
+        for df in meta.fields
+        if df.fieldtype not in ["Table", "Section Break", "Column Break"]
+        and df.fieldname not in excluded
+    ]
+
+
+# ---------------------------------------------------------
+# VALIDATE EVENT
+# ---------------------------------------------------------
+
+
+
+
+# ---------------------------------------------------------
+# MAIN SYNC FUNCTION
+# ---------------------------------------------------------
+
+def sync_linked_sales_invoices(doc):
+
+    # prevent infinite recursion
+    if frappe.flags.in_mundra_sync:
+        return
+
+    # skip if new document (important during split)
+    if doc.is_new():
+        return
+
+    # run only when loading point is MUNDRA
+    if doc.custom_loading_point != "MUNDRA":
+        return
+
+    parent = doc.custom_consolidated_invoice_reference
+
+    if not parent:
+        return
+
+    frappe.flags.in_mundra_sync = True
+
+    try:
+
+        # -------------------------------------------------
+        # UPDATE CONSOLIDATED SALES INVOICE WORKFLOW
+        # -------------------------------------------------
+
+        if frappe.db.exists("Consolidated Sales Invoice", parent):
+
+            consolidated = frappe.get_doc("Consolidated Sales Invoice", parent)
+
+            if doc.docstatus != 0:
+                if consolidated.workflow_state != doc.workflow_state:
+                    consolidated.workflow_state = doc.workflow_state
+                    consolidated.save(ignore_permissions=True)
+
+        # -------------------------------------------------
+        # GET CONNECTED SALES INVOICES
+        # -------------------------------------------------
+
+        linked_sis = frappe.get_all(
+            "Sales Invoice",
+            filters={
+                "custom_consolidated_invoice_reference": parent,
+                "name": ["!=", doc.name],
+                "docstatus": ["!=", 2]
+            },
+            pluck="name"
+        )
+
+        shared_fields = get_shared_fields()
+
+        # -------------------------------------------------
+        # UPDATE OTHER SALES INVOICES
+        # -------------------------------------------------
+
+        for si_name in linked_sis:
+
+            si = frappe.get_doc("Sales Invoice", si_name)
+
+            changed = False
+
+            # sync workflow only if not draft
+            if doc.docstatus != 0:
+                if si.workflow_state != doc.workflow_state:
+                    si.workflow_state = doc.workflow_state
+                    changed = True
+
+            # sync other fields
+            for field in shared_fields:
+
+                if hasattr(doc, field):
+
+                    if si.get(field) != doc.get(field):
+                        si.set(field, doc.get(field))
+                        changed = True
+
+            if changed:
+                si.save(ignore_permissions=True)
+
+    finally:
+        frappe.flags.in_mundra_sync = False
+
+
+# ---------------------------------------------------------
+# CANCEL SYNC
+# ---------------------------------------------------------
+
+def on_cancel(doc, method=None):
+
+    if not doc.custom_consolidated_invoice_reference:
+        return
+
+    frappe.db.set_value(
+        "Consolidated Sales Invoice",
+        doc.custom_consolidated_invoice_reference,
+        "workflow_state",
+        "Cancelled"
+    )
