@@ -26,7 +26,7 @@ frappe.query_reports["PAYMENT DETAILS"] = {
             "fieldname": "workflow_status",
             "label": __("WorkFlow"),
             "fieldtype": "Select",
-            "options": "\nShipment Under Process\nBL Issued\nDocument Submitted & Awaiting Payments"
+            "options": " \nTo Be Tested\nUnder Testing\nTested and Report Passed\nLoading In-progress\nShipment Under Process\nBL Pending\nBL Issued\nDocument Checks In-progress\nDocument Submitted & Awaiting Payments\nCompleted Shipment"
         }
     ]
 };

@@ -12,35 +12,35 @@ def execute(filters=None):
 def get_columns():
     return [
         {"label": _("POL"), "fieldname": "pol", "fieldtype": "Data", "width": 100},
-        {"label": _("Agent"), "fieldname": "agent", "fieldtype": "Data", "width": 100},
-        {"label": _("Buyer"), "fieldname": "buyer", "fieldtype": "Link", "options": "Customer", "width": 150},
+        {"label": _("AGENT"), "fieldname": "agent", "fieldtype": "Data", "width": 100},
+        {"label": _("BUYER"), "fieldname": "buyer", "fieldtype": "Link", "options": "Customer", "width": 150},
         {"label": _("LC/PO"), "fieldname": "lc_po", "fieldtype": "Data", "width": 110},
         {"label": _("PO No"), "fieldname": "po_no", "fieldtype": "Data", "width": 110},
-        {"label": _("New Inv"), "fieldname": "new_inv", "fieldtype": "Link", "options": "Sales Invoice", "width": 130},
-        {"label": _("Qty"), "fieldname": "qty", "fieldtype": "Float", "width": 80},
-        {"label": _("Rate"), "fieldname": "rate", "fieldtype": "Currency", "width": 90},
-        {"label": _("Comm. Rate"), "fieldname": "commission_rate", "fieldtype": "Percent", "width": 90},
+        {"label": _("NEW INV"), "fieldname": "new_inv", "fieldtype": "Link", "options": "Sales Invoice", "width": 130},
+        {"label": _("QTY"), "fieldname": "qty", "fieldtype": "Float", "width": 80},
+        {"label": _("RATE"), "fieldname": "rate", "fieldtype": "Currency", "width": 90},
+        {"label": _("COMM. RATE"), "fieldname": "commission_rate", "fieldtype": "Percent", "width": 90},
         {"label": _("CP"), "fieldname": "cp", "fieldtype": "Data", "width": 80},
-        {"label": _("Product"), "fieldname": "product", "fieldtype": "Data", "width": 120},
-        {"label": _("Amount"), "fieldname": "amount", "fieldtype": "Currency", "width": 110},
+        {"label": _("PRODUCT"), "fieldname": "product", "fieldtype": "Data", "width": 120},
+        {"label": _("AMOUNT"), "fieldname": "amount", "fieldtype": "Currency", "width": 110},
         {"label": _("POD"), "fieldname": "pod", "fieldtype": "Data", "width": 100},
-        {"label": _("Country"), "fieldname": "country", "fieldtype": "Data", "width": 100},
-        {"label": _("Submission Dt"), "fieldname": "submission_dt", "fieldtype": "Date", "width": 110},
+        {"label": _("COUNTRY"), "fieldname": "country", "fieldtype": "Data", "width": 100},
+        {"label": _("SUBMISSION DT"), "fieldname": "submission_dt", "fieldtype": "Date", "width": 110},
         {"label": _("ETD"), "fieldname": "etd", "fieldtype": "Date", "width": 110},
-        {"label": _("Bank"), "fieldname": "bank_name", "fieldtype": "Data", "width": 130},
+        {"label": _("BANK"), "fieldname": "bank_name", "fieldtype": "Data", "width": 130},
         {"label": _("DHL"), "fieldname": "dhl", "fieldtype": "Data", "width": 100},
-        {"label": _("Reaching dt / Payment receipt Date"), "fieldname": "payment_receipt_date", "fieldtype": "Date", "width": 110},
-        {"label": _("Received Amount"), "fieldname": "received_amt", "fieldtype": "Currency", "width": 110},
-        {"label": _("Bank Charges/Balance"), "fieldname": "bank_charges", "fieldtype": "Currency", "width": 110},
-        {"label": _("Bank Reference No"), "fieldname": "bank_ref_no", "fieldtype": "Data", "width": 120},
-        {"label": _("Aging Days"), "fieldname": "aging_days", "fieldtype": "Int", "width": 90},
-        {"label": _("Pending Qty"), "fieldname": "pending_qty", "fieldtype": "Float", "width": 100},
-        {"label": _("Remarks"), "fieldname": "remarks", "fieldtype": "Small Text", "width": 150}
+        {"label": _("REACHING DT / PAYMENT RECEIPT DATE"), "fieldname": "payment_receipt_date", "fieldtype": "Date", "width": 110},
+        {"label": _("RECEIVED AMOUNT"), "fieldname": "received_amt", "fieldtype": "Currency", "width": 110},
+        {"label": _("BANK CHARGES/BALANCE"), "fieldname": "bank_charges", "fieldtype": "Currency", "width": 110},
+        {"label": _("BANK REFERENCE NO"), "fieldname": "bank_ref_no", "fieldtype": "Data", "width": 120},
+        {"label": _("AGING  DAYS"), "fieldname": "aging_days", "fieldtype": "Int", "width": 90},
+        {"label": _("PENDING QTY"), "fieldname": "pending_qty", "fieldtype": "Float", "width": 100},
+        {"label": _("REMARKS"), "fieldname": "remarks", "fieldtype": "Small Text", "width": 150}
     ]
 
 def get_data(filters):
     # Mandatory condition: docstatus 0 or 1 and pending payment
-    conditions = "si.docstatus IN (0, 1) AND si.custom_payment_status = 0"
+    conditions = "si.docstatus IN (0,1) AND si.custom_payment_status IN (0,1)"
     
     # Apply dynamic filters
     if filters.get("company"):

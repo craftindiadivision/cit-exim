@@ -9,7 +9,8 @@
   "section_break_xq1u",
   "amended_from",
   "consignee_name",
-  "buyer"
+  "buyer",
+  "address"
  ],
  "fields": [
   {
@@ -37,13 +38,18 @@
    "fieldtype": "Link",
    "label": "Buyer",
    "options": "Customer"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Button",
+   "label": "Address"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-10 11:28:25.104345",
+ "modified": "2026-03-08 22:30:55.329872",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consignee",

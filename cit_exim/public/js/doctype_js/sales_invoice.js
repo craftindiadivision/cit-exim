@@ -677,6 +677,9 @@ frappe.ui.form.on("Sales Invoice", {
 //         }
 //     }
 // });
+
+
+
 frappe.ui.form.on('Sales Invoice', {
     refresh: function(frm) {
         // Lock the field if it has a value or if it's in the target state

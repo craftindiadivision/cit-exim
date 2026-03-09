@@ -1,0 +1,181 @@
+# Copyright (c) 2026, craft and contributors
+# For license information, please see license.txt
+
+# import frappe
+
+
+# def execute(filters=None):
+# 	columns, data = [], []
+# 	return columns, data
+
+
+
+
+# import frappe
+# from frappe import _
+
+# def execute(filters=None):
+#     if not filters: filters = {}
+#     columns = get_columns()
+#     data = get_data(filters)
+#     return columns, data
+
+# def get_columns():
+#     return [
+#         {"label": _("Country"), "fieldname": "country", "fieldtype": "Data", "width": 180},
+#         {"label": _("FM 60%"), "fieldname": "fm_60", "fieldtype": "Float", "width": 120},
+#         {"label": _("FM 62%"), "fieldname": "fm_62", "fieldtype": "Float", "width": 120},
+#         {"label": _("FM 65%"), "fieldname": "fm_65", "fieldtype": "Float", "width": 120},
+#         {"label": _("FO"), "fieldname": "fo", "fieldtype": "Float", "width": 120},
+#         {"label": _("FSP"), "fieldname": "fsp", "fieldtype": "Float", "width": 120},
+#         {"label": _("Grand Total"), "fieldname": "grand_total", "fieldtype": "Float", "width": 150},
+#     ]
+
+# def get_data(filters):
+#     conditions = ""
+    
+#     if filters.get("company"):
+#         conditions += f" AND si.company = {frappe.db.escape(filters.get('company'))}"
+    
+#     if filters.get("from_date"):
+#         conditions += f" AND si.posting_date >= {frappe.db.escape(filters.get('from_date'))}"
+        
+#     if filters.get("to_date"):
+#         conditions += f" AND si.posting_date <= {frappe.db.escape(filters.get('to_date'))}"
+
+#     query = f"""
+#         SELECT
+#             si.country_of_destination AS country,
+#             SUM(CASE WHEN sii.item_code = 'FG-Fish Meal 60' THEN sii.qty ELSE 0 END) AS fm_60,
+#             SUM(CASE WHEN sii.item_code = 'FG-Fish Meal 62' THEN sii.qty ELSE 0 END) AS fm_62,
+#             SUM(CASE WHEN sii.item_code = 'FG-Fish Meal 65' THEN sii.qty ELSE 0 END) AS fm_65,
+#             SUM(CASE WHEN sii.item_code = 'Fish Oil' THEN sii.qty ELSE 0 END) AS fo,
+#             SUM(CASE WHEN sii.item_code = 'Soluble Paste' THEN sii.qty ELSE 0 END) AS fsp,
+#             SUM(CASE WHEN sii.item_group = 'FG-Fish Meal' THEN sii.qty ELSE 0 END) AS grand_total
+#         FROM 
+#             `tabSales Invoice` si
+#         JOIN 
+#             `tabSales Invoice Item` sii ON sii.parent = si.name
+#         WHERE 
+#             si.docstatus = 1 
+#             AND IFNULL(si.custom_payment_status, 0) != 1
+#             AND si.country_of_destination IS NOT NULL
+#             {conditions}
+#         GROUP BY 
+#             si.country_of_destination
+#         ORDER BY 
+#             si.country_of_destination ASC
+#     """
+    
+#     return frappe.db.sql(query, as_dict=True)
+
+
+
+
+import frappe
+from frappe import _
+from frappe.utils import flt
+
+def execute(filters=None):
+    if not filters:
+        filters = {}
+
+    columns = get_columns()
+    data = get_data(filters)
+
+    # Remove zero values
+    numeric_fields = ["fm_60","fm_62","fm_65","fo","fsp","grand_total"]
+
+    for row in data:
+        for field in numeric_fields:
+            if flt(row.get(field)) == 0:
+                row[field] = ""
+
+    # Add Grand Total row
+    if data:
+        grand_total_row = calculate_grand_total(data)
+        data.append(grand_total_row)
+
+    return columns, data
+
+
+def get_columns():
+    return [
+        {"label": _("Country"), "fieldname": "country", "fieldtype": "Data", "width": 180},
+        {"label": _("FM 60%"), "fieldname": "fm_60", "fieldtype": "Data", "width": 120},
+        {"label": _("FM 62%"), "fieldname": "fm_62", "fieldtype": "Data", "width": 120},
+        {"label": _("FM 65%"), "fieldname": "fm_65", "fieldtype": "Data", "width": 120},
+        {"label": _("FO"), "fieldname": "fo", "fieldtype": "Data", "width": 120},
+        {"label": _("FSP"), "fieldname": "fsp", "fieldtype": "Data", "width": 120},
+        {"label": _("Grand Total"), "fieldname": "grand_total", "fieldtype": "Data", "width": 150},
+    ]
+
+
+def get_data(filters):
+
+    conditions = ""
+
+    if filters.get("company"):
+        conditions += " AND si.company = %(company)s"
+
+    if filters.get("from_date"):
+        conditions += " AND si.posting_date >= %(from_date)s"
+
+    if filters.get("to_date"):
+        conditions += " AND si.posting_date <= %(to_date)s"
+
+    query = f"""
+        SELECT
+            si.country_of_destination AS country,
+            SUM(CASE WHEN sii.item_code = 'FG-Fish Meal 60' THEN sii.qty ELSE 0 END) AS fm_60,
+            SUM(CASE WHEN sii.item_code = 'FG-Fish Meal 62' THEN sii.qty ELSE 0 END) AS fm_62,
+            SUM(CASE WHEN sii.item_code = 'FG-Fish Meal 65' THEN sii.qty ELSE 0 END) AS fm_65,
+            SUM(CASE WHEN sii.item_code = 'Fish Oil' THEN sii.qty ELSE 0 END) AS fo,
+            SUM(CASE WHEN sii.item_code = 'Soluble Paste' THEN sii.qty ELSE 0 END) AS fsp,
+            SUM(CASE WHEN sii.item_group = 'FG-Fish Meal' THEN sii.qty ELSE 0 END) AS grand_total
+        FROM 
+            `tabSales Invoice` si
+        JOIN 
+            `tabSales Invoice Item` sii ON sii.parent = si.name
+        WHERE 
+            si.docstatus = 1
+            AND IFNULL(si.custom_payment_status, 0) != 1
+            AND si.country_of_destination IS NOT NULL
+            {conditions}
+        GROUP BY 
+            si.country_of_destination
+        ORDER BY 
+            si.country_of_destination ASC
+    """
+
+    return frappe.db.sql(query, filters, as_dict=True)
+
+
+def calculate_grand_total(data):
+
+    totals = {
+        "country": "<b>" + _("Grand Total") + "</b>",
+        "fm_60": 0,
+        "fm_62": 0,
+        "fm_65": 0,
+        "fo": 0,
+        "fsp": 0,
+        "grand_total": 0
+    }
+
+    for row in data:
+        totals["fm_60"] += flt(row.get("fm_60"))
+        totals["fm_62"] += flt(row.get("fm_62"))
+        totals["fm_65"] += flt(row.get("fm_65"))
+        totals["fo"] += flt(row.get("fo"))
+        totals["fsp"] += flt(row.get("fsp"))
+        totals["grand_total"] += flt(row.get("grand_total"))
+
+    # Make totals bold and remove zero
+    for field in ["fm_60","fm_62","fm_65","fo","fsp","grand_total"]:
+        if totals[field] == 0:
+            totals[field] = ""
+        else:
+            totals[field] = f"<b>{totals[field]}</b>"
+
+    return totals

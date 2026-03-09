@@ -1063,198 +1063,157 @@ frappe.ui.form.on('Sales Order', {
 
 
 
+frappe.ui.form.on('Sales Order', {
+    refresh: function(frm) {
+        // Only show button if the Sales Order is submitted (DocStatus 1)
+        if (frm.doc.docstatus === 1) {
+            let loading_point = (frm.doc.custom_loading_point || "").toUpperCase();
 
-// frappe.ui.form.on('Sales Order', {
-//     refresh: function(frm) {
-//         // Check if the document is submitted (docstatus 1)
-//         if (frm.doc.docstatus === 1) {
-            
-//             if (frm.doc.custom_loading_point === "MUNDRA") {
-//                 // 1. Remove the standard "Sales Invoice" button 
-//                 // This targets the default Create -> Sales Invoice button
-//                 frm.remove_custom_button('Sales Invoice', 'Create');
+            if (loading_point === "MUNDRA") {
+                // Remove standard Create Invoice button to prevent confusion
+                frm.remove_custom_button('Sales Invoice', 'Create');
+                
+                frm.add_custom_button(__('Consolidated Sales Invoice'), function() {
+                    create_consolidated_invoice(frm);
+                }, __('Create'));
+            }
+        }
+    }
+});
 
-//                 // 2. Add your "Consolidated Sales Invoice" button
-//                 frm.add_custom_button(__('Consolidated Sales Invoice'), function() {
-//                     create_consolidated_invoice(frm);
-//                 }, __('Create'));
-//             }
-//         }
-//     }
-// });
+function create_consolidated_invoice(frm) {
+    // 1. Fetch Company defaults for Item rows
+    frappe.db.get_value('Company', frm.doc.company, ['default_income_account', 'cost_center'], (company_data) => {
+        let default_income = company_data ? company_data.default_income_account : null;
+        let default_cost_center = company_data ? company_data.cost_center : null;
 
+        // 2. Fetch Customer Account (Debit To)
+        frappe.db.get_doc('Customer', frm.doc.customer).then(customer_doc => {
+            let debit_to_account = null;
+            if (customer_doc.accounts) {
+                let account_row = customer_doc.accounts.find(acc => acc.company === frm.doc.company);
+                if (account_row) {
+                    debit_to_account = account_row.account;
+                }
+            }
 
+            // 3. Initialize the New Document
+            frappe.model.with_doctype('Consolidated Sales Invoice', function() {
+                var new_doc = frappe.model.get_new_doc('Consolidated Sales Invoice');
 
+                // Header Mapping
+                new_doc.customer = frm.doc.customer;
+                new_doc.company = frm.doc.company;
+                new_doc.debit_to = debit_to_account;
+                new_doc.sales_contract = frm.doc.name; // Mapping SO to Header field
 
-// function create_consolidated_invoice(frm) {
-//     frappe.model.with_doctype('Consolidated Sales Invoice', function() {
-        
-//         var new_doc = frappe.model.get_new_doc('Consolidated Sales Invoice');
+                // Logistics & Terms
+                new_doc.custom_loading_point = frm.doc.custom_loading_point;
+                new_doc.port_of_loading = frm.doc.port_of_loading;
+                new_doc.shipping_terms = frm.doc.shipping_terms;
+                new_doc.port_of_discharge = frm.doc.port_of_discharge;
+                new_doc.pre_carriage_by = frm.doc.pre_carriage_by;
+                new_doc.custom_carriage_by = frm.doc.custom_carriage_by;
+                new_doc.custom_product = frm.doc.custom_product;
+                new_doc.custom_quality_and_specification = frm.doc.custom_quality_and_specification;
+                new_doc.payment_terms_template = frm.doc.payment_terms_template;
+                new_doc.tc_name = frm.doc.tc_name;
+                new_doc.terms = frm.doc.terms;
 
-//         // --- Basic Mapping ---
-//         new_doc.customer = frm.doc.customer;
-//         new_doc.sales_contract = frm.doc.name;
-//         new_doc.custom_loading_point = frm.doc.custom_loading_point;
-//         new_doc.port_of_loading = frm.doc.port_of_loading;
-//         new_doc.shipping_terms = frm.doc.shipping_terms;
-//         new_doc.port_of_discharge = frm.doc.port_of_discharge;
-//         new_doc.pre_carriage_by = frm.doc.pre_carriage_by;
-//         new_doc.custom_carriage_by = frm.doc.custom_carriage_by;
-//         new_doc.custom_product = frm.doc.custom_product;
-//         new_doc.custom_quality_and_specification = frm.doc.custom_quality_and_specification;
-//         new_doc.payment_terms_template = frm.doc.payment_terms_template;
-//         new_doc.tc_name = frm.doc.tc_name;
-//         new_doc.terms = frm.doc.terms;
-//         new_doc.consignee= frm.doc.custom_consignee;
-        
+                // Totals & Currency
+                new_doc.currency = frm.doc.currency;
+                new_doc.conversion_rate = frm.doc.conversion_rate;
+                new_doc.selling_price_list = frm.doc.selling_price_list;
+                new_doc.base_grand_total = frm.doc.base_grand_total;
+                new_doc.base_in_words = frm.doc.base_in_words;
+                new_doc.grand_total = frm.doc.grand_total;
+                new_doc.in_words = frm.doc.in_words;
+                new_doc.total_advance = frm.doc.total_advance;
+                new_doc.outstanding_amount = frm.doc.outstanding_amount;
+                new_doc.disable_rounded_total = frm.doc.disable_rounded_total;
+                new_doc.total_qty = frm.doc.total_qty;
+                new_doc.total_net_weight = frm.doc.total_net_weight;
+                new_doc.base_total = frm.doc.base_total;
+                new_doc.base_net_total = frm.doc.base_net_total;
+                new_doc.total = frm.doc.total;
+                new_doc.net_total = frm.doc.net_total;
+                new_doc.branch = frm.doc.branch;
+                new_doc.plc_conversion_rate = frm.doc.conversion_rate;
+                new_doc.custom_producer_list = frm.doc.custom_producer_list;
+                new_doc.custom_producer_table = frm.doc.custom_producer_table;
 
-//         // --- Address & GST Mapping (The missing parts) ---
-//         // Customer Address
-//         new_doc.customer_address = frm.doc.customer_address;
-//         new_doc.address_display = frm.doc.address_display;
-//         new_doc.gst_category = frm.doc.gst_category;
-//         new_doc.place_of_supply = frm.doc.place_of_supply;
+                // Address & GST
+                new_doc.customer_address = frm.doc.customer_address;
+                new_doc.address_display = frm.doc.address_display;
+                new_doc.gst_category = frm.doc.gst_category;
+                new_doc.place_of_supply = frm.doc.place_of_supply;
+                new_doc.shipping_address_name = frm.doc.shipping_address_name;
+                new_doc.shipping_address = frm.doc.shipping_address;
+                new_doc.company_address = frm.doc.company_address;
+                new_doc.company_address_display = frm.doc.company_address_display;
+                new_doc.company_gstin = frm.doc.company_gstin;
 
-//         // Shipping Address
-//         new_doc.shipping_address_name = frm.doc.shipping_address_name;
-//         new_doc.shipping_address = frm.doc.shipping_address;
+                // Custom Tracking Fields
+                new_doc.custom_item_group = frm.doc.custom_item_group;
+                new_doc.custom_consignee = frm.doc.custom_consignee;
+                new_doc.custom_agent = frm.doc.custom_agent;
+                new_doc.custom_producer_list = frm.doc.custom_producer_list;
+                new_doc.custom_packing_template = frm.doc.custom_packing_template;
+                new_doc.custom_packing_detailsfor_sales_invoice = frm.doc.custom_packing_detailsfor_sales_invoice;
+                new_doc.tc_name = frm.doc.tc_name
+                new_doc.terms = frm.doc.terms
+                
 
-//         // Company Address & GST
-//         new_doc.company_address = frm.doc.company_address;
-//         new_doc.company_address_display = frm.doc.company_address_display;
-//         new_doc.company_gstin = frm.doc.company_gstin;
+                // 4. Items Child Table Mapping
+                if (frm.doc.items) {
+                    frm.doc.items.forEach(item => {
+                        let row = frappe.model.add_child(new_doc, 'items');
+                        
+                        // Reference to Source Sales Order
+                        row.sales_order = frm.doc.name; // This maps the SO name to the row
+                        row.so_detail = item.name;     // This maps the specific row ID
+                        
+                        // Item Details
+                        row.item_code = item.item_code;
+                        row.item_name = item.item_name;
+                        row.qty = item.qty;
+                        row.uom = item.uom;
+                        row.conversion_factor = item.conversion_factor;
+                        row.warehouse = item.warehouse;
+                        row.gst_hsn_code = item.gst_hsn_code;
 
-//         // --- Child Tables (Items & Payment Schedule) ---
-//         if (frm.doc.items) {
-//             new_doc.items = []; 
-//             frm.doc.items.forEach(item => {
-//                 let row = frappe.model.add_child(new_doc, 'items');
-//                 row.item_code = item.item_code;
-//                 row.qty = item.qty;
-//                 row.rate = item.rate;
-//                 row.amount = item.amount;
-//                 row.uom = item.uom;
-//                 row.conversion_factor = item.conversion_factor;
-//                 row.item_name = item.item_name; 
-//                 // Add warehouse/taxes if your new doctype requires them
-//             });
-//         }
+                        
+                        // Pricing & Accounts
+                        row.rate = item.rate;
+                        row.amount = item.amount;
+                        row.base_rate = item.base_rate;
+                        row.base_amount = item.base_amount;
+                        row.net_rate = item.net_rate;
+                        row.net_amount = item.net_amount;
+                        row.base_net_rate = item.base_net_rate;
+                        row.base_net_amount = item.base_net_amount;
+                        row.taxable_value = item.taxable_value;
+                        
+                        row.income_account = item.income_account || default_income;
+                        row.cost_center = item.cost_center || default_cost_center;
+                    });
+                }
 
-//         if (frm.doc.payment_schedule) {
-//             new_doc.payment_schedule = [];
-//             frm.doc.payment_schedule.forEach(ps => {
-//                 let row = frappe.model.add_child(new_doc, 'payment_schedule');
-//                 row.payment_term = ps.payment_term;
-//                 row.description = ps.description;
-//                 row.due_date = ps.due_date;
-//                 row.invoice_portion = ps.invoice_portion;
-//                 row.payment_amount = ps.payment_amount;
-//             });
-//         }
+                // 5. Payment Schedule Mapping
+                if (frm.doc.payment_schedule) {
+                    frm.doc.payment_schedule.forEach(ps => {
+                        let row = frappe.model.add_child(new_doc, 'payment_schedule');
+                        row.payment_term = ps.payment_term;
+                        row.description = ps.description;
+                        row.due_date = ps.due_date;
+                        row.invoice_portion = ps.invoice_portion;
+                        row.payment_amount = ps.payment_amount;
+                    });
+                }
 
-//         // Set the route
-//         frappe.set_route('Form', 'Consolidated Sales Invoice', new_doc.name);
-//     });
-// }
-
-
-
-
-
-// frappe.ui.form.on('Sales Order', {
-//     refresh: function(frm) {
-//         // Check if the document is submitted (docstatus 1)
-//         if (frm.doc.docstatus === 1) {
-            
-//             if (frm.doc.custom_loading_point === "MUNDRA") {
-//                 // 1. Remove the standard "Sales Invoice" button 
-//                 frm.remove_custom_button('Sales Invoice', 'Create');
-
-//                 // 2. Add your "Consolidated Sales Invoice" button
-//                 frm.add_custom_button(__('Consolidated Sales Invoice'), function() {
-//                     create_consolidated_invoice(frm);
-//                 }, __('Create'));
-//             }
-//         }
-//     }
-// });
-
-// function create_consolidated_invoice(frm) {
-//     // Fetch the default income account and cost center from the Company first
-//     frappe.db.get_value('Company', frm.doc.company, ['default_income_account', 'cost_center'], (r) => {
-//         let default_account = r ? r.default_income_account : null;
-//         let default_cost_center = r ? r.cost_center : null;
-
-//         frappe.model.with_doctype('Consolidated Sales Invoice', function() {
-//             var new_doc = frappe.model.get_new_doc('Consolidated Sales Invoice');
-
-//             // --- Basic Mapping ---
-//             new_doc.customer = frm.doc.customer;
-//             new_doc.sales_contract = frm.doc.name;
-//             new_doc.company = frm.doc.company; // Essential for accounting
-//             new_doc.custom_loading_point = frm.doc.custom_loading_point;
-//             new_doc.port_of_loading = frm.doc.port_of_loading;
-//             new_doc.shipping_terms = frm.doc.shipping_terms;
-//             new_doc.port_of_discharge = frm.doc.port_of_discharge;
-//             new_doc.pre_carriage_by = frm.doc.pre_carriage_by;
-//             new_doc.custom_carriage_by = frm.doc.custom_carriage_by;
-//             new_doc.custom_product = frm.doc.custom_product;
-//             new_doc.custom_quality_and_specification = frm.doc.custom_quality_and_specification;
-//             new_doc.payment_terms_template = frm.doc.payment_terms_template;
-//             new_doc.tc_name = frm.doc.tc_name;
-//             new_doc.terms = frm.doc.terms;
-//             new_doc.consignee = frm.doc.custom_consignee;
-
-//             // --- Address & GST Mapping ---
-//             new_doc.customer_address = frm.doc.customer_address;
-//             new_doc.address_display = frm.doc.address_display;
-//             new_doc.gst_category = frm.doc.gst_category;
-//             new_doc.place_of_supply = frm.doc.place_of_supply;
-//             new_doc.shipping_address_name = frm.doc.shipping_address_name;
-//             new_doc.shipping_address = frm.doc.shipping_address;
-//             new_doc.company_address = frm.doc.company_address;
-//             new_doc.company_address_display = frm.doc.company_address_display;
-//             new_doc.company_gstin = frm.doc.company_gstin;
-
-//             // --- Child Tables (Items) ---
-//             if (frm.doc.items) {
-//                 frm.doc.items.forEach(item => {
-//                     let row = frappe.model.add_child(new_doc, 'items');
-//                     row.item_code = item.item_code;
-//                     row.qty = item.qty;
-//                     row.rate = item.rate;
-//                     row.amount = item.amount;
-//                     row.uom = item.uom;
-//                     row.conversion_factor = item.conversion_factor;
-//                     row.item_name = item.item_name;
-                    
-//                     // Logic: Use item's account if it exists, otherwise use Company default
-//                     row.income_account = item.income_account || default_account;
-//                     row.cost_center = item.cost_center || default_cost_center;
-//                 });
-//             }
-
-//             // --- Child Tables (Payment Schedule) ---
-//             if (frm.doc.payment_schedule) {
-//                 frm.doc.payment_schedule.forEach(ps => {
-//                     let row = frappe.model.add_child(new_doc, 'payment_schedule');
-//                     row.payment_term = ps.payment_term;
-//                     row.description = ps.description;
-//                     row.due_date = ps.due_date;
-//                     row.invoice_portion = ps.invoice_portion;
-//                     row.payment_amount = ps.payment_amount;
-//                 });
-//             }
-
-//             // Route to the new document
-//             frappe.set_route('Form', 'Consolidated Sales Invoice', new_doc.name);
-//         });
-//     });
-// }
-
-
-
-
-
-
-
+                // 6. Route to the new Consolidated Invoice
+                frappe.set_route('Form', 'Consolidated Sales Invoice', new_doc.name);
+            });
+        });
+    });
+}
