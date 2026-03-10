@@ -287,7 +287,7 @@ class VehicleQueue(Document):
                     pr_item.qty = allocate_qty
                 # pr_item.uom = vq_item.uom
                 # pr_item.stock_uom = vq_item.uom
-                # pr_item.rate = vq_item.rate or 0
+                pr_item.rate = vq_item.rate or 0
                 pr_item.warehouse = self.warehouse
                 pr_item.rejected_warehouse = ""
                 if vq_item.purchase_order:
@@ -348,7 +348,7 @@ class VehicleQueue(Document):
                 pr_item = pr.append("items", {})
                 pr_item.item_code = vq_item.item
                 pr_item.qty = vq_item.net_wt
-                # pr_item.rate = vq_item.rate  # MUST exist
+                pr_item.rate = vq_item.rate  # MUST exist
                 pr_item.uom = frappe.db.get_value("Item", vq_item.item, "stock_uom")
                 pr_item.stock_uom = pr_item.uom
                 pr_item.warehouse = self.warehouse
