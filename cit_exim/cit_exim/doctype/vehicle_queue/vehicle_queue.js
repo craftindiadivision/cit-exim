@@ -554,7 +554,6 @@ frappe.ui.form.on("Vehicle Queue", {
 
 });
 
-
 frappe.ui.form.on("Vehicle Queue Item", {
 
     rate: function(frm, cdt, cdn) {
@@ -564,10 +563,9 @@ frappe.ui.form.on("Vehicle Queue Item", {
 
 });
 
-
 function calculate_supplier_invoice(frm) {
 
-    if(frm.doc.invoice_qty && frm.doc.item && frm.doc.item.length > 0){
+    if (frm.doc.invoice_qty && frm.doc.item && frm.doc.item.length > 0) {
 
         let rate = frm.doc.item[0].rate || 0;
         let amount = frm.doc.invoice_qty * rate;
@@ -577,20 +575,23 @@ function calculate_supplier_invoice(frm) {
 
 }
 
-
 function calculate_child_values(frm){
 
     let supplier_invoice_amount = frm.doc.supplier_invoice_amount || 0;
     let net_weight = frm.doc.net_weight || 0;
 
+    let total_row_amount = 0;
+
     (frm.doc.item || []).forEach(function(row){
 
-        row.amount = net_weight * (row.rate || 0);
+        let amount = net_weight * (row.rate || 0);
 
-        doc.difference_in_amount = supplier_invoice_amount - row.amount;
+        frappe.model.set_value(row.doctype, row.name, "amount", amount);
+
+        total_row_amount += amount;
 
     });
 
-    frm.refresh_field("item");
+    frm.set_value("difference_in_amount", supplier_invoice_amount - total_row_amount);
 
 }

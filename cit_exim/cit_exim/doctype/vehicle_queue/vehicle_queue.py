@@ -134,24 +134,24 @@ class VehicleQueue(Document):
         # Calculate Net Weight
         if self.vehicle_no:
             self.vehicle_no = self.vehicle_no.replace(" ", "").upper()
-        if self.gross_weight is not None and self.tare_weight is not None and self.ice_weight is not None :
-            self.net_weight = self.gross_weight - self.tare_weight - self.ice_weight
-        else:
-            self.net_weight = 0
-        supplier_invoice_amount = 0
+        # if self.gross_weight is not None and self.tare_weight is not None and self.ice_weight is not None :
+        #     self.net_weight = self.gross_weight - self.tare_weight - self.ice_weight
+        # else:
+        #     self.net_weight = 0
+        # supplier_invoice_amount = 0
 
-        if self.invoice_qty and self.item:
-            rate = self.item[0].rate or 0
-            supplier_invoice_amount = self.invoice_qty * rate
+        # if self.invoice_qty and self.item:
+        #     rate = self.item[0].rate or 0
+        #     supplier_invoice_amount = self.invoice_qty * rate
 
-        self.supplier_invoice_amount = supplier_invoice_amount
+        # self.supplier_invoice_amount = supplier_invoice_amount
 
-        for row in self.item:
-            rate = row.rate or 0
-            net_weight = self.net_weight or 0
+        # for row in self.item:
+        #     rate = row.rate or 0
+        #     net_weight = self.net_weight or 0
 
-            row.amount = net_weight * rate
-            self.difference_in_amount = supplier_invoice_amount - row.amount
+        #     row.amount = net_weight * rate
+        #     self.difference_in_amount = supplier_invoice_amount - row.amount
     def on_submit(self):
         # CONDITION CHECK
         if self.type != "Inward":
