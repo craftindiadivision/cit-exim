@@ -65,7 +65,7 @@ def validate(doc, method=None):
             "UOM Conversion Detail",
             {
                 "parent": item.item_code,
-                "uom": "Packet"
+                "uom": item.custom_export_uom
             },
             "conversion_factor"
         )
