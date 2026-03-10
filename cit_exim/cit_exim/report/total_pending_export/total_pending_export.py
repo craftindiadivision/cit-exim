@@ -65,7 +65,7 @@ def get_data(filters):
             AND cqs.parenttype = 'Sales Invoice' 
             AND cqs.test = 'PROTEIN'
         WHERE
-            si.docstatus = 1 
+            si.docstatus IN (0,1)
             AND (si.status = 'Unpaid' OR si.custom_payment_status != 1)
         GROUP BY
             si_item.name

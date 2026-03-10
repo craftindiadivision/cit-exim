@@ -72,7 +72,7 @@ def validate(doc, method=None):
 
         if not conversion_factor:
             frappe.throw(
-                f"Packet UOM conversion not defined for Item {item.item_code}"
+                f" Export UOM conversion not defined for Item {item.item_code}"
             )
 
         for entry in bundle.entries:
