@@ -452,7 +452,7 @@ def create_purchase_voucher(doc, method=None):
     # Create Purchase Voucher (Draft)
     pv = frappe.new_doc("Purchase Voucher")
     pv.supplier = doc.supplier
-    pv.company_name = doc.company
+    pv.company = doc.company
     pv.date = doc.date
 
     pv.cost_center = doc.cost_center
