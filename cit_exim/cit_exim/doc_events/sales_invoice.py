@@ -2111,10 +2111,33 @@ def cancel_jv(self):
 
 
 def before_insert(doc, method):
+    print('Before Insert..............................')
     if doc.get("items") and len(doc.items) > 0:
         so_name = doc.items[0].sales_order
         if so_name:
             copy_selected_producers(doc, so_name)
+
+
+
+# def before_insert(doc, method):
+#     print('before insert........................')
+#     if doc.get("items") and len(doc.items) > 0:
+#         so_name = doc.items[0].sales_order
+
+#         if so_name:
+#             # your existing function
+#             copy_selected_producers(doc, so_name)
+
+#             # fetch LC No from Contract Term
+#             lc_no = frappe.db.get_value(
+#                 "Contract Term",
+#                 {"sales_order": so_name},
+#                 "lc_no"
+#             )
+
+#             if lc_no:
+#                 doc.custom_lc_no = lc_no
+
 
 
 def copy_selected_producers(doc, sales_order):

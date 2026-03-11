@@ -110,6 +110,9 @@ frappe.ui.form.on("Sales Invoice", {
             frappe.model.with_doc("Contract Term", frm.doc.contract_and_lc, function () {
                 var doc = frappe.model.get_doc("Contract Term", frm.doc.contract_and_lc)
 
+                //  fetch LC No from Contract Term → Sales Invoice
+                frm.set_value("custom_lc_no", doc.lc_no);
+
                 frm.clear_table('sales_invoice_export_document_item')
                 $.each(doc.document || [], function (i, d) {
                     let c = frm.add_child('sales_invoice_export_document_item')
@@ -131,6 +134,7 @@ frappe.ui.form.on("Sales Invoice", {
             });
         }
     },
+    
     bl_date: function (frm) {
         frm.trigger('maturity_date')
     },
@@ -459,20 +463,20 @@ frappe.ui.form.on('Sales Invoice', {
 // CHILD TABLE 1 : Sales Invoice Contract Term Check
 // =======================================================
 
-frappe.ui.form.on('Sales Invoice Contract Term Check', {
+// frappe.ui.form.on('Sales Invoice Contract Term Check', {
 
-    checked(frm, cdt, cdn) {
-        update_custom_document_checked(frm);
-    },
+//     checked(frm, cdt, cdn) {
+//         update_custom_document_checked(frm);
+//     },
 
-    sales_invoice_contract_term_check_add(frm) {
-        update_custom_document_checked(frm);
-    },
+//     sales_invoice_contract_term_check_add(frm) {
+//         update_custom_document_checked(frm);
+//     },
 
-    sales_invoice_contract_term_check_remove(frm) {
-        update_custom_document_checked(frm);
-    }
-});
+//     sales_invoice_contract_term_check_remove(frm) {
+//         update_custom_document_checked(frm);
+//     }
+// });
 
 
 // =======================================================
@@ -503,19 +507,19 @@ function update_custom_document_checked(frm) {
 
     let all_checked = true;
 
-    // ---------- Validate Contract Term Check ----------
-    if (!frm.doc.sales_invoice_contract_term_check ||
-        frm.doc.sales_invoice_contract_term_check.length === 0) {
+    // // ---------- Validate Contract Term Check ----------
+    // if (!frm.doc.sales_invoice_contract_term_check ||
+    //     frm.doc.sales_invoice_contract_term_check.length === 0) {
 
-        all_checked = false;
+    //     all_checked = false;
 
-    } else {
-        frm.doc.sales_invoice_contract_term_check.forEach(row => {
-            if (row.checked !== 1) {
-                all_checked = false;
-            }
-        });
-    }
+    // } else {
+    //     frm.doc.sales_invoice_contract_term_check.forEach(row => {
+    //         if (row.checked !== 1) {
+    //             all_checked = false;
+    //         }
+    //     });
+    // }
 
     // ---------- Validate Export Document Item ----------
     if (!frm.doc.sales_invoice_export_document_item ||

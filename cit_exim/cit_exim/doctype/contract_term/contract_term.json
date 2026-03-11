@@ -303,6 +303,7 @@
   {
    "fieldname": "contract_term_check",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Contract Term Check",
    "options": "Contract Term Check"
   },
@@ -322,7 +323,7 @@
   }
  ],
  "links": [],
- "modified": "2025-12-03 12:57:16.429216",
+ "modified": "2026-03-11 10:03:40.672259",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Contract Term",

@@ -351,18 +351,41 @@ def make_lc(source_name, target_doc=None):
 				'net_total': source.net_total,
 			})
 
+	# doclist = get_mapped_doc("Sales Order", source_name, {
+	# 		"Sales Order": {
+	# 			"doctype": "Contract Term",
+	# 			"field_map": {
+	# 				"name": "sales_order",
+	# 				"transaction_date":"contract_date",
+	# 				"grand_total": "contract_amount",
+	# 				"delivery_date":"latest_date_of_shipment",
+	# 				"":""
+	# 			},	
+	# 		},		
+	# 	}, target_doc, postprocess)
+	
+
+
 	doclist = get_mapped_doc("Sales Order", source_name, {
-			"Sales Order": {
-				"doctype": "Contract Term",
-				"field_map": {
-					"name": "sales_order",
-					"transaction_date":"contract_date",
-					"grand_total": "contract_amount",
-					"delivery_date":"latest_date_of_shipment",
-					"":""
-				},	
-			},		
-		}, target_doc, postprocess)
+
+		"Sales Order": {
+			"doctype": "Contract Term",
+			"field_map": {
+				"name": "sales_order",
+				"transaction_date": "contract_date",
+				"grand_total": "contract_amount",
+				"delivery_date": "latest_date_of_shipment"
+			}
+		},
+
+		"Document list": {   # child table doctype of Sales Order
+			"doctype": "Export Document Item",   # child table doctype of Contract Term
+			"field_map": {
+				"document_name": "export_document"
+			}
+		}
+
+	}, target_doc, postprocess)
 
 	return doclist
 	

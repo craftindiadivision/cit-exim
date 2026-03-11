@@ -12,18 +12,21 @@
  ],
  "fields": [
   {
+   "allow_on_submit": 1,
    "fieldname": "batch_code",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Batch Code"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "production_date",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Production Date "
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "expiry_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -34,7 +37,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-10 21:14:46.569262",
+ "modified": "2026-03-11 10:55:36.042331",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Production and Batch",
