@@ -611,7 +611,7 @@ frappe.ui.form.on("Sales Order", {
             return {
                 query: "cit_exim.cit_exim.doc_events.sales_order.get_consignee_list",
                 filters: {
-                    customer: frm.doc.customer
+                    // customer: frm.doc.customer
                 }
             };
         });

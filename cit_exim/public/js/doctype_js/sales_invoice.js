@@ -1076,18 +1076,18 @@ frappe.ui.form.on('Sales Invoice', {
 
 
 
-frappe.ui.form.on("Sales Invoice", {
-    customer: function(frm) {
-        frm.set_query("custom_consignee", function() {
-            return {
-                query: "cit_exim.cit_exim.doc_events.sales_invoice.get_consignee_list",
-                filters: {
-                    customer: frm.doc.customer
-                }
-            };
-        });
-    }
-});
+// frappe.ui.form.on("Sales Invoice", {
+//     customer: function(frm) {
+//         frm.set_query("custom_consignee", function() {
+//             return {
+//                 query: "cit_exim.cit_exim.doc_events.sales_invoice.get_consignee_list",
+//                 filters: {
+//                     customer: frm.doc.customer
+//                 }
+//             };
+//         });
+//     }
+// });
 
 // /////////////////////////////////////////Address changing based on Buyer and consignee//////////////////////////////////////////////////////////////
 

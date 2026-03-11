@@ -845,8 +845,6 @@ def recalculate_shipment_schedule(
     invoice_name
 ):
     posting_date = getdate(posting_date)
-    month_name = posting_date.strftime("%B")
-    fiscal_year = posting_date.year
 
     for row in sales_contract.custom_shipment_schedule:
 
@@ -893,9 +891,18 @@ def recalculate_shipment_schedule(
 
             continue
 
-        # ---------------- MONTHLY ----------------
-        if row.month != month_name or int(row.fiscal_year) != fiscal_year:
+
+        # ---------------- DATE RANGE LOGIC ----------------
+        if not row.start_date or not row.end_date:
             continue
+
+        start_date = getdate(row.start_date)
+        end_date = getdate(row.end_date)
+
+        # Skip rows where invoice date is outside range
+        if not (start_date <= posting_date <= end_date):
+            continue
+
 
         submitted_qty = frappe.db.sql("""
             SELECT SUM(sii.qty)
@@ -906,14 +913,14 @@ def recalculate_shipment_schedule(
                 sii.item_code = %s
                 AND sii.sales_order = %s
                 AND si.docstatus = 1
-                AND MONTH(si.posting_date) = %s
-                AND YEAR(si.posting_date) = %s
+                AND si.posting_date BETWEEN %s AND %s
         """, (
             item_code,
             sales_contract.name,
-            posting_date.month,
-            posting_date.year
+            start_date,
+            end_date
         ))[0][0] or 0
+
 
         completed_qty = frappe.db.sql("""
             SELECT SUM(sii.qty)
@@ -925,17 +932,18 @@ def recalculate_shipment_schedule(
                 AND sii.sales_order = %s
                 AND si.docstatus = 1
                 AND si.custom_work_flow_status = 'Completed Shipment'
-                AND MONTH(si.posting_date) = %s
-                AND YEAR(si.posting_date) = %s
+                AND si.posting_date BETWEEN %s AND %s
         """, (
             item_code,
             sales_contract.name,
-            posting_date.month,
-            posting_date.year
+            start_date,
+            end_date
         ))[0][0] or 0
+
 
         submitted_qty = flt(submitted_qty)
         completed_qty = flt(completed_qty)
+
 
         if completed_qty >= row.planned_qty and row.planned_qty > 0:
             row.status = "Completed"
@@ -944,8 +952,12 @@ def recalculate_shipment_schedule(
         else:
             row.status = None
 
+
         if row.status != previous_status:
             append_invoice_reference(row, invoice_name)
+
+        # Stop after updating correct schedule row
+        break
 
 
 # -------------------------------------------------------------------
