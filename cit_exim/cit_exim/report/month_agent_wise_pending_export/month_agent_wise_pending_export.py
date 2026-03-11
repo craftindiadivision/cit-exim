@@ -428,7 +428,7 @@ def execute(filters=None):
         JOIN `tabSales Order Item` soi 
             ON soi.parent = so.name
 
-        LEFT JOIN `tabShipment Schedule` ss
+        LEFT JOIN `tabShipment Schedule Child Table` ss
             ON ss.parent = so.name
 
         LEFT JOIN (
