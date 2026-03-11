@@ -1065,14 +1065,15 @@ frappe.ui.form.on('Sales Order', {
 
 frappe.ui.form.on('Sales Order', {
     refresh: function(frm) {
-        // Only show button if the Sales Order is submitted (DocStatus 1)
-        if (frm.doc.docstatus === 1) {
-            let loading_point = (frm.doc.custom_loading_point || "").toUpperCase();
 
-            if (loading_point === "MUNDRA") {
-                // Remove standard Create Invoice button to prevent confusion
+        // Only show button if the Sales Order is submitted
+        if (frm.doc.docstatus === 1) {
+
+            if (frm.doc.custom_is_loading_from_mudra_port == 1) {
+
+                // Remove default Create Invoice button
                 frm.remove_custom_button('Sales Invoice', 'Create');
-                
+
                 frm.add_custom_button(__('Consolidated Sales Invoice'), function() {
                     create_consolidated_invoice(frm);
                 }, __('Create'));
@@ -1214,6 +1215,6 @@ function create_consolidated_invoice(frm) {
                 // 6. Route to the new Consolidated Invoice
                 frappe.set_route('Form', 'Consolidated Sales Invoice', new_doc.name);
             });
-        });
+        })
     });
 }

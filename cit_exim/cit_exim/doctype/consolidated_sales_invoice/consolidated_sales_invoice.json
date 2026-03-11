@@ -2538,14 +2538,14 @@
    "fieldname": "sales_invoice_contract_term_check",
    "fieldtype": "Table",
    "label": "Sales Invoice Contract Term Check",
-   "options": "Sales Invoice Contract Term Check"
+   "options": "Consolidated Sales Invoice Contract Term Check"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "sales_invoice_export_document_item",
    "fieldtype": "Table",
    "label": "Sales Invoice Export Document Item",
-   "options": "Sales Invoice Export Document Item"
+   "options": "Consolidated Sales Invoice Export Document Item"
   },
   {
    "allow_on_submit": 1,
@@ -2735,7 +2735,7 @@
    "link_fieldname": "custom_consolidated_invoice_reference"
   }
  ],
- "modified": "2026-03-07 07:47:38.825655",
+ "modified": "2026-03-09 22:48:17.207387",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice",
