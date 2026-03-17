@@ -95,7 +95,7 @@ class ConsolidatedSalesInvoice(Document):
                 "UOM Conversion Detail",
                 {
                     "parent": item.item_code,
-                    "uom": "Packet"
+                    "uom": item.custom_export_uom
                 },
                 "conversion_factor"
             )
@@ -379,6 +379,13 @@ def split_consolidated_invoice(source_name, split_count):
     remainder_amount = total_amount % split_count
 
     created_invoices = []
+    bundle_dict = {
+    itm.item_code: {
+        "qty": itm.qty,
+        "bundle": itm.serial_and_batch_bundle
+    }
+    for itm in source_doc.items if itm.serial_and_batch_bundle
+    }
 
     # -----------------------------
     # Disable workflow sync
@@ -437,6 +444,7 @@ def split_consolidated_invoice(source_name, split_count):
             row.uom = item.uom
             row.warehouse = item.warehouse
             row.sales_order = item.sales_order
+            row.custom_export_uom = item.custom_export_uom
 
             if i < remainder_qty:
                 row.qty = qty_per_invoice + 1
@@ -473,6 +481,48 @@ def split_consolidated_invoice(source_name, split_count):
                     },
                     update_modified=False
                 )
+            si_doc = frappe.get_doc("Sales Invoice", si.name)
+
+            for row in si_doc.items:
+
+                if row.item_code not in bundle_dict:
+                    continue
+
+                original_bundle = frappe.get_doc(
+                    "Serial and Batch Bundle",
+                    bundle_dict[row.item_code]["bundle"]
+                )
+
+                # create new bundle
+                new_bundle = frappe.new_doc("Serial and Batch Bundle")
+                new_bundle.company = si_doc.company
+                new_bundle.type_of_transaction = "Outward"
+                new_bundle.voucher_type = "Sales Invoice"
+                new_bundle.voucher_no = si_doc.name
+                new_bundle.voucher_detail_no = row.name
+                new_bundle.item_code = row.item_code
+                new_bundle.warehouse = row.warehouse
+
+                original_total = sum(abs(flt(e.qty)) for e in original_bundle.entries)
+                required_qty = abs(flt(row.stock_qty))
+
+                scale = required_qty / original_total
+
+                for entry in original_bundle.entries:
+                    new_qty = abs(flt(entry.qty)) * scale
+
+                    new_bundle.append("entries", {
+                        "batch_no": entry.batch_no,
+                        "qty": -new_qty,
+                        "warehouse": row.warehouse
+                    })
+
+                new_bundle.insert(ignore_permissions=True)
+
+                row.serial_and_batch_bundle = new_bundle.name
+
+            # save invoice after attaching bundle
+            si_doc.save(ignore_permissions=True)
 
             created_invoices.append(si.name)
 

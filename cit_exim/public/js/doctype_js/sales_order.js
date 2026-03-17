@@ -605,18 +605,18 @@ function render_producer_html(frm) {
 
 
 
-frappe.ui.form.on("Sales Order", {
-    customer: function(frm) {
-        frm.set_query("custom_consignee", function() {
-            return {
-                query: "cit_exim.cit_exim.doc_events.sales_order.get_consignee_list",
-                filters: {
-                    // customer: frm.doc.customer
-                }
-            };
-        });
-    }
-});
+// frappe.ui.form.on("Sales Order", {
+//     customer: function(frm) {
+//         frm.set_query("custom_consignee", function() {
+//             return {
+//                 query: "cit_exim.cit_exim.doc_events.sales_order.get_consignee_list",
+//                 filters: {
+//                     // customer: frm.doc.customer
+//                 }
+//             };
+//         });
+//     }
+// });
 
 
 
@@ -652,6 +652,87 @@ frappe.ui.form.on("Sales Order", {
         });
     }
 });
+
+
+
+
+
+
+// frappe.ui.form.on("Sales Order", {
+
+//     setup: function(frm) {
+
+//         // Filter Shipping Address based on Consignee
+//         frm.set_query("shipping_address_name", function() {
+
+//             if (!frm.doc.custom_consignee) {
+//                 return {};
+//             }
+
+//             return {
+//                 query: "frappe.contacts.doctype.address.address.address_query",
+//                 filters: {
+//                     link_doctype: "Customer",
+//                     link_name: frm.doc.custom_consignee
+//                 }
+//             };
+//         });
+
+//     },
+
+//     custom_consignee: function(frm) {
+
+//         // clear old address
+//         frm.set_value("shipping_address_name", "");
+//         frm.set_value("shipping_address", "");
+
+//         if (frm.doc.custom_consignee) {
+
+//             frappe.call({
+//                 method: "cit_exim.cit_exim.doc_events.sales_order.get_consignee_default_address",
+//                 args: {
+//                     customer: frm.doc.custom_consignee
+//                 },
+//                 callback: function(r) {
+
+//                     if (r.message) {
+//                         frm.set_value("shipping_address_name", r.message.name);
+//                         frm.set_value("shipping_address", r.message.display);
+//                     }
+
+//                 }
+//             });
+
+//         }
+
+//     },
+
+//     shipping_address_name: function(frm) {
+
+//         if (frm.doc.shipping_address_name) {
+
+//             frappe.call({
+//                 method: "frappe.contacts.doctype.address.address.get_address_display",
+//                 args: {
+//                     address_dict: frm.doc.shipping_address_name
+//                 },
+//                 callback: function(r) {
+
+//                     if (r.message) {
+//                         frm.set_value("shipping_address", r.message);
+//                     }
+
+//                 }
+//             });
+
+//         }
+
+//     }
+
+// });
+
+
+
 
 
 frappe.ui.form.on("Sales Order", {

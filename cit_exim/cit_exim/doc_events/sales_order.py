@@ -91,6 +91,52 @@ def get_billing_address_for_customer(customer):
 
 
 
+
+
+
+
+
+# import frappe
+
+# @frappe.whitelist()
+# def get_consignee_default_address(customer):
+
+#     address = frappe.db.sql("""
+#         SELECT 
+#             a.name
+#         FROM `tabAddress` a
+#         INNER JOIN `tabDynamic Link` dl 
+#             ON dl.parent = a.name
+#         WHERE dl.link_doctype = 'Customer'
+#         AND dl.link_name = %s
+#         ORDER BY
+#             a.is_shipping_address DESC,
+#             a.is_primary_address DESC
+#         LIMIT 1
+#     """, (customer), as_dict=True)
+
+#     if not address:
+#         return None
+
+#     addr_name = address[0].name
+#     addr_doc = frappe.get_doc("Address", addr_name)
+
+#     return {
+#         "name": addr_doc.name,
+#         "display": addr_doc.get_display()
+#     }
+
+
+
+
+
+
+
+
+
+
+
+
 @frappe.whitelist()
 def get_customer_shipping_address(customer):
     """

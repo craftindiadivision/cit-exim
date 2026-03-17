@@ -1360,6 +1360,38 @@ def on_submit(self, method):
     # create_brc(self)
     create_jv_with_gst(self)
     update_sales_contract_from_invoice(self)
+    if frappe.flags.in_auto_submit:
+        return
+
+    frappe.flags.in_auto_submit = True
+
+    try:
+
+        if not self.custom_consolidated_invoice_reference:
+            return
+
+        consolidated_name = self.custom_consolidated_invoice_reference
+
+        invoices = frappe.get_all(
+            "Sales Invoice",
+            filters={
+                "custom_consolidated_invoice_reference": consolidated_name
+            },
+            pluck="name"
+        )
+
+        for inv in invoices:
+
+            if inv == self.name:
+                continue
+
+            invoice_doc = frappe.get_doc("Sales Invoice", inv)
+
+            if invoice_doc.docstatus == 0 and not invoice_doc.is_return:
+                invoice_doc.submit()
+
+    finally:
+        frappe.flags.in_auto_submit = False
 
 
 
@@ -3106,7 +3138,7 @@ def get_consignee_list(doctype, txt, searchfield, start, page_len, filters):
 
 
 
-import frappe
+# import frappe
 
 
 @frappe.whitelist()
@@ -3156,9 +3188,6 @@ def get_customer_billing_address(customer):
 
 
 
-
-
-
 @frappe.whitelist()
 def get_billing_address_for_customer(customer):
     """
@@ -3188,6 +3217,57 @@ def get_billing_address_for_customer(customer):
     """, (customer,), as_dict=True)
 
     return address[0].name if address else None
+
+
+
+
+
+
+
+# import frappe
+
+# @frappe.whitelist()
+# def get_consignee_default_address(customer):
+
+#     address = frappe.db.sql("""
+#         SELECT 
+#             a.name
+#         FROM `tabAddress` a
+#         INNER JOIN `tabDynamic Link` dl 
+#             ON dl.parent = a.name
+#         WHERE dl.link_doctype = 'Customer'
+#         AND dl.link_name = %s
+#         ORDER BY
+#             a.is_shipping_address DESC,
+#             a.is_primary_address DESC
+#         LIMIT 1
+#     """, (customer,), as_dict=True)
+
+#     if not address:
+#         return None
+
+#     addr_name = address[0].name
+#     addr_doc = frappe.get_doc("Address", addr_name)
+
+#     return {
+#         "name": addr_doc.name,
+#         "display": addr_doc.get_display()
+#     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
