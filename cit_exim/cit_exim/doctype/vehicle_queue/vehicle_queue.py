@@ -131,9 +131,43 @@ from frappe.model.mapper import get_mapped_doc
 class VehicleQueue(Document):
 
     def validate(self):
+        self.validate_supplier_invoice_number()
+
         # Calculate Net Weight
         if self.vehicle_no:
             self.vehicle_no = self.vehicle_no.replace(" ", "").upper()
+    def validate_supplier_invoice_number(self):
+
+        if self.supplier_invoice_number:
+            fiscal_year = get_fiscal_year(self.date, company=self.company, as_dict=True)
+
+            vq = frappe.db.sql("""
+                SELECT name
+                FROM `tabVehicle Queue`
+                WHERE supplier_invoice_number = %(supplier_invoice_number)s
+                AND supplier = %(supplier)s
+                AND name != %(name)s
+                AND docstatus < 2
+                AND date BETWEEN %(year_start_date)s AND %(year_end_date)s
+            """, {
+                "supplier_invoice_number": self.supplier_invoice_number,
+                "supplier": self.supplier,
+                "name": self.name,
+                "year_start_date": fiscal_year.year_start_date,
+                "year_end_date": fiscal_year.year_end_date
+            })
+
+            if vq:
+                vq_name = vq[0][0]
+
+                frappe.throw(
+                    _("Supplier Invoice Number already exists in Vehicle Queue {0}").format(
+                        frappe.utils.get_link_to_form("Vehicle Queue", vq_name)
+                    )
+                )
+
+
+
         # if self.gross_weight is not None and self.tare_weight is not None and self.ice_weight is not None :
         #     self.net_weight = self.gross_weight - self.tare_weight - self.ice_weight
         # else:
@@ -565,3 +599,39 @@ def get_pending_po_items(supplier, company):
     """, (supplier, company), as_dict=True)
 
     return po_items
+
+import frappe
+from frappe import _
+from frappe.utils import getdate
+from erpnext.accounts.utils import get_fiscal_year
+
+
+def validate_supplier_invoice_number(self):
+
+    if self.supplier_invoice_number:
+        fiscal_year = get_fiscal_year(self.posting_date, company=self.company, as_dict=True)
+
+        vq = frappe.db.sql("""
+            SELECT name
+            FROM `tabVehicle Queue`
+            WHERE supplier_invoice_number = %(supplier_invoice_number)s
+            AND supplier = %(supplier)s
+            AND name != %(name)s
+            AND docstatus < 2
+            AND posting_date BETWEEN %(year_start_date)s AND %(year_end_date)s
+        """, {
+            "supplier_invoice_number": self.supplier_invoice_number,
+            "supplier": self.supplier,
+            "name": self.name,
+            "year_start_date": fiscal_year.year_start_date,
+            "year_end_date": fiscal_year.year_end_date
+        })
+
+        if vq:
+            vq_name = vq[0][0]
+
+            frappe.throw(
+                _("Supplier Invoice Number already exists in Vehicle Queue {0}").format(
+                    frappe.utils.get_link_to_form("Vehicle Queue", vq_name)
+                )
+            )
