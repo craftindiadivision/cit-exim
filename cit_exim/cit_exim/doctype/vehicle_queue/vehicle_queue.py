@@ -509,6 +509,7 @@ def create_purchase_voucher(doc, method=None):
     # Product Name = Item Group
     pv.product_name = item_group
     pv.weighment_location = doc.weighment_location
+    pv.vehicle_queue_created_by = doc.owner
 
     # ----------------------------
     # Child table mapping (ALL ITEMS)
