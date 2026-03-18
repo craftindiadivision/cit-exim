@@ -20,6 +20,7 @@
   "type",
   "supplier",
   "customer",
+  "posting_date",
   "column_break_vmip",
   "token_number",
   "weigh_bridge_name",
@@ -58,6 +59,8 @@
   "difference_in_qty",
   "column_break_lyne",
   "difference_in_amount",
+  "section_break_gabr",
+  "narration",
   "reference_section",
   "purchase_order"
  ],
@@ -351,6 +354,23 @@
    "fieldname": "difference_in_amount",
    "fieldtype": "Float",
    "label": "Difference In Amount"
+  },
+  {
+   "fieldname": "section_break_gabr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "narration",
+   "fieldtype": "Small Text",
+   "label": "Narration"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Posting Date "
   }
  ],
  "grid_page_length": 50,
@@ -366,7 +386,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-03-08 20:16:25.508661",
+ "modified": "2026-03-18 06:22:04.138590",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
