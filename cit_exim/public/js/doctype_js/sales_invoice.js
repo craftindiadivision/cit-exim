@@ -684,14 +684,14 @@ frappe.ui.form.on("Sales Invoice", {
 
 
 
-frappe.ui.form.on('Sales Invoice', {
-    refresh: function(frm) {
-        // Lock the field if it has a value or if it's in the target state
-        if (frm.doc.custom_submission_date || frm.doc.workflow_state === "Document Submitted & Awaiting Payments") {
-            frm.set_df_property('custom_submission_date', 'read_only', 1);
-        }
-    }
-});
+// frappe.ui.form.on('Sales Invoice', {
+//     refresh: function(frm) {
+//         // Lock the field if it has a value or if it's in the target state
+//         if (frm.doc.custom_submission_date || frm.doc.workflow_state === "Document Submitted & Awaiting Payments") {
+//             frm.set_df_property('custom_submission_date', 'read_only', 1);
+//         }
+//     }
+// });
 
 
 
