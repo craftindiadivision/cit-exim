@@ -1031,6 +1031,7 @@ def on_update(doc, method=None):
 def on_update_after_submit(doc, method=None):
     print("on update after submit is working........")
     _handle_custom_status_change(doc)
+    update_sales_order_qty(doc)
     """
     This function runs every time a submitted Sales Invoice is updated 
     (e.g., when the Workflow State changes).
@@ -1046,7 +1047,7 @@ def on_update_after_submit(doc, method=None):
         # Optional: notify the user or add a comment
         doc.add_comment("Info", text=f"Captured submission date as state changed to {target_state}")
     
-    update_sales_order_qty(doc)
+    
 
 
 def update_sales_order_qty(doc):

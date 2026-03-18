@@ -413,7 +413,7 @@
   "dt": "Sales Invoice Item",
   "fetch_from": null,
   "fetch_if_empty": 0,
-  "fieldname": "duty_drawback_rate1",
+  "fieldname": "duty_drawback_rate",
   "fieldtype": "Percent",
   "hidden": 0,
   "hide_border": 0,
