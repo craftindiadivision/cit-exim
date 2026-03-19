@@ -20,6 +20,7 @@
   "type",
   "supplier",
   "customer",
+  "posting_date",
   "column_break_vmip",
   "token_number",
   "weigh_bridge_name",
@@ -58,6 +59,8 @@
   "difference_in_qty",
   "column_break_lyne",
   "difference_in_amount",
+  "section_break_scqr",
+  "narration",
   "reference_section",
   "purchase_order"
  ],
@@ -355,6 +358,23 @@
    "fieldtype": "Table",
    "label": "Total",
    "options": "Total Packages"
+  },
+  {
+   "fieldname": "section_break_scqr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "narration",
+   "fieldtype": "Small Text",
+   "label": "Narration"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Posting Date"
   }
  ],
  "grid_page_length": 50,
@@ -370,7 +390,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-03-19 15:05:40.839298",
+ "modified": "2026-03-19 16:20:10.931183",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
