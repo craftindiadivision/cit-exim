@@ -132,8 +132,21 @@ class VehicleQueue(Document):
 
     def validate(self):
         self.validate_supplier_invoice_number()
-
-        # Calculate Net Weight
+        for row in self.item:
+            row.net_weight = (row.no_of_bags or 0) * (row.conversion_factor_kg or 0)
+        child_total = sum([row.net_weight or 0 for row in self.item])
+        voucher_net = self.net_weight or 0
+        print(child_total,voucher_net,"total values")
+        if child_total != voucher_net:
+            frappe.msgprint(
+                f"""
+                <b>Weight Mismatch Warning</b><br>
+                Items Total Weight: {child_total}<br>
+                Load Weight: {voucher_net}
+                """,
+                indicator="orange"
+            )
+            # Calculate Net Weight
         if self.vehicle_no:
             self.vehicle_no = self.vehicle_no.replace(" ", "").upper()
     def validate_supplier_invoice_number(self):
@@ -266,7 +279,7 @@ class VehicleQueue(Document):
                 )
 
         elif any(d.purchase_order for d in self.item):
-            
+
             pr = frappe.new_doc("Purchase Receipt")
             pr.supplier = self.supplier
             pr.company = self.company
@@ -283,16 +296,11 @@ class VehicleQueue(Document):
             # -------------------------------------------------
             # LOOP VEHICLE QUEUE ITEM TABLE
             # -------------------------------------------------
-            vehicle_remaining = self.net_weight
-              # Vehicle Queue Item table
-                
-            for vq_item in self.item:   # child table name
-                if vehicle_remaining <= 0:
-                    break
+            for vq_item in self.item:
 
                 if not vq_item.purchase_order:
                     continue
-                print(vehicle_remaining,"vehicle remaining")
+
                 po = frappe.get_doc("Purchase Order", vq_item.purchase_order)
 
                 # Match PO item
@@ -303,27 +311,15 @@ class VehicleQueue(Document):
 
                 if not po_item:
                     continue
-                po_received_qty = po.per_received / 100 * po_item.qty
-                print(po_received_qty,"po received qty")
-                po_pending = po_item.qty - (po_received_qty or 0)
-                print(po_pending,"po pending qty")
-                if po_pending <= 0:
-                    continue
 
-                allocate_qty = min(po_pending, vehicle_remaining)
-                print(allocate_qty,"allocate qty")
                 pr_item = pr.append("items", {})
 
                 pr_item.item_code = vq_item.item
-                if not vq_item.purchase_order:
-                    pr_item.qty = self.net_weight
-                else: 
-                    pr_item.qty = allocate_qty
-                # pr_item.uom = vq_item.uom
-                # pr_item.stock_uom = vq_item.uom
+                pr_item.qty = self.net_weight   # ✅ direct qty, no allocation
                 pr_item.rate = vq_item.rate or 0
                 pr_item.warehouse = self.warehouse
                 pr_item.rejected_warehouse = ""
+                
                 if vq_item.purchase_order:
                     pr_item.custom_purchase_order_ref = vq_item.purchase_order
 
@@ -337,8 +333,8 @@ class VehicleQueue(Document):
                 )
 
                 pr_item.custom_test_variable_template = lab_template
-                vehicle_remaining -= allocate_qty
-                print(vehicle_remaining,"vehicle remaining after allocation")
+
+                # Copy Taxes from PO (only once ideally, but keeping your logic)
                 if vq_item.purchase_order:
                     for po_tax in po.taxes:
                         pr_tax = pr.append("taxes", {})
@@ -353,16 +349,15 @@ class VehicleQueue(Document):
                         pr_tax.base_total = po_tax.base_total
                         pr_tax.cost_center = po_tax.cost_center
                         pr_tax.included_in_print_rate = po_tax.included_in_print_rate
-                    
 
-                # ---------------------------------------------------------
-                # Insert PR
-                # ---------------------------------------------------------
+            # ---------------------------------------------------------
+            # Insert PR
+            # ---------------------------------------------------------
             pr.insert(ignore_permissions=True)
 
             frappe.msgprint(
-                    f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
-                )
+                f"Purchase Receipt <b>{pr.name}</b> created in Draft from Vehicle Queue"
+            )
         else:
             pr = frappe.new_doc("Purchase Receipt")
             pr.supplier = self.supplier
@@ -578,17 +573,27 @@ def get_pending_po_items(supplier, company):
             poi.item_code,
             poi.item_name,
             poi.qty AS ordered_qty,
-
+            item.custom_default_receiving_uom,
+            
             -- calculated received qty based on PO percentage
             ((po.per_received / 100) * poi.qty) AS calculated_received_qty,
 
             -- calculated pending qty
             (poi.qty - ((po.per_received / 100) * poi.qty)) AS pending_qty,
 
+            -- converted pending qty in KG (stock uom)
+            uomc.conversion_factor AS conversion_factor,
+
             poi.rate
         FROM `tabPurchase Order` po
         INNER JOIN `tabPurchase Order Item` poi
             ON poi.parent = po.name
+        LEFT JOIN  `tabItem` item
+            ON poi.item_code = item.item_code
+        -- 🔥 Join UOM Conversion Table
+        LEFT JOIN `tabUOM Conversion Detail` uomc
+            ON uomc.parent = item.name
+            AND uomc.uom = item.custom_default_receiving_uom
         WHERE
             po.docstatus = 1
             AND po.status NOT IN ('Closed', 'On Hold')

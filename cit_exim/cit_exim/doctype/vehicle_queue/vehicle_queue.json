@@ -20,7 +20,6 @@
   "type",
   "supplier",
   "customer",
-  "posting_date",
   "column_break_vmip",
   "token_number",
   "weigh_bridge_name",
@@ -38,6 +37,8 @@
   "section_break_hxnf",
   "total_no_of_boxes",
   "column_break_tiid",
+  "total_section",
+  "total",
   "section_break_wmlx",
   "gross_weight",
   "column_break_xfke",
@@ -53,14 +54,10 @@
   "supplier_invoice_date",
   "column_break_yryz",
   "invoice_qty",
-  "column_break_tkbn",
-  "supplier_bags",
   "section_break_oxza",
   "difference_in_qty",
   "column_break_lyne",
   "difference_in_amount",
-  "section_break_gabr",
-  "narration",
   "reference_section",
   "purchase_order"
  ],
@@ -281,6 +278,7 @@
    "options": "Loading Location"
   },
   {
+   "depends_on": "eval:doc.product === \"Raw Fish\"",
    "fieldname": "section_break_hxnf",
    "fieldtype": "Section Break"
   },
@@ -333,15 +331,6 @@
    "label": "Supplier Invoice Date"
   },
   {
-   "fieldname": "column_break_tkbn",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "supplier_bags",
-   "fieldtype": "Float",
-   "label": "Supplier Bags"
-  },
-  {
    "depends_on": "eval:doc.product == \"RM-Fish Meal\" || doc.product == \"Fish Oil\" || doc.product == \"Soluable Paste\"",
    "fieldname": "section_break_oxza",
    "fieldtype": "Section Break"
@@ -356,21 +345,16 @@
    "label": "Difference In Amount"
   },
   {
-   "fieldname": "section_break_gabr",
-   "fieldtype": "Section Break"
+   "depends_on": "eval:doc.product != \"Raw Fish\"",
+   "fieldname": "total_section",
+   "fieldtype": "Section Break",
+   "label": "Total"
   },
   {
-   "fieldname": "narration",
-   "fieldtype": "Small Text",
-   "label": "Narration"
-  },
-  {
-   "default": "Today",
-   "fieldname": "posting_date",
-   "fieldtype": "Date",
-   "hidden": 1,
-   "in_list_view": 1,
-   "label": "Posting Date "
+   "fieldname": "total",
+   "fieldtype": "Table",
+   "label": "Total",
+   "options": "Total Packages"
   }
  ],
  "grid_page_length": 50,
@@ -386,7 +370,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-03-18 06:22:04.138590",
+ "modified": "2026-03-19 15:05:40.839298",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
