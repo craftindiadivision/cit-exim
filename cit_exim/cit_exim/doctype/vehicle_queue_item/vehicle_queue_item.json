@@ -115,6 +115,7 @@
    "label": "Conversion Factor (KG)"
   },
   {
+   "depends_on": "eval:parent.product != \"Raw Fish\"",
    "fieldname": "net_weight",
    "fieldtype": "Float",
    "label": "Net Weight"
@@ -124,7 +125,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-03-18 15:57:24.347614",
+ "modified": "2026-03-23 11:11:58.772753",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue Item",

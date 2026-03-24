@@ -248,6 +248,7 @@ class VehicleQueue(Document):
                 pr_item.stock_uom = po_item.stock_uom
                 pr_item.rate = po_item.rate
                 pr_item.warehouse = po_item.warehouse
+                pr_item.custom_purchase_order_item_ref = po_item.name
                 pr_item.rejected_warehouse = ""
                 # Get Lab Template
                 po_item_group = frappe.db.get_value(
@@ -315,9 +316,11 @@ class VehicleQueue(Document):
                 pr_item = pr.append("items", {})
 
                 pr_item.item_code = vq_item.item
-                pr_item.qty = self.net_weight   # ✅ direct qty, no allocation
+                # pr_item.qty = self.net_weight   # ✅ direct qty, no allocation
                 pr_item.rate = vq_item.rate or 0
                 pr_item.warehouse = self.warehouse
+                pr_item.qty = vq_item.net_weight
+                pr_item.custom_purchase_order_item_ref = po_item.name
                 pr_item.rejected_warehouse = ""
                 
                 if vq_item.purchase_order:
@@ -333,22 +336,23 @@ class VehicleQueue(Document):
                 )
 
                 pr_item.custom_test_variable_template = lab_template
-
+            pr.set_missing_values()
+            pr.run_method("calculate_taxes_and_totals")
                 # Copy Taxes from PO (only once ideally, but keeping your logic)
-                if vq_item.purchase_order:
-                    for po_tax in po.taxes:
-                        pr_tax = pr.append("taxes", {})
-                        pr_tax.charge_type = po_tax.charge_type
-                        pr_tax.account_head = po_tax.account_head
-                        pr_tax.description = po_tax.description
-                        pr_tax.rate = po_tax.rate
-                        pr_tax.tax_amount = po_tax.tax_amount
-                        pr_tax.total = po_tax.total
-                        pr_tax.tax_amount_after_discount_amount = po_tax.tax_amount_after_discount_amount
-                        pr_tax.base_tax_amount = po_tax.base_tax_amount
-                        pr_tax.base_total = po_tax.base_total
-                        pr_tax.cost_center = po_tax.cost_center
-                        pr_tax.included_in_print_rate = po_tax.included_in_print_rate
+                # if vq_item.purchase_order:
+                #     for po_tax in po.taxes:
+                #         pr_tax = pr.append("taxes", {})
+                #         pr_tax.charge_type = po_tax.charge_type
+                #         pr_tax.account_head = po_tax.account_head
+                #         pr_tax.description = po_tax.description
+                #         pr_tax.rate = po_tax.rate
+                #         pr_tax.tax_amount = po_tax.tax_amount
+                #         pr_tax.total = po_tax.total
+                #         pr_tax.tax_amount_after_discount_amount = po_tax.tax_amount_after_discount_amount
+                #         pr_tax.base_tax_amount = po_tax.base_tax_amount
+                #         pr_tax.base_total = po_tax.base_total
+                #         pr_tax.cost_center = po_tax.cost_center
+                #         pr_tax.included_in_print_rate = po_tax.included_in_print_rate
 
             # ---------------------------------------------------------
             # Insert PR
@@ -565,43 +569,52 @@ def create_purchase_voucher(doc, method=None):
 
 @frappe.whitelist()
 def get_pending_po_items(supplier, company):
+
     po_items = frappe.db.sql("""
         SELECT
             po.name AS purchase_order,
             po.transaction_date,
             po.supplier,
+
+            poi.name AS purchase_order_item,   -- 🔥 IMPORTANT (use later)
             poi.item_code,
             poi.item_name,
+
             poi.qty AS ordered_qty,
+            poi.received_qty,                  -- ✅ DIRECT VALUE
+
+            (poi.qty - poi.received_qty) AS pending_qty,   -- ✅ CORRECT
+
             item.custom_default_receiving_uom,
-            
-            -- calculated received qty based on PO percentage
-            ((po.per_received / 100) * poi.qty) AS calculated_received_qty,
 
-            -- calculated pending qty
-            (poi.qty - ((po.per_received / 100) * poi.qty)) AS pending_qty,
-
-            -- converted pending qty in KG (stock uom)
-            uomc.conversion_factor AS conversion_factor,
+            -- UOM Conversion
+            uomc.conversion_factor,
 
             poi.rate
+
         FROM `tabPurchase Order` po
+
         INNER JOIN `tabPurchase Order Item` poi
             ON poi.parent = po.name
-        LEFT JOIN  `tabItem` item
+
+        LEFT JOIN `tabItem` item
             ON poi.item_code = item.item_code
-        -- 🔥 Join UOM Conversion Table
+
         LEFT JOIN `tabUOM Conversion Detail` uomc
             ON uomc.parent = item.name
             AND uomc.uom = item.custom_default_receiving_uom
+
         WHERE
             po.docstatus = 1
             AND po.status NOT IN ('Closed', 'On Hold')
-            AND po.per_received < 100
             AND po.supplier = %s
             AND po.company = %s
-            AND (poi.qty - ((po.per_received / 100) * poi.qty)) > 0
+
+            -- ✅ Use item-level pending
+            AND (poi.qty - poi.received_qty) > 0
+
         ORDER BY po.transaction_date, po.name
+
     """, (supplier, company), as_dict=True)
 
     return po_items
