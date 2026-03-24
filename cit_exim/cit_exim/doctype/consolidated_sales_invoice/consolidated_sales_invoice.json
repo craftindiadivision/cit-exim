@@ -2627,6 +2627,7 @@
    "allow_on_submit": 1,
    "fieldname": "custom_work_flow_status",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Work Flow Status"
   },
   {
@@ -2735,7 +2736,7 @@
    "link_fieldname": "custom_consolidated_invoice_reference"
   }
  ],
- "modified": "2026-03-09 22:48:17.207387",
+ "modified": "2026-03-24 14:30:25.939709",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice",

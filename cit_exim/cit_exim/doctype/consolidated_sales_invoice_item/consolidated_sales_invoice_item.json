@@ -23,6 +23,7 @@
   "quantity_and_rate",
   "qty",
   "stock_uom",
+  "export_uom",
   "col_break2",
   "uom",
   "conversion_factor",
@@ -1060,11 +1061,17 @@
    "no_copy": 1,
    "print_hide": 1,
    "report_hide": 1
+  },
+  {
+   "fieldname": "export_uom",
+   "fieldtype": "Link",
+   "label": "Export UOM",
+   "options": "UOM"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-03-02 16:58:13.495223",
+ "modified": "2026-03-17 11:06:20.328983",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice Item",

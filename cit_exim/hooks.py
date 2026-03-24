@@ -344,7 +344,7 @@ doc_events = {
         "on_update": "cit_exim.cit_exim.doc_events.sales_invoice.sync_workflow_from_sales_invoice",
         # "on_update_after_submit":"cit_exim.cit_exim.doc_events.sales_invoice.sync_workflow_from_sales_invoice",
         "on_update_after_submit": [
-            # "cit_exim.cit_exim.doc_events.sales_invoice.sync_workflow_from_sales_invoice",
+            "cit_exim.cit_exim.doc_events.sales_invoice.sync_workflow_from_sales_invoice",
             "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit"
         ],
 

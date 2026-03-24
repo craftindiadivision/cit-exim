@@ -1,6 +1,8 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import flt
+from frappe.utils import nowdate
+
 
 
 
@@ -95,7 +97,7 @@ class ConsolidatedSalesInvoice(Document):
                 "UOM Conversion Detail",
                 {
                     "parent": item.item_code,
-                    "uom": item.custom_export_uom
+                    "uom": item.export_uom
                 },
                 "conversion_factor"
             )
@@ -130,6 +132,26 @@ class ConsolidatedSalesInvoice(Document):
                 "lot_no": lot["lot_no"],
                 "no_of_packages": int(no_of_packages)
             })
+
+    def on_update_after_submit(self):
+        print("date...........")
+        """
+        Runs when a submitted Consolidated Sales Invoice is updated
+        (e.g., workflow state change)
+        """
+        target_state = "Document Submitted & Awaiting Payments"
+
+        # Check workflow state and ensure date is not already set
+        if self.workflow_state == target_state and not self.custom_submission_date:
+            
+            # Update field bypassing validation
+            self.db_set('custom_submission_date', nowdate())
+
+            # Add comment (optional)
+            self.add_comment(
+                "Info",
+                text=f"Captured submission date as state changed to {target_state}"
+            )
 
 
 #     def sync_to_sales_invoices(self):
@@ -353,7 +375,14 @@ from frappe.model.mapper import get_mapped_doc
 
 
 @frappe.whitelist()
-def split_consolidated_invoice(source_name, split_count):
+def split_consolidated_invoice(source_name, split_count, split_data=None):
+
+
+
+    split_count = int(split_count)
+    if split_data:
+        split_data = frappe.parse_json(split_data)
+
 
     split_count = int(split_count)
 
@@ -361,6 +390,56 @@ def split_consolidated_invoice(source_name, split_count):
         frappe.throw("Split count must be greater than 0")
 
     source_doc = frappe.get_doc("Consolidated Sales Invoice", source_name)
+    bundle_batch_qty = {}
+
+    for itm in source_doc.items:
+
+        if not itm.serial_and_batch_bundle:
+            continue
+
+        bundle = frappe.get_doc("Serial and Batch Bundle", itm.serial_and_batch_bundle)
+
+        for entry in bundle.entries:
+
+            batch = entry.batch_no
+            qty = abs(flt(entry.qty))
+
+            if batch not in bundle_batch_qty:
+                bundle_batch_qty[batch] = 0
+
+            bundle_batch_qty[batch] += qty
+
+
+    selected_batch_qty = {}
+
+    for entry in split_data:
+
+        batch = entry.get("batch")
+        qty = flt(entry.get("qty"))
+
+        if not batch:
+            continue
+
+        if batch not in bundle_batch_qty:
+            frappe.throw(
+                f"Batch <b>{batch}</b> was not used in the Consolidated Invoice."
+            )
+
+        if batch not in selected_batch_qty:
+            selected_batch_qty[batch] = 0
+
+        selected_batch_qty[batch] += qty
+
+
+    for batch, qty in selected_batch_qty.items():
+
+        allowed_qty = bundle_batch_qty.get(batch, 0)
+
+        if qty > allowed_qty:
+            frappe.throw(
+                f"Selected quantity <b>{qty}</b> for Batch <b>{batch}</b> exceeds available quantity <b>{allowed_qty}</b> in the Consolidated Invoice."
+            )
+
 
     if len(source_doc.items) != 1:
         frappe.throw("Consolidated Sales Invoice must contain exactly one item")
@@ -444,7 +523,7 @@ def split_consolidated_invoice(source_name, split_count):
             row.uom = item.uom
             row.warehouse = item.warehouse
             row.sales_order = item.sales_order
-            row.custom_export_uom = item.custom_export_uom
+            row.custom_export_uom = item.export_uom
 
             if i < remainder_qty:
                 row.qty = qty_per_invoice + 1
@@ -485,15 +564,12 @@ def split_consolidated_invoice(source_name, split_count):
 
             for row in si_doc.items:
 
-                if row.item_code not in bundle_dict:
+                print("Processing Item:", row.item_code)
+
+                if not split_data:
+                    print("No split data received")
                     continue
 
-                original_bundle = frappe.get_doc(
-                    "Serial and Batch Bundle",
-                    bundle_dict[row.item_code]["bundle"]
-                )
-
-                # create new bundle
                 new_bundle = frappe.new_doc("Serial and Batch Bundle")
                 new_bundle.company = si_doc.company
                 new_bundle.type_of_transaction = "Outward"
@@ -503,26 +579,35 @@ def split_consolidated_invoice(source_name, split_count):
                 new_bundle.item_code = row.item_code
                 new_bundle.warehouse = row.warehouse
 
-                original_total = sum(abs(flt(e.qty)) for e in original_bundle.entries)
-                required_qty = abs(flt(row.stock_qty))
+                for batch_entry in split_data:
 
-                scale = required_qty / original_total
+                    if not batch_entry.get("batch"):
+                        continue
 
-                for entry in original_bundle.entries:
-                    new_qty = abs(flt(entry.qty)) * scale
+                    if flt(batch_entry.get("qty")) <= 0:
+                        continue
 
-                    new_bundle.append("entries", {
-                        "batch_no": entry.batch_no,
-                        "qty": -new_qty,
-                        "warehouse": row.warehouse
-                    })
+                    if batch_entry.get("invoice") != (i + 1):
+                        continue
 
-                new_bundle.insert(ignore_permissions=True)
+                    existing_batches = [e.batch_no for e in new_bundle.entries]
 
+                    if batch_entry.get("batch") not in existing_batches:
+                        new_bundle.append("entries", {
+                            "batch_no": batch_entry.get("batch"),
+                            "qty": -flt(batch_entry.get("qty")),
+                            "warehouse": row.warehouse
+                        })
+
+                if new_bundle.entries:
+                    new_bundle.insert(ignore_permissions=True)
+
+                # attach bundle to item row
                 row.serial_and_batch_bundle = new_bundle.name
-
+            
             # save invoice after attaching bundle
             si_doc.save(ignore_permissions=True)
+            
 
             created_invoices.append(si.name)
 
