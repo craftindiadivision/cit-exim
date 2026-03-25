@@ -137,32 +137,36 @@ def get_billing_address_for_customer(customer):
 
 
 
-@frappe.whitelist()
-def get_customer_shipping_address(customer):
-    """
-    Returns Shipping Address of a Customer (Consignee).
-    Handles real ERPNext address structure.
-    """
+# @frappe.whitelist()
+# def get_customer_shipping_address(customer):
+#     """
+#     Returns Shipping Address of a Customer (Consignee).
+#     Handles real ERPNext address structure.
+#     """
 
-    address = frappe.db.sql("""
-        SELECT a.name
-        FROM `tabAddress` a
-        INNER JOIN `tabDynamic Link` dl
-            ON dl.parent = a.name
-        WHERE dl.link_doctype = 'Customer'
-          AND dl.link_name = %s
-          AND a.disabled = 0
-          AND (
-                a.address_type = 'Shipping'
-                OR a.is_shipping_address = 1
-          )
-        ORDER BY
-            a.is_primary_address DESC,
-            a.modified DESC
-        LIMIT 1
-    """, (customer,), as_dict=True)
+#     address = frappe.db.sql("""
+#         SELECT a.name
+#         FROM `tabAddress` a
+#         INNER JOIN `tabDynamic Link` dl
+#             ON dl.parent = a.name
+#         WHERE dl.link_doctype = 'Customer'
+#           AND dl.link_name = %s
+#           AND a.disabled = 0
+#           AND (
+#                 a.address_type = 'Shipping'
+#                 OR a.is_shipping_address = 1
+#           )
+#         ORDER BY
+#             a.is_primary_address DESC,
+#             a.modified DESC
+#         LIMIT 1
+#     """, (customer,), as_dict=True)
 
-    return address[0].name if address else None
+#     return address[0].name if address else None
+
+
+
+
 
 
 
