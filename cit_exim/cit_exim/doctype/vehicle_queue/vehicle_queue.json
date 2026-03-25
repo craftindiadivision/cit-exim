@@ -194,6 +194,7 @@
    "collapsible": 1,
    "fieldname": "reference_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Reference"
   },
   {
@@ -390,7 +391,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-03-19 16:20:10.931183",
+ "modified": "2026-03-25 10:50:47.940203",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

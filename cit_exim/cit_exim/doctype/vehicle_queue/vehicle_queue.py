@@ -132,20 +132,21 @@ class VehicleQueue(Document):
 
     def validate(self):
         self.validate_supplier_invoice_number()
-        for row in self.item:
-            row.net_weight = (row.no_of_bags or 0) * (row.conversion_factor_kg or 0)
-        child_total = sum([row.net_weight or 0 for row in self.item])
-        voucher_net = self.net_weight or 0
-        print(child_total,voucher_net,"total values")
-        if child_total != voucher_net:
-            frappe.msgprint(
-                f"""
-                <b>Weight Mismatch Warning</b><br>
-                Items Total Weight: {child_total}<br>
-                Load Weight: {voucher_net}
-                """,
-                indicator="orange"
-            )
+        if self.product != "Raw Fish":
+            for row in self.item:
+                row.net_weight = (row.no_of_bags or 0) * (row.conversion_factor_kg or 0)
+            child_total = sum([row.net_weight or 0 for row in self.item])
+            voucher_net = self.net_weight or 0
+            print(child_total,voucher_net,"total values")
+            if child_total != voucher_net:
+                frappe.msgprint(
+                    f"""
+                    <b>Weight Mismatch Warning</b><br>
+                    Items Total Weight: {child_total}<br>
+                    Load Weight: {voucher_net}
+                    """,
+                    indicator="orange"
+                )
             # Calculate Net Weight
         if self.vehicle_no:
             self.vehicle_no = self.vehicle_no.replace(" ", "").upper()

@@ -116,29 +116,29 @@ frappe.ui.form.on("Purchase Order", {
     }
 });
 
-frappe.ui.form.on("Purchase Order", {
-    refresh(frm) {
-        frm.clear_custom_buttons();
-        if (frm.doc.per_received >= 100){
-            return
-        }
-        if (!frm.is_new()) {
-            frm.add_custom_button("Vehicle Queue", () => {
-                frappe.call({
-                    method: "cit_exim.cit_exim.doc_events.purchase_order.create_vehicle_queue",
-                    args: {
-                        purchase_order: frm.doc.name
-                    },
-                    callback: function (r) {
-                        if (!r.exc) {
-                            frappe.set_route("Form", "Vehicle Queue", r.message);
-                        }
-                    }
-                });
-            }, "Create");
-        }
-    }
-});
+// frappe.ui.form.on("Purchase Order", {
+//     refresh(frm) {
+//         frm.clear_custom_buttons();
+//         if (frm.doc.per_received >= 100){
+//             return
+//         }
+//         if (!frm.is_new()) {
+//             frm.add_custom_button("Vehicle Queue", () => {
+//                 frappe.call({
+//                     method: "cit_exim.cit_exim.doc_events.purchase_order.create_vehicle_queue",
+//                     args: {
+//                         purchase_order: frm.doc.name
+//                     },
+//                     callback: function (r) {
+//                         if (!r.exc) {
+//                             frappe.set_route("Form", "Vehicle Queue", r.message);
+//                         }
+//                     }
+//                 });
+//             }, "Create");
+//         }
+//     }
+// });
 // frappe.ui.form.on("Purchase Order", {
 //     refresh(frm) {
 //         frm.clear_custom_buttons();
