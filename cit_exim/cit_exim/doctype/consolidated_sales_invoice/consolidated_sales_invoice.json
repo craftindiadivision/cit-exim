@@ -2736,7 +2736,7 @@
    "link_fieldname": "custom_consolidated_invoice_reference"
   }
  ],
- "modified": "2026-03-24 14:30:25.939709",
+ "modified": "2026-03-25 16:35:10.589790",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice",
