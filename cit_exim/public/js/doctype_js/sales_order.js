@@ -1299,3 +1299,106 @@ function create_consolidated_invoice(frm) {
         })
     });
 }
+
+
+
+
+
+
+
+
+
+// frappe.ui.form.on('Sales Order', {
+//     payment_terms_template: function(frm) {
+//         if (frm.doc.payment_terms_template) {
+//             // We use a short delay (200ms) to let the standard ERPNext 
+//             // template logic finish before we inject our custom data.
+//             setTimeout(() => {
+//                 frappe.db.get_doc('Payment Terms Template', frm.doc.payment_terms_template)
+//                     .then(template => {
+                        
+//                         // Loop through the rows already created by ERPNext
+//                         // or create them if the table is empty
+//                         if (!frm.doc.payment_schedule || frm.doc.payment_schedule.length === 0) {
+//                             template.terms.forEach(term => {
+//                                 if (term.due_date_based_on === "Day(s) after Sales Contract date") {
+//                                     let child = frm.add_child('payment_schedule');
+//                                     child.payment_term = term.payment_term;
+//                                     child.invoice_portion = term.invoice_portion;
+//                                     child.custom_days = term.custom_days;
+//                                 }
+//                             });
+//                         } else {
+//                             // If rows already exist (from ERPNext standard logic), 
+//                             // we just update the custom_days field in the matching row.
+//                             frm.doc.payment_schedule.forEach((row, index) => {
+//                                 let template_term = template.terms[index];
+//                                 if (template_term && template_term.due_date_based_on === "Day(s) after Sales Contract date") {
+//                                     // Use model.set_value to ensure the UI updates correctly
+//                                     frappe.model.set_value(row.doctype, row.name, 'custom_days', template_term.custom_days);
+//                                 }
+//                             });
+//                         }
+                        
+//                         frm.refresh_field('payment_schedule');
+//                     });
+//             }, 500); // 500ms delay is usually enough to beat the core script
+//         }
+//     }
+// });
+
+
+
+
+frappe.ui.form.on('Sales Order', {
+    payment_terms_template: function(frm) {
+        if (frm.doc.payment_terms_template) {
+            
+            setTimeout(() => {
+                frappe.db.get_doc('Payment Terms Template', frm.doc.payment_terms_template)
+                    .then(template => {
+                        
+                        // If the table was empty, we build it
+                        if (!frm.doc.payment_schedule || frm.doc.payment_schedule.length === 0) {
+                            template.terms.forEach(term => {
+                                if (term.due_date_based_on === "Day(s) after Sales Contract date") {
+                                    let child = frm.add_child('payment_schedule');
+                                    child.payment_term = term.payment_term;
+                                    child.invoice_portion = term.invoice_portion;
+                                    child.custom_days = term.custom_days;
+
+                                    // Calculate Due Date: transaction_date + custom_days
+                                    if (frm.doc.transaction_date && term.custom_days) {
+                                        child.due_date = frappe.datetime.add_days(frm.doc.transaction_date, term.custom_days);
+                                    }
+                                }
+                            });
+                        } else {
+                            // If rows exist, we update custom_days and due_date
+                            frm.doc.payment_schedule.forEach((row, index) => {
+                                let template_term = template.terms[index];
+                                
+                                if (template_term && template_term.due_date_based_on === "Day(s) after Sales Contract date") {
+                                    
+                                    // 1. Set the Custom Days
+                                    frappe.model.set_value(row.doctype, row.name, 'custom_days', template_term.custom_days);
+                                    
+                                    // 2. Calculate and set the Due Date
+                                    if (frm.doc.transaction_date && template_term.custom_days) {
+                                        let new_due_date = frappe.datetime.add_days(frm.doc.transaction_date, template_term.custom_days);
+                                        frappe.model.set_value(row.doctype, row.name, 'due_date', new_due_date);
+                                    }
+                                }
+                            });
+                        }
+                        
+                        frm.refresh_field('payment_schedule');
+                    });
+            }, 500);
+        }
+    }
+});
+
+
+
+
