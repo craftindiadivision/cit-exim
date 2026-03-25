@@ -1755,37 +1755,37 @@ def calculate_total(self):
 	self.total_pallets = total_pallets
 
 
+
 def duty_calculation(self):
     parent_meta = frappe.get_meta(self.doctype)
 
-    # Check if country is not India and field exists
     if parent_meta.has_field('total_duty_drawback') and frappe.db.get_value('Address', self.customer_address, 'country') != "India":
         total_duty_drawback = 0.0
         
         for row in self.items:
             child_meta = frappe.get_meta(row.doctype)
             
+            # Fetch conversion factor from Item Master based on Item Code and UOM
+            conversion_factor = frappe.db.get_value("UOM Conversion Detail", 
+                {"parent": row.item_code, "uom": row.uom}, "conversion_factor") or 1.0
+            
             if child_meta.has_field('duty_drawback_rate') and row.duty_drawback_rate and row.fob_value:
-                # 1. Standard calculation based on % rate
                 duty_drawback_amount = flt(row.fob_value * row.duty_drawback_rate / 100.0)
                 
                 if child_meta.has_field('duty_drawback_amount'):
-                    # --- NEW LOGIC START ---
-                    # If a capped_rate (per kg) is provided, calculate the capped_amount
-                    if child_meta.has_field('capped_rate') and row.capped_rate and row.total_weight:
-                        row.capped_amount = flt(row.total_weight * row.capped_rate)
+                    # Using fetched conversion factor for weight calculation
+                    if child_meta.has_field('capped_rate') and row.capped_rate and row.qty:
+                        row.capped_amount = flt((row.qty * flt(conversion_factor)) * row.capped_rate)
                     
-
-                    if row.maximum_cap == 1:
-                        # Compare drawback amount vs the newly calculated capped_amount
-                        if row.capped_amount and row.capped_amount < duty_drawback_amount:
-                            row.duty_drawback_amount = row.capped_amount
-                            row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
-                        else:
-                            row.duty_drawback_amount = duty_drawback_amount
-                            row.effective_rate = row.duty_drawback_rate
-                    else:
-                        row.duty_drawback_amount = duty_drawback_amount
+                    # if row.maximum_cap == 1:
+                    #     if row.capped_amount and row.capped_amount < duty_drawback_amount:
+                    #         row.duty_drawback_amount = row.capped_amount
+                    #         row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
+                    #     else:
+                    #         row.duty_drawback_amount = duty_drawback_amount
+                    #         row.effective_rate = row.duty_drawback_rate
+                    # else:
+                    #     row.duty_drawback_amount = duty_drawback_amount
 
             row.igst_taxable_value = flt(row.amount)
             if child_meta.has_field('duty_drawback_amount'):
@@ -1793,39 +1793,49 @@ def duty_calculation(self):
 
         self.total_duty_drawback = total_duty_drawback
 
-
 def meis_calculation(self):
-	if frappe.db.get_value('Address', self.customer_address, 'country') != "India":
-		total_meis = 0.0
+    if frappe.db.get_value('Address', self.customer_address, 'country') != "India":
+        total_meis = 0.0
 
-		for row in self.items:
-			rodtep_fob_value = 0.0
-			rodtep_kg_value = 0.0
+        for row in self.items:
+            rodtep_fob_value = 0.0
+            rodtep_kg_value = 0.0
 
-			# RoDTEP on FOB (%)
-			if row.fob_value and row.meis_rate:
-				rodtep_fob_value = flt(
-					row.fob_value * row.meis_rate / 100
-				)
+            # 1. Fetch conversion_factor from Item Master (UOM Conversion Detail)
+            # We look for the row where parent is the Item and UOM matches the row's UOM
+            conversion_factor = frappe.db.get_value(
+                "UOM Conversion Detail", 
+                {"parent": row.item_code, "uom": row.uom}, 
+                "conversion_factor"
+            ) or 1.0  # Default to 1.0 if not found
 
-			# RoDTEP on Per Kg (Capped) — FIXED
-			if row.total_weight and row.custom_rodtep_capped_rate:
-				rodtep_kg_value = flt(
-					row.total_weight * row.custom_rodtep_capped_rate
-				)
-				row.custom_rodtep_capped_amount = rodtep_kg_value
-			else:
-				row.custom_rodtep_capped_amount = 0.0
+            # 2. Calculate the dynamic weight (qty * conversion_factor)
+            calculated_weight = flt(row.qty * flt(conversion_factor))
 
-			# Final RoDTEP = LOWER of FOB % or Kg cap
-			if rodtep_fob_value and rodtep_kg_value:
-				row.meis_value = min(rodtep_fob_value, rodtep_kg_value)
-			else:
-				row.meis_value = rodtep_fob_value or rodtep_kg_value or 0.0
+            # RoDTEP on FOB (%)
+            if row.fob_value and row.meis_rate:
+                rodtep_fob_value = flt(
+                    row.fob_value * row.meis_rate / 100
+                )
 
-			total_meis += flt(row.meis_value)
+            # RoDTEP on Per Kg (Capped) — Using calculated weight instead of total_weight
+            if calculated_weight and row.custom_rodtep_capped_rate:
+                rodtep_kg_value = flt(
+                    calculated_weight * row.custom_rodtep_capped_rate
+                )
+                row.custom_rodtep_capped_amount = rodtep_kg_value
+            else:
+                row.custom_rodtep_capped_amount = 0.0
 
-		self.total_meis = total_meis
+            # Final RoDTEP = LOWER of FOB % or Kg cap
+            if rodtep_fob_value and rodtep_kg_value:
+                row.meis_value = min(rodtep_fob_value, rodtep_kg_value)
+            else:
+                row.meis_value = rodtep_fob_value or rodtep_kg_value or 0.0
+
+            total_meis += flt(row.meis_value)
+
+        self.total_meis = total_meis
 
 # def validate_document_checks(self):
 # 	if self.get('sales_invoice_export_document_item') and not all([row.checked for row in self.get('sales_invoice_export_document_item')]):
