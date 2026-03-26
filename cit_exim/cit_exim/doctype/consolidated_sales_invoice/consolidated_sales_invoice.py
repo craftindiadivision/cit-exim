@@ -372,7 +372,20 @@ class ConsolidatedSalesInvoice(Document):
 
 import frappe
 from frappe.model.mapper import get_mapped_doc
+@frappe.whitelist()
+def get_serial_batch_bundle(bundle_name):
+    if not bundle_name:
+        return []
 
+    bundle = frappe.get_doc("Serial and Batch Bundle", bundle_name)
+
+    return [
+        {
+            "batch_no": row.batch_no,
+            "qty": abs(flt(row.qty))
+        }
+        for row in bundle.entries if row.batch_no
+    ]
 
 @frappe.whitelist()
 def split_consolidated_invoice(source_name, split_count, split_data=None):
