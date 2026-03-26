@@ -1,5 +1,11 @@
-# # Copyright (c) 2026, craft and contributors
-# # For license information, please see license.txt
+# # # Copyright (c) 2026, craft and contributors
+# # # For license information, please see license.txt
+
+
+
+
+
+
 
 
 
@@ -112,7 +118,7 @@
 
 #             sort_key = get_sort_key(row.start_date, row.end_date)
 
-#             # MONTH
+#             # MONTH ROW
 #             if month not in month_map:
 #                 month_map[month] = {
 #                     "month_agent": month,
@@ -122,7 +128,7 @@
 
 #             month_map[month][column_name] = month_map[month].get(column_name, 0) + pending_qty
 
-#             # AGENT
+#             # AGENT ROW
 #             agent_key = f"{month}::{agent}"
 
 #             if agent_key not in month_map:
@@ -152,7 +158,6 @@
 #             "width": 150
 #         })
 
-#     # ✅ ADD GRAND TOTAL COLUMN
 #     columns.append({
 #         "label": "Grand Total",
 #         "fieldname": "grand_total",
@@ -161,7 +166,7 @@
 #     })
 
 #     # ---------------------------------------
-#     # TREE
+#     # BUILD TREE DATA
 #     # ---------------------------------------
 #     final_data = []
 
@@ -187,7 +192,7 @@
 #             final_data.append(a)
 
 #     # ---------------------------------------
-#     # CALCULATE GRAND TOTAL COLUMN (ROW-WISE)
+#     # ROW-WISE GRAND TOTAL
 #     # ---------------------------------------
 #     for row in final_data:
 #         total = 0
@@ -196,14 +201,17 @@
 #         row["grand_total"] = total
 
 #     # ---------------------------------------
-#     # ADD FINAL GRAND TOTAL ROW
+#     # FINAL GRAND TOTAL ROW (FIXED)
 #     # ---------------------------------------
 #     grand_row = {"month_agent": "Grand Total"}
 
-#     for col in dynamic_columns:
-#         grand_row[col] = sum(r.get(col, 0) or 0 for r in final_data)
+#     # ✅ ONLY MONTH ROWS (NO AGENTS)
+#     parent_rows = [r for r in final_data if not r.get("parent")]
 
-#     grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in final_data)
+#     for col in dynamic_columns:
+#         grand_row[col] = sum(r.get(col, 0) or 0 for r in parent_rows)
+
+#     grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in parent_rows)
 
 #     final_data.append(grand_row)
 
@@ -287,7 +295,7 @@ def execute(filters=None):
 
 
 def get_data():
-
+    # Requirement: Filtered out Sales Orders where custom_agent is NULL or empty
     records = frappe.db.sql("""
         SELECT
             so.name AS sales_order,
@@ -304,6 +312,8 @@ def get_data():
         JOIN `tabSales Order Item` soi ON soi.parent = so.name
         JOIN `tabShipment Schedule Child Table` css ON css.parent = so.name
         WHERE so.docstatus = 1
+            AND so.custom_agent IS NOT NULL
+            AND so.custom_agent <> ''
         ORDER BY soi.name, css.start_date
     """, as_dict=1)
 
@@ -378,7 +388,8 @@ def get_data():
                 continue
 
             month = format_month(row.start_date, row.end_date)
-            agent = (row.agent or "").strip() or "No Agent"
+            # Since we filter in SQL, row.agent will always be valid
+            agent = row.agent.strip()
 
             column_name = get_column_name(row, item_details)
             dynamic_columns.add(column_name)
@@ -468,19 +479,20 @@ def get_data():
         row["grand_total"] = total
 
     # ---------------------------------------
-    # FINAL GRAND TOTAL ROW (FIXED)
+    # FINAL GRAND TOTAL ROW
     # ---------------------------------------
-    grand_row = {"month_agent": "Grand Total"}
+    if final_data:
+        grand_row = {"month_agent": "Grand Total"}
 
-    # ✅ ONLY MONTH ROWS (NO AGENTS)
-    parent_rows = [r for r in final_data if not r.get("parent")]
+        # ONLY MONTH ROWS (NO AGENTS)
+        parent_rows = [r for r in final_data if not r.get("parent")]
 
-    for col in dynamic_columns:
-        grand_row[col] = sum(r.get(col, 0) or 0 for r in parent_rows)
+        for col in dynamic_columns:
+            grand_row[col] = sum(r.get(col, 0) or 0 for r in parent_rows)
 
-    grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in parent_rows)
+        grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in parent_rows)
 
-    final_data.append(grand_row)
+        final_data.append(grand_row)
 
     return columns, final_data
 
@@ -489,40 +501,30 @@ def get_data():
 # HELPERS
 # ---------------------------------------
 def get_column_name(row, item_details):
-
     if row.item_group == "FG-Fish Meal":
         item = item_details.get(row.item_code)
-
         if item:
             if item.get("custom_minimum_protein_content_range") and item.get("custom_maximum_protein_content_range"):
                 return item.get("item_name")
-
         return row.item_group or "Others"
-
     return row.item_group or "Others"
 
 
 def format_month(start_date, end_date):
-
     if not start_date and not end_date:
         return "No Schedule"
-
     if not start_date:
         start_date = end_date
-
     if not end_date:
         end_date = start_date
-
     try:
         start = getdate(start_date)
         end = getdate(end_date)
     except Exception:
         return "Invalid Date"
-
     sm = start.strftime("%b").upper()
     em = end.strftime("%b").upper()
     year = start.strftime("%Y")
-
     if start.month == end.month:
         return f"{sm}, {year}"
     else:
@@ -530,18 +532,14 @@ def format_month(start_date, end_date):
 
 
 def get_sort_key(start_date, end_date):
-
     if not start_date:
         return "9999-99"
-
     try:
         start = getdate(start_date)
         end = getdate(end_date) if end_date else start
     except Exception:
         return "9999-99"
-
     base = start.strftime("%Y-%m")
-
     if start.month == end.month:
         return f"{base}-1"
     return f"{base}-2"

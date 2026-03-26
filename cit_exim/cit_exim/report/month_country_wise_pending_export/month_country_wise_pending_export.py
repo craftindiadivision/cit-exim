@@ -1,7 +1,9 @@
-# Copyright (c) 2026, craft and contributors
-# For license information, please see license.txt
+# # Copyright (c) 2026, craft and contributors
+# # For license information, please see license.txt
 
-# import frappe
+# # import frappe
+
+
 
 
 
@@ -200,14 +202,17 @@
 #         row["grand_total"] = total
 
 #     # ---------------------------------------
-#     # FINAL GRAND TOTAL ROW
+#     # FINAL GRAND TOTAL ROW (FIXED)
 #     # ---------------------------------------
 #     grand_row = {"month_country": "Grand Total"}
 
-#     for col in dynamic_columns:
-#         grand_row[col] = sum(r.get(col, 0) or 0 for r in final_data)
+#     # ✅ ONLY MONTH ROWS (NO COUNTRY DUPLICATION)
+#     parent_rows = [r for r in final_data if not r.get("parent")]
 
-#     grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in final_data)
+#     for col in dynamic_columns:
+#         grand_row[col] = sum(r.get(col, 0) or 0 for r in parent_rows)
+
+#     grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in parent_rows)
 
 #     final_data.append(grand_row)
 
@@ -278,6 +283,10 @@
 
 
 
+
+
+
+
 import frappe
 from frappe.utils import getdate
 
@@ -288,7 +297,7 @@ def execute(filters=None):
 
 
 def get_data():
-
+    # Requirement: Added WHERE condition to exclude empty/null country_of_destination
     records = frappe.db.sql("""
         SELECT
             so.name AS sales_order,
@@ -305,6 +314,8 @@ def get_data():
         JOIN `tabSales Order Item` soi ON soi.parent = so.name
         JOIN `tabShipment Schedule Child Table` css ON css.parent = so.name
         WHERE so.docstatus = 1
+            AND so.country_of_destination IS NOT NULL
+            AND so.country_of_destination <> ''
         ORDER BY soi.name, css.start_date
     """, as_dict=1)
 
@@ -379,7 +390,8 @@ def get_data():
                 continue
 
             month = format_month(row.start_date, row.end_date)
-            country = (row.country or "").strip() or "No Country"
+            # Since we filter in SQL, country will always have a value here
+            country = row.country.strip()
 
             column_name = get_column_name(row, item_details)
             dynamic_columns.add(column_name)
@@ -469,19 +481,20 @@ def get_data():
         row["grand_total"] = total
 
     # ---------------------------------------
-    # FINAL GRAND TOTAL ROW (FIXED)
+    # FINAL GRAND TOTAL ROW
     # ---------------------------------------
-    grand_row = {"month_country": "Grand Total"}
+    if final_data:
+        grand_row = {"month_country": "Grand Total"}
 
-    # ✅ ONLY MONTH ROWS (NO COUNTRY DUPLICATION)
-    parent_rows = [r for r in final_data if not r.get("parent")]
+        # ONLY MONTH ROWS (To avoid double counting country child rows)
+        parent_rows = [r for r in final_data if not r.get("parent")]
 
-    for col in dynamic_columns:
-        grand_row[col] = sum(r.get(col, 0) or 0 for r in parent_rows)
+        for col in dynamic_columns:
+            grand_row[col] = sum(r.get(col, 0) or 0 for r in parent_rows)
 
-    grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in parent_rows)
+        grand_row["grand_total"] = sum(r.get("grand_total", 0) or 0 for r in parent_rows)
 
-    final_data.append(grand_row)
+        final_data.append(grand_row)
 
     return columns, final_data
 

@@ -1755,7 +1755,6 @@ def calculate_total(self):
 	self.total_pallets = total_pallets
 
 
-
 def duty_calculation(self):
     parent_meta = frappe.get_meta(self.doctype)
 
@@ -1765,33 +1764,118 @@ def duty_calculation(self):
         for row in self.items:
             child_meta = frappe.get_meta(row.doctype)
             
-            # Fetch conversion factor from Item Master based on Item Code and UOM
-            conversion_factor = frappe.db.get_value("UOM Conversion Detail", 
-                {"parent": row.item_code, "uom": row.uom}, "conversion_factor") or 1.0
-            
-            if child_meta.has_field('duty_drawback_rate') and row.duty_drawback_rate and row.fob_value:
+            conversion_factor = frappe.db.get_value(
+                "UOM Conversion Detail",
+                {"parent": row.item_code, "uom": row.uom},
+                "conversion_factor"
+            ) or 1.0
+
+            calculated_weight = flt(row.qty * conversion_factor)
+
+            # Default values 
+            row.capped_amount = 0.0
+            row.duty_drawback_amount = 0.0
+
+            if row.duty_drawback_rate and row.fob_value:
                 duty_drawback_amount = flt(row.fob_value * row.duty_drawback_rate / 100.0)
-                
-                if child_meta.has_field('duty_drawback_amount'):
-                    # Using fetched conversion factor for weight calculation
-                    if child_meta.has_field('capped_rate') and row.capped_rate and row.qty:
-                        row.capped_amount = flt((row.qty * flt(conversion_factor)) * row.capped_rate)
-                    
-                    # if row.maximum_cap == 1:
-                    #     if row.capped_amount and row.capped_amount < duty_drawback_amount:
-                    #         row.duty_drawback_amount = row.capped_amount
-                    #         row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
-                    #     else:
-                    #         row.duty_drawback_amount = duty_drawback_amount
-                    #         row.effective_rate = row.duty_drawback_rate
-                    # else:
-                    #     row.duty_drawback_amount = duty_drawback_amount
+
+                #  capped calculation using qty * conversion_factor
+                if row.capped_rate and calculated_weight:
+                    row.capped_amount = flt(calculated_weight * row.capped_rate)
+
+                #  APPLY YOUR LOGIC (this was missing)
+                if getattr(row, "maximum_cap", 0) == 1:
+                    if row.capped_amount and row.capped_amount < duty_drawback_amount:
+                        row.duty_drawback_amount = row.capped_amount
+                        row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
+                    else:
+                        row.duty_drawback_amount = duty_drawback_amount
+                        row.effective_rate = row.duty_drawback_rate
+                else:
+                    row.duty_drawback_amount = duty_drawback_amount
 
             row.igst_taxable_value = flt(row.amount)
-            if child_meta.has_field('duty_drawback_amount'):
-                total_duty_drawback += flt(row.duty_drawback_amount) or 0.0
+
+            total_duty_drawback += flt(row.duty_drawback_amount)
 
         self.total_duty_drawback = total_duty_drawback
+
+
+# def duty_calculation(self):
+#     parent_meta = frappe.get_meta(self.doctype)
+
+#     if parent_meta.has_field('total_duty_drawback') and frappe.db.get_value('Address', self.customer_address, 'country') != "India":
+#         total_duty_drawback = 0.0
+        
+#         for row in self.items:
+#             child_meta = frappe.get_meta(row.doctype)
+            
+#             # Fetch conversion factor from Item Master based on Item Code and UOM
+#             conversion_factor = frappe.db.get_value("UOM Conversion Detail", 
+#                 {"parent": row.item_code, "uom": row.uom}, "conversion_factor") or 1.0
+            
+#             if child_meta.has_field('duty_drawback_rate') and row.duty_drawback_rate and row.fob_value:
+#                 duty_drawback_amount = flt(row.fob_value * row.duty_drawback_rate / 100.0)
+                
+#                 if child_meta.has_field('duty_drawback_amount'):
+#                     # Using fetched conversion factor for weight calculation
+#                     if child_meta.has_field('capped_rate') and row.capped_rate and row.qty:
+#                         row.capped_amount = flt((row.qty * flt(conversion_factor)) * row.capped_rate)
+                    
+#                     # if row.maximum_cap == 1:
+#                     #     if row.capped_amount and row.capped_amount < duty_drawback_amount:
+#                     #         row.duty_drawback_amount = row.capped_amount
+#                     #         row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
+#                     #     else:
+#                     #         row.duty_drawback_amount = duty_drawback_amount
+#                     #         row.effective_rate = row.duty_drawback_rate
+#                     # else:
+#                     #     row.duty_drawback_amount = duty_drawback_amount
+
+#             row.igst_taxable_value = flt(row.amount)
+#             if child_meta.has_field('duty_drawback_amount'):
+#                 total_duty_drawback += flt(row.duty_drawback_amount) or 0.0
+
+#         self.total_duty_drawback = total_duty_drawback
+
+
+# def duty_calculation(self):
+#     parent_meta = frappe.get_meta(self.doctype)
+
+#     # Check if country is not India and field exists
+#     if parent_meta.has_field('total_duty_drawback') and frappe.db.get_value('Address', self.customer_address, 'country') != "India":
+#         total_duty_drawback = 0.0
+        
+#         for row in self.items:
+#             child_meta = frappe.get_meta(row.doctype)
+            
+#             if child_meta.has_field('duty_drawback_rate') and row.duty_drawback_rate and row.fob_value:
+#                 # 1. Standard calculation based on % rate
+#                 duty_drawback_amount = flt(row.fob_value * row.duty_drawback_rate / 100.0)
+                
+#                 if child_meta.has_field('duty_drawback_amount'):
+#                     # --- NEW LOGIC START ---
+#                     # If a capped_rate (per kg) is provided, calculate the capped_amount
+#                     if child_meta.has_field('capped_rate') and row.capped_rate and row.total_weight:
+#                         row.capped_amount = flt(row.total_weight * row.capped_rate)
+                    
+
+#                     if row.maximum_cap == 1:
+#                         # Compare drawback amount vs the newly calculated capped_amount
+#                         if row.capped_amount and row.capped_amount < duty_drawback_amount:
+#                             row.duty_drawback_amount = row.capped_amount
+#                             row.effective_rate = flt(row.capped_amount / row.fob_value * 100.0)
+#                         else:
+#                             row.duty_drawback_amount = duty_drawback_amount
+#                             row.effective_rate = row.duty_drawback_rate
+#                     else:
+#                         row.duty_drawback_amount = duty_drawback_amount
+
+#             row.igst_taxable_value = flt(row.amount)
+#             if child_meta.has_field('duty_drawback_amount'):
+#                 total_duty_drawback += flt(row.duty_drawback_amount) or 0.0
+
+#         self.total_duty_drawback = total_duty_drawback
 
 def meis_calculation(self):
     if frappe.db.get_value('Address', self.customer_address, 'country') != "India":
