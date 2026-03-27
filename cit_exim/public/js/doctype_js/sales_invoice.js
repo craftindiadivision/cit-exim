@@ -1318,12 +1318,12 @@ frappe.ui.form.on('Sales Invoice', {
         let consignee = frm.doc.custom_consignee;
 
         if (!buyer || !consignee) {
-            frappe.msgprint(__('Please ensure both Buyer and Custom Consignee are selected.'));
+            frappe.msgprint(__('Please ensure both Buyer and Consignee are selected.'));
             return;
         }
 
         frappe.call({
-            method: 'cit_exim.cit_exim.doc_events.sales_order.map_buyer_to_consignee_address_si',
+            method: 'cit_exim.cit_exim.doc_events.sales_invoice.map_buyer_to_consignee_address',
             args: {
                 buyer: buyer,
                 consignee: consignee
@@ -1331,8 +1331,12 @@ frappe.ui.form.on('Sales Invoice', {
             callback: function(r) {
                 if (r.message) {
 
+                    // ✅ Set Shipping Address from Consignee
                     frm.set_value('shipping_address_name', r.message.shipping_address_name);
                     frm.set_value('shipping_address', r.message.shipping_address);
+
+                    // ✅ Force Billing Address from Buyer
+                    frappe.contacts.get_address_display(frm, "customer", "customer_address");
 
                     frappe.show_alert({
                         message: __('Address mapped successfully'),
@@ -1343,7 +1347,6 @@ frappe.ui.form.on('Sales Invoice', {
         });
     }
 });
-
 
 
 
