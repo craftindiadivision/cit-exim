@@ -773,9 +773,101 @@ frappe.ui.form.on("Sales Order", {
 
 
 
+// frappe.ui.form.on('Sales Order', {
+//     custom_map_address: function(frm) {
+//         let buyer = frm.doc.customer || frm.doc.buyer; 
+//         let consignee = frm.doc.custom_consignee;
+
+//         if (!buyer || !consignee) {
+//             frappe.msgprint(__('Please ensure both Buyer and Custom Consignee are selected.'));
+//             return;
+//         }
+
+//         // 1. Find the Address tied to the Consignee
+//         frappe.call({
+//             method: 'frappe.client.get_list',
+//             args: {
+//                 doctype: 'Address',
+//                 filters: [
+//                     ['Dynamic Link', 'link_name', '=', consignee],
+//                     ['Dynamic Link', 'parenttype', '=', 'Address']
+//                 ],
+//                 fields: ['name']
+//             },
+//             callback: function(r) {
+//                 if (r.message && r.message.length > 0) {
+//                     let address_id = r.message[0].name;
+//                     update_address_and_map(frm, address_id, buyer);
+//                 } else {
+//                     frappe.msgprint(__('No Address found linked to Consignee: ') + consignee);
+//                 }
+//             }
+//         });
+//     }
+// });
+
+// function update_address_and_map(frm, address_id, buyer_name) {
+//     frappe.call({
+//         method: 'frappe.client.get',
+//         args: {
+//             doctype: 'Address',
+//             name: address_id
+//         },
+//         callback: function(r) {
+//             let address_doc = r.message;
+            
+//             // 2. Check if the "Buyer" is already in the Links table
+//             let is_linked = (address_doc.links || []).some(l => l.link_name === buyer_name && l.link_doctype === 'Customer');
+
+//             if (!is_linked) {
+//                 // 3. Explicitly push a new row into the links child table
+//                 if (!address_doc.links) address_doc.links = [];
+                
+//                 address_doc.links.push({
+//                     "doctype": "Dynamic Link",
+//                     "parent": address_id,
+//                     "parentfield": "links",
+//                     "parenttype": "Address",
+//                     "link_doctype": "Customer",
+//                     "link_name": buyer_name
+//                 });
+
+//                 // 4. Save the Address doc with the new link
+//                 frappe.call({
+//                     method: 'frappe.client.save',
+//                     args: { doc: address_doc },
+//                     callback: function(save_res) {
+//                         if (save_res.message) {
+//                             console.log("Address updated with new link:", save_res.message);
+//                             apply_to_so(frm, save_res.message);
+//                         }
+//                     }
+//                 });
+//             } else {
+//                 // Link already exists, just perform the mapping
+//                 apply_to_so(frm, address_doc);
+//             }
+//         }
+//     });
+// }
+
+// function apply_to_so(frm, address_doc) {
+//     // 5. Map values back to Sales Order
+//     frm.set_value('shipping_address_name', address_doc.name);
+//     frm.set_value('shipping_address', address_doc.address_display);
+    
+//     frappe.show_alert({
+//         message: __('Buyer linked to Address and mapped to Shipping fields.'), 
+//         indicator: 'green'
+//     });
+// }
+
+
+// ---------------------------------------------corrected code------------------------------------------------
 frappe.ui.form.on('Sales Order', {
     custom_map_address: function(frm) {
-        let buyer = frm.doc.customer || frm.doc.buyer; 
+
+        let buyer = frm.doc.customer || frm.doc.buyer;
         let consignee = frm.doc.custom_consignee;
 
         if (!buyer || !consignee) {
@@ -783,84 +875,40 @@ frappe.ui.form.on('Sales Order', {
             return;
         }
 
-        // 1. Find the Address tied to the Consignee
         frappe.call({
-            method: 'frappe.client.get_list',
+            method: 'cit_exim.cit_exim.doc_events.sales_order.map_buyer_to_consignee_address',
             args: {
-                doctype: 'Address',
-                filters: [
-                    ['Dynamic Link', 'link_name', '=', consignee],
-                    ['Dynamic Link', 'parenttype', '=', 'Address']
-                ],
-                fields: ['name']
+                buyer: buyer,
+                consignee: consignee
             },
             callback: function(r) {
-                if (r.message && r.message.length > 0) {
-                    let address_id = r.message[0].name;
-                    update_address_and_map(frm, address_id, buyer);
-                } else {
-                    frappe.msgprint(__('No Address found linked to Consignee: ') + consignee);
+                if (r.message) {
+
+                    frm.set_value('shipping_address_name', r.message.shipping_address_name);
+                    frm.set_value('shipping_address', r.message.shipping_address);
+
+                    frappe.show_alert({
+                        message: __('Address mapped successfully'),
+                        indicator: 'green'
+                    });
                 }
             }
         });
     }
 });
 
-function update_address_and_map(frm, address_id, buyer_name) {
-    frappe.call({
-        method: 'frappe.client.get',
-        args: {
-            doctype: 'Address',
-            name: address_id
-        },
-        callback: function(r) {
-            let address_doc = r.message;
-            
-            // 2. Check if the "Buyer" is already in the Links table
-            let is_linked = (address_doc.links || []).some(l => l.link_name === buyer_name && l.link_doctype === 'Customer');
 
-            if (!is_linked) {
-                // 3. Explicitly push a new row into the links child table
-                if (!address_doc.links) address_doc.links = [];
-                
-                address_doc.links.push({
-                    "doctype": "Dynamic Link",
-                    "parent": address_id,
-                    "parentfield": "links",
-                    "parenttype": "Address",
-                    "link_doctype": "Customer",
-                    "link_name": buyer_name
-                });
 
-                // 4. Save the Address doc with the new link
-                frappe.call({
-                    method: 'frappe.client.save',
-                    args: { doc: address_doc },
-                    callback: function(save_res) {
-                        if (save_res.message) {
-                            console.log("Address updated with new link:", save_res.message);
-                            apply_to_so(frm, save_res.message);
-                        }
-                    }
-                });
-            } else {
-                // Link already exists, just perform the mapping
-                apply_to_so(frm, address_doc);
-            }
-        }
-    });
-}
 
-function apply_to_so(frm, address_doc) {
-    // 5. Map values back to Sales Order
-    frm.set_value('shipping_address_name', address_doc.name);
-    frm.set_value('shipping_address', address_doc.address_display);
-    
-    frappe.show_alert({
-        message: __('Buyer linked to Address and mapped to Shipping fields.'), 
-        indicator: 'green'
-    });
-}
+
+
+
+
+
+
+
+
+
 
 
 
