@@ -196,16 +196,15 @@ frm.add_custom_button(__('Split Invoice'), () => {
                     }
 
                     frappe.call({
-                        method: "frappe.client.get",
-                        args: { doctype: "Serial and Batch Bundle", name: bundle },
+                        method: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.get_serial_batch_bundle",
+                        args: {
+                            bundle_name: bundle
+                        },
                         callback: function(r){
                             if(!r.message) return;
 
-                            // store batches in dialog object for Add Row
-                            d.batches = r.message.entries.map(row => ({
-                                batch_no: row.batch_no,
-                                qty: Math.abs(row.qty)
-                            }));
+                            // Already formatted from backend
+                            d.batches = r.message;
 
                             render_tables(d.batches);
                         }
