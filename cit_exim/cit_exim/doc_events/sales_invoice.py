@@ -3678,21 +3678,18 @@ import frappe
 from frappe import _
 
 @frappe.whitelist()
-def map_buyer_to_consignee_address(buyer, consignee):
+def map_buyer_to_consignee_address_si(buyer, consignee):
     if not buyer or not consignee:
         frappe.throw(_("Buyer and Consignee are required"))
 
-    # 1. Get Consignee Address (DO NOT MODIFY LINKS)
-    address = frappe.get_all(
-        "Dynamic Link",
-        filters={
-            "link_doctype": "Customer",
-            "link_name": consignee,
-            "parenttype": "Address"
-        },
-        fields=["parent"],
-        limit=1
-    )
+    # 1. Find Address linked to Consignee
+    address = frappe.db.sql("""
+        SELECT parent
+        FROM `tabDynamic Link`
+        WHERE link_name = %s
+        AND parenttype = 'Address'
+        LIMIT 1
+    """, (consignee,), as_dict=True)
 
     if not address:
         frappe.throw(_("No Address found linked to Consignee: {0}").format(consignee))
@@ -3702,14 +3699,30 @@ def map_buyer_to_consignee_address(buyer, consignee):
     # 2. Get Address document
     address_doc = frappe.get_doc("Address", address_name)
 
-    # 3. Get formatted address
+    # 3. Check if Buyer already linked
+    is_linked = any(
+        d.link_doctype == "Customer" and d.link_name == buyer
+        for d in address_doc.links
+    )
+
+    # 4. Add Buyer link if not exists
+    if not is_linked:
+        address_doc.append("links", {
+            "link_doctype": "Customer",
+            "link_name": buyer
+        })
+        address_doc.save(ignore_permissions=True)
+
+    # 5. Get address display (correct method)
     address_display = address_doc.get_display()
 
-    # 4. Return values
+    # 6. Return values for Sales Invoice
     return {
         "shipping_address_name": address_doc.name,
         "shipping_address": address_display
     }
+
+
 
 
 

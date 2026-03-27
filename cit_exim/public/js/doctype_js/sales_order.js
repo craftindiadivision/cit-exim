@@ -864,7 +864,38 @@ frappe.ui.form.on("Sales Order", {
 
 
 // ---------------------------------------------corrected code------------------------------------------------
+// frappe.ui.form.on('Sales Order', {
+//     custom_map_address: function(frm) {
 
+//         let buyer = frm.doc.customer || frm.doc.buyer;
+//         let consignee = frm.doc.custom_consignee;
+
+//         if (!buyer || !consignee) {
+//             frappe.msgprint(__('Please ensure both Buyer and Custom Consignee are selected.'));
+//             return;
+//         }
+
+//         frappe.call({
+//             method: 'cit_exim.cit_exim.doc_events.sales_order.map_buyer_to_consignee_address',
+//             args: {
+//                 buyer: buyer,
+//                 consignee: consignee
+//             },
+//             callback: function(r) {
+//                 if (r.message) {
+
+//                     frm.set_value('shipping_address_name', r.message.shipping_address_name);
+//                     frm.set_value('shipping_address', r.message.shipping_address);
+
+//                     frappe.show_alert({
+//                         message: __('Address mapped successfully'),
+//                         indicator: 'green'
+//                     });
+//                 }
+//             }
+//         });
+//     }
+// });
 
 
 frappe.ui.form.on('Sales Order', {
@@ -874,7 +905,7 @@ frappe.ui.form.on('Sales Order', {
         let consignee = frm.doc.custom_consignee;
 
         if (!buyer || !consignee) {
-            frappe.msgprint(__('Please ensure both Buyer and Consignee are selected.'));
+            frappe.msgprint(__('Please ensure both Buyer and Custom Consignee are selected.'));
             return;
         }
 
@@ -887,12 +918,8 @@ frappe.ui.form.on('Sales Order', {
             callback: function(r) {
                 if (r.message) {
 
-                    // ✅ Set Shipping Address from Consignee
                     frm.set_value('shipping_address_name', r.message.shipping_address_name);
                     frm.set_value('shipping_address', r.message.shipping_address);
-
-                    // ✅ Force Billing Address from Buyer (VERY IMPORTANT)
-                    frappe.contacts.get_address_display(frm, "customer", "customer_address");
 
                     frappe.show_alert({
                         message: __('Address mapped successfully'),
@@ -903,8 +930,6 @@ frappe.ui.form.on('Sales Order', {
         });
     }
 });
-
-
 
 
 
