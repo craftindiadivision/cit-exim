@@ -1323,7 +1323,7 @@ frappe.ui.form.on('Sales Invoice', {
         }
 
         frappe.call({
-            method: 'cit_exim.cit_exim.doc_events.sales_order.map_buyer_to_consignee_address_si',
+            method: 'cit_exim.cit_exim.doc_events.sales_invoice.map_buyer_to_consignee_address_si',
             args: {
                 buyer: buyer,
                 consignee: consignee
