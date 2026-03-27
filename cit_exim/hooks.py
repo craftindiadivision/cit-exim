@@ -435,13 +435,13 @@ doc_events = {
 # }
 
 
-# scheduler_events = {
-#     "cron": {
-#         "*/2 * * * *": [
-#             "cit_exim.cit_exim.doc_events.sales_order.update_payment_status_scheduler"
-#         ]
-#     }
-# }
+scheduler_events = {
+    "cron": {
+        "*/5 * * * *": [
+            "cit_exim.cit_exim.doc_events.sales_order.update_payment_status_scheduler"
+        ]
+    }
+}
 
 
 
