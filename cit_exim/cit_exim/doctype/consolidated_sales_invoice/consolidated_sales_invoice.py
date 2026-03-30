@@ -613,8 +613,8 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
                 if new_bundle.entries:
                     new_bundle.posting_date = si_doc.posting_date
                     new_bundle.posting_time = si_doc.posting_time or frappe.utils.nowtime()
-                    new_bundle.has_batch_no = row.has_batch_no
-                    new_bundle.has_serial_no = row.has_serial_no
+                    new_bundle.has_batch_no = 1
+                    new_bundle.has_serial_no = 0
                     new_bundle.insert(ignore_permissions=True)
 
 
