@@ -390,8 +390,6 @@ def get_serial_batch_bundle(bundle_name):
 @frappe.whitelist()
 def split_consolidated_invoice(source_name, split_count, split_data=None):
 
-
-
     split_count = int(split_count)
     if split_data:
         split_data = frappe.parse_json(split_data)
@@ -422,7 +420,7 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
 
             bundle_batch_qty[batch] += qty
 
-
+    print(bundle_batch_qty)
     selected_batch_qty = {}
 
     for entry in split_data:
@@ -433,10 +431,10 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
         if not batch:
             continue
 
-        if batch not in bundle_batch_qty:
-            frappe.throw(
-                f"Batch <b>{batch}</b> was not used in the Consolidated Invoice."
-            )
+        # if batch not in bundle_batch_qty:
+        #     frappe.throw(
+        #         f"Batch <b>{batch}</b> was not used in the Consolidated Invoice."
+        #     )
 
         if batch not in selected_batch_qty:
             selected_batch_qty[batch] = 0
@@ -448,10 +446,10 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
 
         allowed_qty = bundle_batch_qty.get(batch, 0)
 
-        if qty > allowed_qty:
-            frappe.throw(
-                f"Selected quantity <b>{qty}</b> for Batch <b>{batch}</b> exceeds available quantity <b>{allowed_qty}</b> in the Consolidated Invoice."
-            )
+        # if qty > allowed_qty:
+        #     frappe.throw(
+        #         f"Selected quantity <b>{qty}</b> for Batch <b>{batch}</b> exceeds available quantity <b>{allowed_qty}</b> in the Consolidated Invoice."
+        #     )
 
 
     if len(source_doc.items) != 1:
@@ -613,7 +611,12 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
                         })
 
                 if new_bundle.entries:
+                    new_bundle.posting_date = si_doc.posting_date
+                    new_bundle.posting_time = si_doc.posting_time or frappe.utils.nowtime()
+                    new_bundle.has_batch_no = row.has_batch_no
+                    new_bundle.has_serial_no = row.has_serial_no
                     new_bundle.insert(ignore_permissions=True)
+
 
                 # attach bundle to item row
                 row.serial_and_batch_bundle = new_bundle.name
