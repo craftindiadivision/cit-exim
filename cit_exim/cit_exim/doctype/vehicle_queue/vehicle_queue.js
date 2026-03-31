@@ -8,16 +8,16 @@ frappe.ui.form.on("Vehicle Queue", {
 frappe.ui.form.on("Vehicle Queue Item", {
     no_of_bags: function(frm) {
         calculate_totals(frm);
-        calculate_totals_non_rawfish(frm);
+        // calculate_totals_non_rawfish(frm);
     },
     item_add: function(frm) {
         calculate_totals(frm);
-        calculate_totals_non_rawfish(frm);
+        // calculate_totals_non_rawfish(frm);
     },
 
     item_remove: function(frm) {
         calculate_totals(frm);
-        calculate_totals_non_rawfish(frm);
+        // calculate_totals_non_rawfish(frm);
     }
 });
 function calculate_totals(frm) {
@@ -34,43 +34,43 @@ function calculate_totals(frm) {
     frm.refresh_field("total_no_of_boxes");
 
 }
-function calculate_totals_non_rawfish(frm) {
+// function calculate_totals_non_rawfish(frm) {
 
-    let item_map = {};
+//     let item_map = {};
 
-    (frm.doc.item || []).forEach(row => {
+//     (frm.doc.item || []).forEach(row => {
 
-        // Skip if no item or raw fish
-        if (!row.item || row.item_group === "Raw Fish") {
-            return;
-        }
+//         // Skip if no item or raw fish
+//         if (!row.item || row.item_group === "Raw Fish") {
+//             return;
+//         }
 
-        let key = row.unit;  // grouping by item
+//         let key = row.unit;  // grouping by item
 
-        if (!item_map[key]) {
-            item_map[key] = {
-                item: row.item,
-                unit: row.unit,
-                total: 0
-            };
-        }
+//         if (!item_map[key]) {
+//             item_map[key] = {
+//                 item: row.item,
+//                 unit: row.unit,
+//                 total: 0
+//             };
+//         }
 
-        item_map[key].total += row.no_of_bags || 0;
-    });
+//         item_map[key].total += row.no_of_bags || 0;
+//     });
 
-    // Clear existing child table
-    frm.clear_table("total");
+//     // Clear existing child table
+//     frm.clear_table("total");
 
-    // Rebuild child table
-    Object.values(item_map).forEach(data => {
-        let child = frm.add_child("total");
+//     // Rebuild child table
+//     Object.values(item_map).forEach(data => {
+//         let child = frm.add_child("total");
 
-        child.unit = data.unit;   // make sure field exists
-        child.total_number = data.total;
-    });
+//         child.unit = data.unit;   // make sure field exists
+//         child.total_number = data.total;
+//     });
 
-    frm.refresh_field("total");
-}
+//     frm.refresh_field("total");
+// }
 frappe.ui.form.on("Vehicle Queue", {
     gross_weight: function(frm) {
         calculate_net_weight(frm);
@@ -127,7 +127,7 @@ function calculate_net_weight(frm) {
     let gross = frm.doc.gross_weight || 0;
     let tare = frm.doc.tare_weight || 0;
     let ice = frm.doc.ice_weight || 0;
-
+    console.log(434444444)
     let net = gross - tare - ice;
 
     frappe.model.set_value(
@@ -451,12 +451,12 @@ frappe.ui.form.on("Vehicle Queue", {
                         cannot_add_rows: true,
                         in_place_edit: false,
                         fields: [
-                            {
-                                fieldtype: "Link",
-                                fieldname: "custom_default_receiving_uom",
-                                label: "Receiving UOM",
-                                columns: 1
-                            },
+                            // {
+                            //     fieldtype: "Link",
+                            //     fieldname: "custom_default_receiving_uom",
+                            //     label: "Receiving UOM",
+                            //     columns: 1
+                            // },
                             {
                                 fieldtype: "Link",
                                 fieldname: "purchase_order",
@@ -530,13 +530,13 @@ frappe.ui.form.on("Vehicle Queue", {
                                 read_only: 1,
                                 columns: 1
                             },
-                            {
-                                fieldtype: "Float",
-                                fieldname: "conversion_factor",
-                                label: "Conversion Factor(KG)",
-                                read_only:1,
-                                columns:1
-                            }
+                            // {
+                            //     fieldtype: "Float",
+                            //     fieldname: "conversion_factor",
+                            //     label: "Conversion Factor(KG)",
+                            //     read_only:1,
+                            //     columns:1
+                            // }
                             
                         ]
                     }
@@ -555,10 +555,11 @@ frappe.ui.form.on("Vehicle Queue", {
                     selected.forEach(row => {
                         let child = frm.add_child("item");
                         child.purchase_order = row.purchase_order;
-                        child.item = row.item_code;
+                        // child.item = row.item_code;
+                        frappe.model.set_value(child.doctype, child.name, "item", row.item_code);
                         frappe.model.set_value(child.doctype, child.name, "rate", row.rate);
-                        child.unit = row.custom_default_receiving_uom
-                        child.conversion_factor_kg = row.conversion_factor
+                        // child.unit = row.custom_default_receiving_uom
+                        // child.conversion_factor_kg = row.conversion_factor
                     });
 
                     // set product based on first item
@@ -664,7 +665,6 @@ frappe.ui.form.on("Vehicle Queue", {
     },
 
     net_weight: function(frm) {
-        console.log(5555555555555555555555555555555)
         calculate_child_values(frm);
     }
 
@@ -692,21 +692,27 @@ frappe.ui.form.on("Vehicle Queue Item", {
 
 function calculate_supplier_invoice(frm) {
 
-    let total_amount = 0;
+    if (frm.doc.invoice_qty && frm.doc.item && frm.doc.item.length > 0) {
+        (frm.doc.item || []).forEach(row => {
+            if (row.rate) {
+                let rate = row.rate || 0;
+                let amount = frm.doc.invoice_qty * rate;
 
-    (frm.doc.item || []).forEach(function(row) {
+                frm.set_value("supplier_invoice_amount", amount);
+            }
+        });
+    } 
+    // else {
+    //     let rate = frm.doc.item[0].rate || 0;
+    //     let amount = frm.doc.invoice_qty * rate;
 
-        let row_amount = (row.supplier_invoiced_qty || 0) * (row.rate || 0);
+    //     frm.set_value("supplier_invoice_amount", amount);
+    // }
 
-        total_amount += row_amount;
-
-    });
-
-    frm.set_value("supplier_invoice_amount", total_amount);
 }
 
 function calculate_child_values(frm){
-    console.log(1111)
+
     let supplier_invoice_amount = frm.doc.supplier_invoice_amount || 0;
     let net_weight = frm.doc.net_weight || 0;
 
@@ -714,7 +720,7 @@ function calculate_child_values(frm){
 
     (frm.doc.item || []).forEach(function(row){
 
-        let amount = (row.net_weight || 0) * (row.rate || 0);
+        let amount = net_weight * (row.rate || 0);
 
         frappe.model.set_value(row.doctype, row.name, "amount", amount);
 
@@ -725,92 +731,126 @@ function calculate_child_values(frm){
     frm.set_value("difference_in_amount", supplier_invoice_amount - total_row_amount);
 
 }
-frappe.ui.form.on("Vehicle Queue Item", {
-    item: function(frm, cdt, cdn) {
-        fetch_conversion(frm, cdt, cdn);
+frappe.ui.form.on('Vehicle Queue', {
+    refresh: function(frm) {
+
+
+        frm.fields_dict['item'].grid.get_field("unit").get_query = function(doc, cdt, cdn) {
+
+
+            let row = locals[cdt][cdn];
+
+
+            return {
+                filters: {
+                    item_group: row.item_group
+                }
+            };
+        };
     },
+    net_weight: function(frm) {
 
-    unit: function(frm, cdt, cdn) {
-        fetch_conversion(frm, cdt, cdn);
-    }
-});
+        if (!frm.doc.net_weight) return;
 
-function fetch_conversion(frm, cdt, cdn) {
-    let row = locals[cdt][cdn];
+        (frm.doc.item || []).forEach(row => {
 
-    if (!row.item) return;
-
-    frappe.db.get_doc("Item", row.item).then(item_doc => {
-
-        // If unit not manually changed, use default receiving uom
-        let receiving_uom = row.unit || item_doc.custom_default_receiving_uom;
-
-        // Set unit only if empty (avoid overriding user selection)
-        if (!row.unit) {
-            frappe.model.set_value(cdt, cdn, "unit", receiving_uom);
-        }
-
-        // Find conversion
-        let conversion = (item_doc.uoms || []).find(u => 
-            u.uom === receiving_uom
-        );
-        console.log(99999,conversion,3444)
-        if (conversion.conversion_factor) {
             frappe.model.set_value(
-                cdt,
-                cdn,
-                "conversion_factor_kg",
-                conversion.conversion_factor
-            )
-            
-        } else {
-            frappe.model.set_value(cdt, cdn, "conversion_factor", 1);
+                row.doctype,
+                row.name,
+                'qty',
+                frm.doc.net_weight
+            );
+        });
+
+        frm.refresh_field('items');
+    }        
+});
+
+frappe.ui.form.on('Vehicle Queue Item', {
+    item: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (row.item) {
+            frappe.db.get_value('Item', row.item, 'item_group')
+                .then(r => {
+                    if (r.message) {
+
+                        row.item_group = r.message.item_group;
+
+
+                        // ✅ Apply row-wise filter
+                        frm.fields_dict['item'].grid.get_field("unit").get_query = function(doc, cdt, cdn) {
+                            let child = locals[cdt][cdn];
+
+                            return {
+                                filters: {
+                                    item_group: child.item_group
+                                }
+                            };
+                        };
+
+                        frm.refresh_field('item');
+                    }
+                });
+            frappe.db.get_value('Item', row.item, ['purchase_uom', 'stock_uom'])
+                .then(r => {
+                    if (r.message) {
+
+                        let billing_uom = r.message.purchase_uom || r.message.stock_uom;
+
+                        frappe.model.set_value(
+                            cdt,
+                            cdn,
+                            'billing_uom',
+                            billing_uom
+                        );
+
+                    }
+                });
+        }
+    }
+});
+
+frappe.ui.form.on('Vehicle Queue Item', {
+    purchase_order: function(frm, cdt, cdn) {
+        calculate_po_details(frm, cdt, cdn);
+    },
+    item: function(frm, cdt, cdn) {
+        calculate_po_details(frm, cdt, cdn);
+    }
+});
+
+frappe.ui.form.on('Vehicle Queue', {
+    net_weight: function(frm) {
+        (frm.doc.item || []).forEach(row => {
+            calculate_po_details(frm, row.doctype, row.name);
+        });
+    }
+});
+
+function calculate_po_details(frm, cdt, cdn) {
+
+    let row = locals[cdt][cdn];
+
+    if (!row.purchase_order || !row.item) return;
+
+    frappe.call({
+        method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_po_item_details",
+        args: {
+            purchase_order: row.purchase_order,
+            item: row.item,
+            net_weight: frm.doc.net_weight,
+            product: row.product
+        },
+        callback: function(r) {
+
+            if (!r.message) return;
+
+            frappe.model.set_value(cdt, cdn, 'po_qty', r.message.po_qty);
+            frappe.model.set_value(cdt, cdn, 'p_o_balance_qty', r.message.po_balance_qty);
+
         }
     });
-}
+    frm.refresh_field('items');
 
-frappe.ui.form.on("Vehicle Queue Item", {
-    no_of_bags: function(frm, cdt, cdn) {
-        calculate_net_wt(frm, cdt, cdn);
-        calculate_child_values(frm)
-    },
-
-    conversion_factor_kg: function(frm, cdt, cdn) {
-        calculate_net_wt(frm, cdt, cdn);
-    }
-});
-
-function calculate_net_wt(frm, cdt, cdn) {
-    let row = locals[cdt][cdn];
-    let net = (row.no_of_bags || 0) * (row.conversion_factor_kg || 0);
-
-    console.log(net, "CALCULATED");
-
-    frappe.model.set_value(row.doctype, row.name, "net_weight", net);
-
-    frm.refresh_field("item"); // refresh AFTER direct assignment
-}
-
-frappe.ui.form.on("Vehicle Queue Item", {
-    supplier_invoiced_qty: function(frm) {
-        calculate_supplier_invoice_total(frm);
-    },
-
-    item_add: function(frm) {
-        calculate_supplier_invoice_total(frm);
-    },
-
-    item_remove: function(frm) {
-        calculate_supplier_invoice_total(frm);
-    }
-});
-
-function calculate_supplier_invoice_total(frm) {
-    let total = 0;
-
-    (frm.doc.item || []).forEach(row => {
-        total += row.supplier_invoiced_qty || 0;
-    });
-
-    frm.set_value("invoice_qty", total);
 }

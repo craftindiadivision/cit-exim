@@ -38,6 +38,7 @@
   "section_break_hxnf",
   "total_no_of_boxes",
   "column_break_tiid",
+  "no_of_supplier_packages",
   "total_section",
   "total",
   "section_break_wmlx",
@@ -50,11 +51,10 @@
   "net_weight",
   "section_break_uioj",
   "supplier_invoice_number",
-  "supplier_invoice_amount",
+  "invoice_qty",
   "column_break_nkcg",
   "supplier_invoice_date",
-  "column_break_yryz",
-  "invoice_qty",
+  "supplier_invoice_amount",
   "section_break_oxza",
   "difference_in_qty",
   "column_break_lyne",
@@ -230,10 +230,6 @@
    "label": "Supplier Invoice Qty"
   },
   {
-   "fieldname": "column_break_yryz",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "difference_in_qty",
    "fieldtype": "Float",
    "label": "Difference In Qty"
@@ -282,14 +278,13 @@
    "options": "Loading Location"
   },
   {
-   "depends_on": "eval:doc.product === \"Raw Fish\"",
    "fieldname": "section_break_hxnf",
    "fieldtype": "Section Break"
   },
   {
    "fieldname": "total_no_of_boxes",
    "fieldtype": "Float",
-   "label": "Total No. of Boxes"
+   "label": "Total No. of Packages"
   },
   {
    "fieldname": "column_break_tiid",
@@ -349,9 +344,9 @@
    "label": "Difference In Amount"
   },
   {
-   "depends_on": "eval:doc.product != \"Raw Fish\"",
    "fieldname": "total_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Total"
   },
   {
@@ -376,6 +371,11 @@
    "hidden": 1,
    "in_list_view": 1,
    "label": "Posting Date"
+  },
+  {
+   "fieldname": "no_of_supplier_packages",
+   "fieldtype": "Float",
+   "label": "Total No. of Supplier Packages"
   }
  ],
  "grid_page_length": 50,
@@ -391,7 +391,7 @@
    "link_fieldname": "vehicle_queue"
   }
  ],
- "modified": "2026-03-25 10:50:47.940203",
+ "modified": "2026-03-31 15:42:30.651659",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

@@ -132,21 +132,34 @@ class VehicleQueue(Document):
 
     def validate(self):
         self.validate_supplier_invoice_number()
-        if self.product != "Raw Fish":
-            for row in self.item:
-                row.net_weight = (row.no_of_bags or 0) * (row.conversion_factor_kg or 0)
-            child_total = sum([row.net_weight or 0 for row in self.item])
-            voucher_net = self.net_weight or 0
-            print(child_total,voucher_net,"total values")
-            if child_total != voucher_net:
-                frappe.msgprint(
-                    f"""
-                    <b>Weight Mismatch Warning</b><br>
-                    Items Total Weight: {child_total}<br>
-                    Load Weight: {voucher_net}
-                    """,
-                    indicator="orange"
-                )
+        # if self.product != "Raw Fish":
+        #     if self.net_weight != self.invoice_qty:
+        #         frappe.msgprint(
+        #                 f"""
+        #                 <b>Weight Mismatch</b><br><br>
+        #                 There is a difference between the invoice quantity and the load weight.<br><br>
+                        
+        #                 <b>Invoice Quantity:</b> {self.invoice_qty}<br>
+        #                 <b>Load Weight:</b> {self.net_weight}<br><br>
+                        
+        #                 Please verify the values before proceeding.
+        #                 """,
+        #                 indicator="orange"
+        #             )
+        #     for row in self.item:
+        #         row.net_weight = (row.no_of_bags or 0) * (row.conversion_factor_kg or 0)
+        #     child_total = sum([row.net_weight or 0 for row in self.item])
+        #     voucher_net = self.net_weight or 0
+        #     print(child_total,voucher_net,"total values")
+        #     if child_total != voucher_net:
+        #         frappe.msgprint(
+        #             f"""
+        #             <b>Weight Mismatch Warning</b><br>
+        #             Items Total Weight: {child_total}<br>
+        #             Load Weight: {voucher_net}
+        #             """,
+        #             indicator="orange"
+        #         )
             # Calculate Net Weight
         if self.vehicle_no:
             self.vehicle_no = self.vehicle_no.replace(" ", "").upper()
@@ -317,10 +330,10 @@ class VehicleQueue(Document):
                 pr_item = pr.append("items", {})
 
                 pr_item.item_code = vq_item.item
-                # pr_item.qty = self.net_weight   # ✅ direct qty, no allocation
+                pr_item.qty = self.net_weight   # ✅ direct qty, no allocation
                 pr_item.rate = vq_item.rate or 0
                 pr_item.warehouse = self.warehouse
-                pr_item.qty = vq_item.net_weight
+                # pr_item.qty = vq_item.net_weight
                 pr_item.custom_purchase_order_item_ref = po_item.name
                 pr_item.rejected_warehouse = ""
                 
@@ -381,7 +394,7 @@ class VehicleQueue(Document):
 
                 pr_item = pr.append("items", {})
                 pr_item.item_code = vq_item.item
-                pr_item.qty = vq_item.net_wt
+                pr_item.qty = self.net_weight   # ✅ direct qty, no allocation
                 pr_item.rate = vq_item.rate  # MUST exist
                 pr_item.uom = frappe.db.get_value("Item", vq_item.item, "stock_uom")
                 pr_item.stock_uom = pr_item.uom
@@ -656,3 +669,40 @@ def validate_supplier_invoice_number(self):
                     frappe.utils.get_link_to_form("Vehicle Queue", vq_name)
                 )
             )
+
+@frappe.whitelist()
+def get_po_item_details(purchase_order, item, net_weight=0, product=None):
+
+    # 🚫 Skip Raw Fish
+    if product == "Raw Fish":
+        return {}
+
+    if not purchase_order or not item:
+        return {}
+
+    # Fetch PO Item directly (optimized)
+    po_item = frappe.db.get_value(
+        "Purchase Order Item",
+        {
+            "parent": purchase_order,
+            "item_code": item
+        },
+        ["qty", "received_qty"],
+        as_dict=1
+    )
+
+    if not po_item:
+        frappe.throw("Item not found in selected Purchase Order")
+
+    po_qty = po_item.qty or 0
+    received_qty = po_item.received_qty or 0
+    net_weight = float(net_weight or 0)
+    print(received_qty,net_weight,"received and net weight values")
+
+    balance_qty = po_qty - received_qty - net_weight
+
+    return {
+        "po_qty": po_qty,
+        "received_qty": received_qty,
+        "po_balance_qty": balance_qty
+    }
