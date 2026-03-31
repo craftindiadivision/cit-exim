@@ -24,6 +24,7 @@
   "qty",
   "stock_uom",
   "export_uom",
+  "kg_per_package",
   "col_break2",
   "uom",
   "conversion_factor",
@@ -1065,13 +1066,20 @@
   {
    "fieldname": "export_uom",
    "fieldtype": "Link",
-   "label": "Export UOM",
-   "options": "UOM"
+   "label": "Export Package",
+   "options": "Package Type"
+  },
+  {
+   "fetch_from": "export_uom.kg_per_package",
+   "fetch_if_empty": 1,
+   "fieldname": "kg_per_package",
+   "fieldtype": "Float",
+   "label": "Kg Per Package"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-03-17 11:06:20.328983",
+ "modified": "2026-03-31 14:38:36.588895",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice Item",

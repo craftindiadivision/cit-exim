@@ -411,7 +411,8 @@ doc_events = {
         ],
         "on_cancel": [
             "cit_exim.cit_exim.doc_events.payment_entry.on_cancel"
-        ]
+        ],
+        "validate": "cit_exim.cit_exim.doc_events.payment_entry.validate"
     },
 
 
@@ -435,13 +436,13 @@ doc_events = {
 # }
 
 
-scheduler_events = {
-    "cron": {
-        "*/5 * * * *": [
-            "cit_exim.cit_exim.doc_events.sales_order.update_payment_status_scheduler"
-        ]
-    }
-}
+# scheduler_events = {
+#     "cron": {
+#         "*/5 * * * *": [
+#             "cit_exim.cit_exim.doc_events.sales_order.update_payment_status_scheduler"
+#         ]
+#     }
+# }
 
 
 

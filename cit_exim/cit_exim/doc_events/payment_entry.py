@@ -329,3 +329,78 @@ def revert_consolidated_status(si_name):
         "workflow_state",
         "Document Submitted & Awaiting Payments"
     )
+import frappe
+from frappe.utils import flt
+
+@frappe.whitelist()
+def get_sales_invoices(consolidated_invoice):
+
+    if not consolidated_invoice:
+        return []
+
+    invoices = frappe.get_all(
+        "Sales Invoice",
+        filters={
+            "custom_consolidated_invoice_reference": consolidated_invoice,
+            "docstatus": 1,
+            "outstanding_amount": [">", 0]
+        },
+        fields=["name", "grand_total", "outstanding_amount"]
+    )
+
+    for inv in invoices:
+        inv["grand_total"] = flt(inv.get("grand_total"))
+        inv["outstanding_amount"] = flt(inv.get("outstanding_amount"))
+
+    return invoices
+
+
+def validate(doc, method):
+
+    if not doc.custom_get_from_consolidated_sales_invoice:
+        return
+
+    if not doc.custom_consolidated_sales_invoice:
+        return
+
+    #  Step 1: Get invoices in FIFO order
+    invoices = frappe.get_all(
+        "Sales Invoice",
+        filters={
+            "custom_consolidated_invoice_reference": doc.custom_consolidated_sales_invoice,
+            "docstatus": 1,
+            "outstanding_amount": [">", 0]
+        },
+        fields=["name", "grand_total", "outstanding_amount", "posting_date"],
+        order_by="posting_date asc"   #  FIFO
+    )
+
+    #Step 2: Clear table
+    doc.set("references", [])
+
+    #  Step 3: Total amount to distribute
+    remaining = flt(doc.paid_amount)
+
+    #  Step 4: FIFO Allocation
+    for inv in invoices:
+
+        outstanding = flt(inv.outstanding_amount)
+
+        if remaining <= 0:
+            allocated = 0
+
+        elif remaining >= outstanding:
+            allocated = outstanding
+            remaining -= outstanding
+
+        else:
+            allocated = remaining
+            remaining = 0
+
+        doc.append("references", {
+            "reference_doctype": "Sales Invoice",
+            "reference_name": inv.name,
+            "total_amount": flt(inv.grand_total),
+            "outstanding_amount": outstanding,
+            "allocated_amount": allocated
+        })

@@ -47,6 +47,70 @@ def validate(doc, method=None):
 
             if company_address:
                 doc.company_address = company_address
+    current_address = None
+    is_current_consignee = False
+
+    # -----------------------------------
+    # 1. Check current address (if exists)
+    # -----------------------------------
+    if doc.customer_address:
+        current_address = frappe.get_doc("Address", doc.customer_address)
+
+        for link in current_address.links:
+            if (
+                link.link_doctype == "Customer" and
+                link.link_name == doc.customer and
+                getattr(link, "custom_is_consignee", 0)
+            ):
+                is_current_consignee = True
+                break
+
+    # -----------------------------------
+    # 2. If current is VALID billing → keep
+    # -----------------------------------
+    if doc.customer_address and not is_current_consignee:
+        return
+
+    # -----------------------------------
+    # 3. Find NON-CONSIGNEE (billing) address
+    # -----------------------------------
+    address_links = frappe.get_all(
+        "Dynamic Link",
+        filters={
+            "link_doctype": "Customer",
+            "link_name": doc.customer,
+            "parenttype": "Address"
+        },
+        fields=["parent"]
+    )
+
+    correct_address = None
+
+    for row in address_links:
+        addr = frappe.get_doc("Address", row.parent)
+
+        for link in addr.links:
+            if (
+                link.link_doctype == "Customer" and
+                link.link_name == doc.customer and
+                not getattr(link, "custom_is_consignee", 0)
+            ):
+                correct_address = addr
+                break
+
+        if correct_address:
+            break
+
+    # -----------------------------------
+    # 4. Replace consignee → billing
+    # -----------------------------------
+    if correct_address:
+        doc.customer_address = correct_address.name
+        doc.address_display = correct_address.get_display()
+
+    else:
+        frappe.throw("No valid Billing Address found (all marked as Consignee)")
+    
     if not doc.items:
         return
     print('aaaaaaaaaaaaaaaaaaaaaaaaaa')
@@ -62,18 +126,19 @@ def validate(doc, method=None):
                 item.serial_and_batch_bundle
             )
 
-            conversion_factor = frappe.db.get_value(
-                "UOM Conversion Detail",
-                {
-                    "parent": item.item_code,
-                    "uom": item.custom_export_uom
-                },
-                "conversion_factor"
-            )
+            # conversion_factor = frappe.db.get_value(
+            #     "UOM Conversion Detail",
+            #     {
+            #         "parent": item.item_code,
+            #         "uom": item.custom_export_uom
+            #     },
+            #     "conversion_factor"
+            # )
+            conversion_factor = item.custom_kg_per_package
 
             if not conversion_factor:
                 frappe.throw(
-                    f" Export UOM conversion not defined for Item {item.item_code}"
+                    f"Export Package is not defined for Item {item.item_code}"
                 )
 
             for entry in bundle.entries:
@@ -88,6 +153,14 @@ def validate(doc, method=None):
                     "batch_qty": batch_qty,
                     "conversion_factor": conversion_factor
                 })
+        if len(doc.custom_batches_for_loading) == 0:
+            for lot in lot_list:
+                no_of_packages = flt(lot["batch_qty"]) / flt(lot["conversion_factor"])
+                doc.append("custom_batches_for_loading",{
+                    "batch_no": lot["lot_no"],
+                    "batch_qty": lot["batch_qty"],
+                    "no_of_packages": int(no_of_packages),
+            })
 
         existing_lots = {row.lot_no for row in doc.container_detail}
 
@@ -97,10 +170,10 @@ def validate(doc, method=None):
 
             no_of_packages = flt(lot["batch_qty"]) / flt(lot["conversion_factor"])
 
-            doc.append("container_detail", {
-                "lot_no": lot["lot_no"],
-                "no_of_packages": int(no_of_packages)
-            })
+            # doc.append("container_detail", {
+            #     # "lot_no": lot["lot_no"],
+            #     "no_of_packages": int(no_of_packages)
+            # })
 
 
 # def sync_workflow_from_sales_invoice(doc, method):
@@ -3677,50 +3750,75 @@ def get_billing_address_for_customer(customer):
 import frappe
 from frappe import _
 
+
 @frappe.whitelist()
 def map_buyer_to_consignee_address_si(buyer, consignee):
+
+
     if not buyer or not consignee:
         frappe.throw(_("Buyer and Consignee are required"))
 
-    # 1. Find Address linked to Consignee
-    address = frappe.db.sql("""
+    # -----------------------------------
+    # 1. GET CONSIGNEE ADDRESS (SHIPPING)
+    # -----------------------------------
+    addresses = frappe.db.sql("""
         SELECT parent
         FROM `tabDynamic Link`
         WHERE link_name = %s
         AND parenttype = 'Address'
-        LIMIT 1
     """, (consignee,), as_dict=True)
 
-    if not address:
+    if not addresses:
         frappe.throw(_("No Address found linked to Consignee: {0}").format(consignee))
 
-    address_name = address[0].parent
+    shipping_address = None
 
-    # 2. Get Address document
-    address_doc = frappe.get_doc("Address", address_name)
+    for row in addresses:
+        address_doc = frappe.get_doc("Address", row.parent)
 
-    # 3. Check if Buyer already linked
-    is_linked = any(
-        d.link_doctype == "Customer" and d.link_name == buyer
-        for d in address_doc.links
-    )
+        updated = False
 
-    # 4. Add Buyer link if not exists
-    if not is_linked:
-        address_doc.append("links", {
-            "link_doctype": "Customer",
-            "link_name": buyer
-        })
-        address_doc.save(ignore_permissions=True)
+        for link in address_doc.links:
+            if link.link_name == consignee:
 
-    # 5. Get address display (correct method)
-    address_display = address_doc.get_display()
+                # ✅ AUTO-CHECK CONSIGNEE
+                if not getattr(link, "custom_is_consignee", 0):
+                    link.custom_is_consignee = 1
+                    updated = True
 
-    # 6. Return values for Sales Invoice
+                shipping_address = address_doc
+
+        if updated:
+            address_doc.save(ignore_permissions=True)
+
+        if shipping_address:
+            break
+
+    # -----------------------------------
+    # 2. GET BUYER ADDRESS (BILLING)
+    # -----------------------------------
+    buyer_addresses = frappe.db.sql("""
+        SELECT parent
+        FROM `tabDynamic Link`
+        WHERE link_name = %s
+        AND parenttype = 'Address'
+    """, (buyer,), as_dict=True)
+
+    if not buyer_addresses:
+        frappe.throw(_("No Address found for Buyer: {0}").format(buyer))
+
+    billing_address = frappe.get_doc("Address", buyer_addresses[0].parent)
+
+    # -----------------------------------
+    # 3. RETURN
+    # -----------------------------------
     return {
-        "shipping_address_name": address_doc.name,
-        "shipping_address": address_display
+        "shipping_address_name": shipping_address.name,
+        "shipping_address": shipping_address.get_display(),
+        "customer_address": billing_address.name,
+        "address_display": billing_address.get_display()
     }
+
 
 
 

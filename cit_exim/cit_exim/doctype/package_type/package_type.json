@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "package_type",
-  "item_group"
+  "item_group",
+  "kg_per_package"
  ],
  "fields": [
   {
@@ -21,12 +22,17 @@
    "fieldtype": "Link",
    "label": "Item Group",
    "options": "Item Group"
+  },
+  {
+   "fieldname": "kg_per_package",
+   "fieldtype": "Float",
+   "label": "Kg Per Package"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-31 12:16:12.656331",
+ "modified": "2026-03-31 12:35:08.434706",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Package Type",

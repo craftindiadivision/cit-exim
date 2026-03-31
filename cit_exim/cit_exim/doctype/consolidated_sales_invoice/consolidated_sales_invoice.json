@@ -158,6 +158,8 @@
   "number_of_containers",
   "custom_shipped_on_board_date",
   "movement",
+  "section_break_bjip",
+  "batches_for_loading",
   "container_details",
   "container_detail",
   "export_documents",
@@ -2720,6 +2722,16 @@
    "fieldname": "custom_payment_status",
    "fieldtype": "Check",
    "label": "Payment Status"
+  },
+  {
+   "fieldname": "section_break_bjip",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "batches_for_loading",
+   "fieldtype": "Table",
+   "label": "Batches For Loading",
+   "options": "Batches For Loading"
   }
  ],
  "grid_page_length": 50,
@@ -2736,7 +2748,7 @@
    "link_fieldname": "custom_consolidated_invoice_reference"
   }
  ],
- "modified": "2026-03-25 16:35:10.589790",
+ "modified": "2026-03-31 10:12:00.559620",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice",

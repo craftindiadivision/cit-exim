@@ -899,13 +899,14 @@ frappe.ui.form.on("Sales Order", {
 
 
 frappe.ui.form.on('Sales Order', {
+
     custom_map_address: function(frm) {
 
         let buyer = frm.doc.customer || frm.doc.buyer;
         let consignee = frm.doc.custom_consignee;
 
         if (!buyer || !consignee) {
-            frappe.msgprint(__('Please ensure both Buyer and Custom Consignee are selected.'));
+            frappe.msgprint(__('Please ensure both Buyer and Consignee are selected.'));
             return;
         }
 
@@ -918,11 +919,16 @@ frappe.ui.form.on('Sales Order', {
             callback: function(r) {
                 if (r.message) {
 
+                    // Shipping → Consignee
                     frm.set_value('shipping_address_name', r.message.shipping_address_name);
                     frm.set_value('shipping_address', r.message.shipping_address);
 
+                    // Billing → Buyer
+                    frm.set_value('customer_address', r.message.customer_address);
+                    frm.set_value('address_display', r.message.address_display);
+
                     frappe.show_alert({
-                        message: __('Address mapped successfully'),
+                        message: __('Shipping = Consignee, Billing = Buyer'),
                         indicator: 'green'
                     });
                 }
@@ -1432,9 +1438,11 @@ function create_consolidated_invoice(frm) {
                         row.item_name = item.item_name;
                         row.qty = item.qty;
                         row.uom = item.uom;
+                        row.stock_uom = item.stock_uom;
                         row.conversion_factor = item.conversion_factor;
                         row.warehouse = item.warehouse;
                         row.gst_hsn_code = item.gst_hsn_code;
+                        row.stock_qty = item.qty * item.conversion_factor;
 
                         
                         // Pricing & Accounts

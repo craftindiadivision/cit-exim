@@ -93,18 +93,19 @@ class ConsolidatedSalesInvoice(Document):
                 item.serial_and_batch_bundle
             )
 
-            conversion_factor = frappe.db.get_value(
-                "UOM Conversion Detail",
-                {
-                    "parent": item.item_code,
-                    "uom": item.export_uom
-                },
-                "conversion_factor"
-            )
+            # conversion_factor = frappe.db.get_value(
+            #     "UOM Conversion Detail",
+            #     {
+            #         "parent": item.item_code,
+            #         "uom": item.export_uom
+            #     },
+            #     "conversion_factor"
+            # )
+            conversion_factor = item.kg_per_package
 
             if not conversion_factor:
                 frappe.throw(
-                    f"Packet UOM conversion not defined for Item {item.item_code}"
+                    f"Export Package is not defined for Item {item.item_code}"
                 )
 
             for entry in bundle.entries:
@@ -119,6 +120,14 @@ class ConsolidatedSalesInvoice(Document):
                     "batch_qty": batch_qty,
                     "conversion_factor": conversion_factor
                 })
+        if len(self.batches_for_loading) == 0:
+            for lot in lot_list:
+                no_of_packages = flt(lot["batch_qty"]) / flt(lot["conversion_factor"])
+                self.append("batches_for_loading",{
+                    "batch_no": lot["lot_no"],
+                    "batch_qty": lot["batch_qty"],
+                    "no_of_packages": int(no_of_packages),
+            })
 
         existing_lots = {row.lot_no for row in self.container_detail}
 
@@ -128,10 +137,10 @@ class ConsolidatedSalesInvoice(Document):
 
             no_of_packages = flt(lot["batch_qty"]) / flt(lot["conversion_factor"])
 
-            self.append("container_detail", {
-                "lot_no": lot["lot_no"],
-                "no_of_packages": int(no_of_packages)
-            })
+            # self.append("container_detail", {
+            #     "lot_no": lot["lot_no"],
+            #     "no_of_packages": int(no_of_packages)
+            # })
 
     def on_update_after_submit(self):
         print("date...........")
@@ -532,6 +541,8 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
             row.item_name = item.item_name
             row.description = item.description
             row.uom = item.uom
+            row.stock_uom = item.stock_uom
+            row.conversion_factor = item.conversion_factor
             row.warehouse = item.warehouse
             row.sales_order = item.sales_order
             row.custom_export_uom = item.export_uom
@@ -543,7 +554,7 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
 
             row.rate = rate_per_invoice
             row.amount = row.qty * row.rate
-
+            
             # Container split
             if container_rows:
                 start = i * rows_per_split

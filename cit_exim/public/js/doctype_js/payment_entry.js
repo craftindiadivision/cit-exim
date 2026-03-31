@@ -346,3 +346,75 @@ function calculate_usd_amount(frm) {
 //         frm.trigger("cal_total_amount_utilized");
 //     },
 // });
+frappe.ui.form.on("Payment Entry", {
+
+    custom_consolidated_sales_invoice: function(frm) {
+        load_invoices(frm);
+    },
+
+    paid_amount: function(frm) {
+        apply_fifo(frm);
+    }
+
+});
+
+function load_invoices(frm) {
+
+    if (!frm.doc.custom_get_from_consolidated_sales_invoice) return;
+
+    let consolidated = frm.doc.custom_consolidated_sales_invoice;
+    if (!consolidated) return;
+
+    frm.clear_table("references");
+
+    frappe.call({
+        method: "cit_exim.cit_exim.doc_events.payment_entry.get_sales_invoices",
+        args: {
+            consolidated_invoice: consolidated
+        },
+        callback: function(r) {
+
+            if (r.message) {
+
+                r.message.forEach(inv => {
+
+                    let row = frm.add_child("references");
+
+                    row.reference_doctype = "Sales Invoice";
+                    row.reference_name = inv.name;
+                    row.total_amount = inv.grand_total || 0;
+                    row.outstanding_amount = inv.outstanding_amount || 0;
+                    row.allocated_amount = 0; //  initially 0
+
+                });
+
+                frm.refresh_field("references");
+
+                //  Apply FIFO after loading
+                apply_fifo(frm);
+            }
+        }
+    });
+}
+
+function apply_fifo(frm) {
+
+    let remaining = frm.doc.paid_amount || 0;
+
+    (frm.doc.references || []).forEach(row => {
+
+        let outstanding = row.outstanding_amount || 0;
+
+        if (remaining <= 0) {
+            row.allocated_amount = 0;
+        } else if (remaining >= outstanding) {
+            row.allocated_amount = outstanding;
+            remaining -= outstanding;
+        } else {
+            row.allocated_amount = remaining;
+            remaining = 0;
+        }
+    });
+
+    frm.refresh_field("references");
+}

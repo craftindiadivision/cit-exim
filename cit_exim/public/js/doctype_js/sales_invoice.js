@@ -1311,14 +1311,16 @@ frappe.ui.form.on("Sales Invoice", {
 
 // ----------------------------------------------------- corrected code ------------------------------------------------
 
+
 frappe.ui.form.on('Sales Invoice', {
+
     custom_map_address: function(frm) {
 
         let buyer = frm.doc.customer || frm.doc.buyer;
         let consignee = frm.doc.custom_consignee;
 
         if (!buyer || !consignee) {
-            frappe.msgprint(__('Please ensure both Buyer and Custom Consignee are selected.'));
+            frappe.msgprint(__('Please ensure both Buyer and Consignee are selected.'));
             return;
         }
 
@@ -1331,11 +1333,20 @@ frappe.ui.form.on('Sales Invoice', {
             callback: function(r) {
                 if (r.message) {
 
+                    // -------------------------------
+                    // Shipping → Consignee
+                    // -------------------------------
                     frm.set_value('shipping_address_name', r.message.shipping_address_name);
                     frm.set_value('shipping_address', r.message.shipping_address);
 
+                    // -------------------------------
+                    // Billing → Buyer
+                    // -------------------------------
+                    frm.set_value('customer_address', r.message.customer_address);
+                    frm.set_value('address_display', r.message.address_display);
+
                     frappe.show_alert({
-                        message: __('Address mapped successfully'),
+                        message: __('Shipping = Consignee, Billing = Buyer'),
                         indicator: 'green'
                     });
                 }
@@ -1346,23 +1357,141 @@ frappe.ui.form.on('Sales Invoice', {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // -------------------------------------------------------------------------------------------------------------
 
+frappe.ui.form.on("Batches For Loading", {
+    pick_container: function (frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        if (!row.batch_no) {
+            frappe.msgprint(__("Please select a Batch No first"));
+            return;
+        }
+
+        // Get unique containers
+        let containers = [];
+        if (frm.doc.container_detail) {
+            frm.doc.container_detail.forEach(c => {
+                if (c.container_no && !containers.includes(c.container_no)) {
+                    containers.push(c.container_no);
+                }
+            });
+        }
+
+        if (containers.length === 0) {
+            frappe.msgprint(__("No containers found in Container Detail table"));
+            return;
+        }
+
+        let d = new frappe.ui.Dialog({
+            title: __("Assign Batch {0} to Containers", [row.batch_no]),
+            size: "large",
+            fields: [
+                {
+                    label: __("Split Information"),
+                    fieldname: "split_table",
+                    fieldtype: "Table",
+                    cannot_add_rows: true,
+                    in_place_edit: true,
+                    fields: [
+                        {
+                            fieldname: "container_no",
+                            fieldtype: "Data",
+                            label: __("Container No"),
+                            in_list_view: 1,
+                            read_only: 1
+                        },
+                        {
+                            fieldname: "packages",
+                            fieldtype: "Int",
+                            label: __("No of Packages"),
+                            in_list_view: 1,
+                            reqd: 1
+                        }
+                    ],
+                    data: containers.map(c => ({
+                        container_no: c,
+                        packages: 0
+                    }))
+                }
+            ],
+
+            primary_action_label: __("Update"),
+
+            primary_action(values) {
+                if (!values.split_table || values.split_table.length === 0) {
+                    frappe.msgprint(__("Please add at least one row"));
+                    return;
+                }
+
+                // Validate total
+                let total_packages = values.split_table.reduce((sum, r) => {
+                    return sum + (r.packages || 0);
+                }, 0);
+
+                if (total_packages > row.no_of_packages) {
+                    frappe.msgprint(__(
+                        "Total packages ({0}) exceeds batch packages ({1})",
+                        [total_packages, row.no_of_packages]
+                    ));
+                    return;
+                }
+
+                values.split_table.forEach(split => {
+                    if (!split.container_no || !split.packages) return;
+
+                    let found = false;
+
+                    if (frm.doc.container_detail) {
+                        frm.doc.container_detail.forEach(cd => {
+                            if (cd.container_no === split.container_no) {
+
+                                // 👉 EXISTING CONTAINER FOUND → MERGE
+                                let existing_batches = cd.lot_no ? cd.lot_no.split(",") : [];
+
+                                // Trim spaces
+                                existing_batches = existing_batches.map(b => b.trim());
+
+                                // Add batch if not already present
+                                if (!existing_batches.includes(row.batch_no)) {
+                                    existing_batches.push(row.batch_no);
+                                }
+
+                                cd.lot_no = existing_batches.join(", ");
+
+                                // 👉 SUM packages instead of overwrite
+                                cd.no_of_packages = (cd.no_of_packages || 0) + split.packages;
+
+                                found = true;
+                            }
+                        });
+                    }
+
+
+
+
+                    // 👉 If container not found → create new
+                    if (!found) {
+                        let child = frm.add_child("container_detail");
+                        child.container_no = split.container_no;
+                        child.lot_no = row.batch_no;
+                        child.no_of_packages = split.packages;
+                    }
+                });
+
+                frm.refresh_field("container_detail");
+
+                d.hide();
+
+                frappe.show_alert({
+                    message: __("Containers updated for batch {0}", [row.batch_no]),
+                    indicator: "green"
+                });
+            }
+        });
+
+        d.show();
+    }
+});
 
 
