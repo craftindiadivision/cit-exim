@@ -647,3 +647,28 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
         frappe.flags.in_consolidated_sync = False
 
     return created_invoices
+
+import frappe
+
+@frappe.whitelist()
+def get_package_type_by_item(doctype, txt, searchfield, start, page_len, filters):
+
+    filters = filters or {}   # ✅ prevent None error
+
+    item_code = filters.get("item_code")
+
+    if not item_code:
+        return []
+
+    item_group = frappe.db.get_value("Item", item_code, "item_group")
+
+    if not item_group:
+        return []
+
+    return frappe.db.sql("""
+        SELECT name
+        FROM `tabPackage Type`
+        WHERE item_group = %s
+        AND name LIKE %s
+        LIMIT %s, %s
+    """, (item_group, f"%{txt}%", start, page_len))

@@ -1496,4 +1496,23 @@ frappe.ui.form.on("Batches For Loading", {
     }
 });
 
+frappe.ui.form.on('Sales Invoice', {
+    refresh: function(frm) {
 
+        frm.fields_dict['items'].grid.get_field("custom_export_uom").get_query = function(doc, cdt, cdn) {
+
+            let row = locals[cdt][cdn];
+
+            if (!row.item_code) {
+                return {};
+            }
+
+            return {
+                query: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.get_package_type_by_item",
+                filters: {
+                    item_code: row.item_code
+                }
+            };
+        };
+    }
+});

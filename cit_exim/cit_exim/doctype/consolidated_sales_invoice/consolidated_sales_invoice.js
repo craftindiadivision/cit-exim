@@ -592,5 +592,75 @@ frappe.ui.form.on("Batches For Loading", {
         d.show();
     }
 });
+// frappe.ui.form.on('Consolidated Sales Invoice', {
+//     refresh: function(frm) {
+
+//         frm.fields_dict['items'].grid.get_field("export_uom").get_query = function(doc, cdt, cdn) {
+
+//             let row = locals[cdt][cdn];
+
+//             return {
+               
+//                 filters: {
+//                     item_group: row.item_group
+//                 }
+//             };
+//         };
+//     }
+// });
 
 
+// frappe.ui.form.on('Consolidated Sales Invoice Item', {
+//     item_code: function(frm, cdt, cdn) {
+
+//         let row = locals[cdt][cdn];
+
+//         if (row.item_code) {
+//             console.log("222222222",row.item_group)
+//             frappe.db.get_value('Item', row.item_code, 'item_group')
+//                 .then(r => {
+//                     if (r.message) {
+
+//                         //Set item_group in row (must exist as field)
+//                         row.item_group = r.message.item_group;
+//                         console.log("11111111",row.item_group)
+
+//                         // Apply row-wise filter dynamically
+//                         frm.fields_dict['items'].grid.get_field("export_uom").get_query = function(doc, cdt, cdn) {
+
+//                             let child = locals[cdt][cdn];
+
+//                             return {
+//                                 filters: {
+//                                     item_group: child.item_group
+//                                 }
+//                             };
+//                         };
+
+//                         frm.refresh_field('items');
+//                     }
+//                 });
+//         }
+//     }
+// });
+
+frappe.ui.form.on('Consolidated Sales Invoice', {
+    refresh: function(frm) {
+
+        frm.fields_dict['items'].grid.get_field("export_uom").get_query = function(doc, cdt, cdn) {
+
+            let row = locals[cdt][cdn];
+
+            if (!row.item_code) {
+                return {};
+            }
+
+            return {
+                query: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.get_package_type_by_item",
+                filters: {
+                    item_code: row.item_code   // ✅ MUST PASS THIS
+                }
+            };
+        };
+    }
+});
