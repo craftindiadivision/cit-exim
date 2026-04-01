@@ -3759,12 +3759,84 @@ def get_billing_address_for_customer(customer):
 
 # ------------------------------------------------------- corrected code -----------------------------------------------------
 
+# import frappe
+# from frappe import _
+
+# @frappe.whitelist()
+# def map_buyer_to_consignee_address_si(buyer, consignee):
+
+
+#     if not buyer or not consignee:
+#         frappe.throw(_("Buyer and Consignee are required"))
+
+#     # -----------------------------------
+#     # 1. GET CONSIGNEE ADDRESS (SHIPPING)
+#     # -----------------------------------
+#     addresses = frappe.db.sql("""
+#         SELECT parent
+#         FROM `tabDynamic Link`
+#         WHERE link_name = %s
+#         AND parenttype = 'Address'
+#     """, (consignee,), as_dict=True)
+
+#     if not addresses:
+#         frappe.throw(_("No Address found linked to Consignee: {0}").format(consignee))
+
+#     shipping_address = None
+
+#     for row in addresses:
+#         address_doc = frappe.get_doc("Address", row.parent)
+
+#         updated = False
+
+#         for link in address_doc.links:
+#             if link.link_name == consignee:
+
+#                 # ✅ AUTO-CHECK CONSIGNEE
+#                 if not getattr(link, "custom_is_consignee", 0):
+#                     link.custom_is_consignee = 1
+#                     updated = True
+
+#                 shipping_address = address_doc
+
+#         if updated:
+#             address_doc.save(ignore_permissions=True)
+
+#         if shipping_address:
+#             break
+
+#     # -----------------------------------
+#     # 2. GET BUYER ADDRESS (BILLING)
+#     # -----------------------------------
+#     buyer_addresses = frappe.db.sql("""
+#         SELECT parent
+#         FROM `tabDynamic Link`
+#         WHERE link_name = %s
+#         AND parenttype = 'Address'
+#     """, (buyer,), as_dict=True)
+
+#     if not buyer_addresses:
+#         frappe.throw(_("No Address found for Buyer: {0}").format(buyer))
+
+#     billing_address = frappe.get_doc("Address", buyer_addresses[0].parent)
+
+#     # -----------------------------------
+#     # 3. RETURN
+#     # -----------------------------------
+#     return {
+#         "shipping_address_name": shipping_address.name,
+#         "shipping_address": shipping_address.get_display(),
+#         "customer_address": billing_address.name,
+#         "address_display": billing_address.get_display()
+#     }
+
+
+
 import frappe
 from frappe import _
 
 @frappe.whitelist()
 def map_buyer_to_consignee_address_si(buyer, consignee):
-
 
     if not buyer or not consignee:
         frappe.throw(_("Buyer and Consignee are required"))
@@ -3788,8 +3860,11 @@ def map_buyer_to_consignee_address_si(buyer, consignee):
         address_doc = frappe.get_doc("Address", row.parent)
 
         updated = False
+        buyer_link_exists = False
 
         for link in address_doc.links:
+
+            # 👉 Identify consignee row
             if link.link_name == consignee:
 
                 # ✅ AUTO-CHECK CONSIGNEE
@@ -3799,11 +3874,26 @@ def map_buyer_to_consignee_address_si(buyer, consignee):
 
                 shipping_address = address_doc
 
+            # 👉 Check if Buyer already exists
+            if link.link_doctype == "Customer" and link.link_name == buyer:
+                buyer_link_exists = True
+
+        # 👉 ADD BUYER INTO LINKS TABLE (IMPORTANT)
+        if shipping_address and not buyer_link_exists:
+            address_doc.append("links", {
+                "link_doctype": "Customer",
+                "link_name": buyer
+            })
+            updated = True
+
         if updated:
             address_doc.save(ignore_permissions=True)
 
         if shipping_address:
             break
+
+    if not shipping_address:
+        frappe.throw(_("No valid shipping address found for Consignee"))
 
     # -----------------------------------
     # 2. GET BUYER ADDRESS (BILLING)
@@ -3829,8 +3919,6 @@ def map_buyer_to_consignee_address_si(buyer, consignee):
         "customer_address": billing_address.name,
         "address_display": billing_address.get_display()
     }
-
-
 
 
 
