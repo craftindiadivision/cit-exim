@@ -47,6 +47,9 @@ def validate(doc, method=None):
 
             if company_address:
                 doc.company_address = company_address
+    # --------------------------------------------------
+    # BILLING ADDRESS VALIDATION (NON-CONSIGNEE ONLY)
+    # --------------------------------------------------
     current_address = None
     is_current_consignee = False
 
@@ -110,6 +113,11 @@ def validate(doc, method=None):
 
     else:
         frappe.throw("No valid Billing Address found (all marked as Consignee)")
+    
+             
+    # --------------------------------------------------
+    # 3. EXPORT LOGIC (LOT / CONTAINER)
+    # --------------------------------------------------
     
     if not doc.items:
         return
@@ -3754,7 +3762,6 @@ def get_billing_address_for_customer(customer):
 import frappe
 from frappe import _
 
-
 @frappe.whitelist()
 def map_buyer_to_consignee_address_si(buyer, consignee):
 
@@ -3822,9 +3829,6 @@ def map_buyer_to_consignee_address_si(buyer, consignee):
         "customer_address": billing_address.name,
         "address_display": billing_address.get_display()
     }
-
-
-
 
 
 

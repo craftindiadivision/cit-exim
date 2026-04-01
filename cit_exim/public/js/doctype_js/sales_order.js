@@ -948,6 +948,7 @@ frappe.ui.form.on('Sales Order', {
 
 
 
+
 // ================================
 //  LOADING THE TEMPLATES 
 // ================================

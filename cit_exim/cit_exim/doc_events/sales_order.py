@@ -190,6 +190,8 @@ def map_buyer_to_consignee_address(buyer, consignee):
 
 
 
+
+
 # import frappe
 
 # @frappe.whitelist()
@@ -299,7 +301,7 @@ def validate(doc, method=None):
                 doc.company_address = company_address
 
     populate_banks(doc)
-     # --------------------------------------------------
+    # --------------------------------------------------
     # BILLING ADDRESS VALIDATION (NON-CONSIGNEE ONLY)
     # --------------------------------------------------
     current_address = None
@@ -365,6 +367,7 @@ def validate(doc, method=None):
 
     else:
         frappe.throw("No valid Billing Address found (all marked as Consignee)")
+    
 
 
 def populate_banks(doc):
