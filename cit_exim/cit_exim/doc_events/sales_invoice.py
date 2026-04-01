@@ -690,7 +690,7 @@ def sync_workflow_from_sales_invoice(doc, method):
             "port_of_loading","port_of_discharge","pre_carriage_by","custom_dclc","custom_dc_no",
             "custom_lc_no","custom_loading_point","final_destination","custom_carriage_by",
             "custom_dhl","custom_dc_date","custom_lc_date","container_size","country_of_origin",
-            "country_of_destination","number_of_containers","movement","custom_submission_date",
+            "country_of_destination","movement","custom_submission_date",
             "custom_bl_issued_remarks","contract_and_lc","custom_document_checked","set_warehouse"
         ]
 

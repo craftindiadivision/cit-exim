@@ -2501,6 +2501,7 @@
    "options": "Country"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "number_of_containers",
    "fieldtype": "Int",
    "label": "Number of Containers"
@@ -2785,7 +2786,7 @@
    "link_fieldname": "custom_consolidated_invoice_reference"
   }
  ],
- "modified": "2026-04-01 12:45:28.798567",
+ "modified": "2026-04-01 16:14:15.103978",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice",

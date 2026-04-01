@@ -658,9 +658,43 @@ frappe.ui.form.on('Consolidated Sales Invoice', {
             return {
                 query: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.get_package_type_by_item",
                 filters: {
-                    item_code: row.item_code   // ✅ MUST PASS THIS
+                    item_code: row.item_code
                 }
             };
         };
     }
 });
+
+// frappe.ui.form.on("Consolidated Sales Invoice", {
+//     refresh(frm) {
+//         update_number_of_containers(frm);
+//     }
+// });
+
+// frappe.ui.form.on("Container Details", {
+//     lot_no(frm) {
+//         update_number_of_containers(frm);
+//     },
+
+//     container_detail_add(frm) {
+//         update_number_of_containers(frm);
+//     },
+
+//     container_detail_remove(frm) {
+//         update_number_of_containers(frm);
+//     }
+// });
+
+// function update_number_of_containers(frm) {
+//     let count = 0;
+
+//     if (frm.doc.container_detail) {
+//         frm.doc.container_detail.forEach(row => {
+//             if (row.lot_no) {
+//                 count += 1;
+//             }
+//         });
+//     }
+
+//     frm.set_value("number_of_containers", count);
+// }
