@@ -1,11 +1,12 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:package_type",
+ "autoname": "field:name_of_package_type",
  "creation": "2026-03-31 12:14:39.208001",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "name_of_package_type",
   "package_type",
   "item_group",
   "kg_per_package"
@@ -14,8 +15,7 @@
   {
    "fieldname": "package_type",
    "fieldtype": "Data",
-   "label": "Package Type",
-   "unique": 1
+   "label": "Package Type"
   },
   {
    "fieldname": "item_group",
@@ -27,12 +27,18 @@
    "fieldname": "kg_per_package",
    "fieldtype": "Float",
    "label": "Kg Per Package"
+  },
+  {
+   "fieldname": "name_of_package_type",
+   "fieldtype": "Data",
+   "label": "Name of Package Type",
+   "unique": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-31 12:35:08.434706",
+ "modified": "2026-04-01 12:31:39.606374",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Package Type",
@@ -54,7 +60,10 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "name_of_package_type",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "package_type"
 }
