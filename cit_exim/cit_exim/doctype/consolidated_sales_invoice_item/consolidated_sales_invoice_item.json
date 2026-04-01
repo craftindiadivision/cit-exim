@@ -17,6 +17,7 @@
   "description",
   "item_group",
   "brand",
+  "gst_hsn_code",
   "image_section",
   "image",
   "image_view",
@@ -1075,11 +1076,17 @@
    "fieldname": "kg_per_package",
    "fieldtype": "Float",
    "label": "Kg Per Package"
+  },
+  {
+   "fetch_from": "item_code.gst_hsn_code",
+   "fieldname": "gst_hsn_code",
+   "fieldtype": "Data",
+   "label": "HSN/SAC"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-03-31 14:38:36.588895",
+ "modified": "2026-04-01 10:28:03.689432",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice Item",

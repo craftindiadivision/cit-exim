@@ -1443,6 +1443,7 @@ function create_consolidated_invoice(frm) {
                         row.warehouse = item.warehouse;
                         row.gst_hsn_code = item.gst_hsn_code;
                         row.stock_qty = item.qty * item.conversion_factor;
+                        row.gst_hsn_code = item.gst_hsn_code
 
                         
                         // Pricing & Accounts

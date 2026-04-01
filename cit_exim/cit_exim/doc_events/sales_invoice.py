@@ -1722,6 +1722,10 @@ def on_submit(self, method):
 
             if invoice_doc.docstatus == 0 and not invoice_doc.is_return:
                 invoice_doc.submit()
+        consolidated_doc = frappe.get_doc("Consolidated Sales Invoice", consolidated_name)
+
+        if consolidated_doc.docstatus == 0:
+            consolidated_doc.submit()
 
     finally:
         frappe.flags.in_auto_submit = False
