@@ -162,6 +162,8 @@
   "batches_for_loading",
   "container_details",
   "container_detail",
+  "section_break_rroh",
+  "production_and_batch_table",
   "export_documents",
   "contract_and_lc",
   "sales_invoice_contract_term_check",
@@ -2426,6 +2428,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "vessel_no",
    "fieldtype": "Data",
    "label": "Vessel Name /Voyage No"
@@ -2732,6 +2735,17 @@
    "fieldtype": "Table",
    "label": "Batches For Loading",
    "options": "Batches For Loading"
+  },
+  {
+   "fieldname": "section_break_rroh",
+   "fieldtype": "Section Break",
+   "label": "Production & Batch"
+  },
+  {
+   "fieldname": "production_and_batch_table",
+   "fieldtype": "Table",
+   "label": "Production and Batch Table",
+   "options": "Production and Batch"
   }
  ],
  "grid_page_length": 50,
@@ -2748,7 +2762,7 @@
    "link_fieldname": "custom_consolidated_invoice_reference"
   }
  ],
- "modified": "2026-03-31 10:12:00.559620",
+ "modified": "2026-04-01 06:18:09.248937",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice",
