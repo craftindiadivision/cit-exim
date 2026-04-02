@@ -850,6 +850,58 @@ def sync_workflow_from_sales_invoice(doc, method):
                 row.export_document = ed.export_document
                 row.number = ed.number
                 row.checked = ed.checked
+                 # ---------------------------------------
+        # PRODUCTION & BATCH TABLE FULL SYNC
+        # (ADD + DELETE SAFE)
+        # ---------------------------------------
+
+        # Step 1: Collect all batch entries from ALL Sales Invoices
+        all_batches = set()
+
+        # Step 1: Collect all batch entries from ALL Sales Invoices
+        for inv in invoices:
+            for pb in inv.custom_production_and_batch_table:
+                key = (
+                    pb.batch_code,
+                    str(pb.production_date),
+                    str(pb.expiry_date)
+                )
+                all_batches.add(key)
+
+        # Step 2: Remove entries from Consolidated that no longer exist
+        rows_to_remove = []
+        for row in consolidated_doc.production_and_batch_table:
+            key = (
+                row.batch_code,
+                str(row.production_date),
+                str(row.expiry_date)
+            )
+
+            if key not in all_batches:
+                rows_to_remove.append(row)
+
+        for row in rows_to_remove:
+            consolidated_doc.remove(row)
+
+        # Step 3: Add missing entries
+        existing_batches = set()
+        for row in consolidated_doc.production_and_batch_table:
+            key = (
+                row.batch_code,
+                str(row.production_date),
+                str(row.expiry_date)
+            )
+            existing_batches.add(key)
+
+        for key in all_batches:
+            if key in existing_batches:
+                continue
+
+            consolidated_doc.append("production_and_batch_table", {
+                "batch_code": key[0],
+                "production_date": key[1],
+                "expiry_date": key[2]
+            })
 
         # ---------------------------------------
         # SAVE ALL DOCUMENTS

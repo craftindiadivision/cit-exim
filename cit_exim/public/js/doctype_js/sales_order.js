@@ -1380,6 +1380,7 @@ function create_consolidated_invoice(frm) {
                 new_doc.payment_terms_template = frm.doc.payment_terms_template;
                 new_doc.tc_name = frm.doc.tc_name;
                 new_doc.terms = frm.doc.terms;
+                new_doc.set_warehouse = frm.doc.set_warehouse
 
                 // Totals & Currency
                 new_doc.currency = frm.doc.currency;

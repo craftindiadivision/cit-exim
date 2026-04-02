@@ -797,8 +797,7 @@
    "oldfieldtype": "Currency",
    "options": "Company:company:default_currency",
    "print_hide": 1,
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "column_break_52",
@@ -956,8 +955,7 @@
    "oldfieldtype": "Currency",
    "options": "Company:company:default_currency",
    "print_hide": 1,
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "depends_on": "eval:!doc.disable_rounded_total",
@@ -1017,8 +1015,7 @@
    "oldfieldname": "grand_total_export",
    "oldfieldtype": "Currency",
    "options": "currency",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "depends_on": "eval:!doc.disable_rounded_total",
@@ -1883,7 +1880,6 @@
    "oldfieldtype": "Link",
    "options": "Account",
    "print_hide": 1,
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -2746,18 +2742,21 @@
    "label": "Production & Batch"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "production_and_batch_table",
    "fieldtype": "Table",
    "label": "Production and Batch Table",
    "options": "Production and Batch"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "to_show",
    "fieldtype": "Check",
    "label": "To Show"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "description": "Show Po Name and Date For Print Form",
    "fieldname": "show_purchase_order",
@@ -2765,6 +2764,7 @@
    "label": "Show Purchase Order"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "description": "Show Sales Contract Name and Date to Print Form",
    "fieldname": "show_sales_contract",
@@ -2786,7 +2786,7 @@
    "link_fieldname": "custom_consolidated_invoice_reference"
   }
  ],
- "modified": "2026-04-01 16:14:15.103978",
+ "modified": "2026-04-02 07:33:39.509209",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Consolidated Sales Invoice",

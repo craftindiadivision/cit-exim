@@ -698,3 +698,109 @@ frappe.ui.form.on('Consolidated Sales Invoice', {
 
 //     frm.set_value("number_of_containers", count);
 // }
+
+frappe.ui.form.on('Consolidated Sales Invoice', {
+
+    onload(frm) {
+        update_custom_document_checked(frm);
+    },
+
+    refresh(frm) {
+        update_custom_document_checked(frm);
+    },
+
+    // Prevent manual edit
+    custom_document_checked(frm) {
+        update_custom_document_checked(frm);
+    }
+});
+
+
+// =======================================================
+// CHILD TABLE 1 : Sales Invoice Contract Term Check
+// =======================================================
+
+// frappe.ui.form.on('Sales Invoice Contract Term Check', {
+
+//     checked(frm, cdt, cdn) {
+//         update_custom_document_checked(frm);
+//     },
+
+//     sales_invoice_contract_term_check_add(frm) {
+//         update_custom_document_checked(frm);
+//     },
+
+//     sales_invoice_contract_term_check_remove(frm) {
+//         update_custom_document_checked(frm);
+//     }
+// });
+
+
+// =======================================================
+// CHILD TABLE 2 : Sales Invoice Export Document Item
+// =======================================================
+
+frappe.ui.form.on('Consolidated Sales Invoice Export Document Item', {
+
+    checked(frm, cdt, cdn) {
+        update_custom_document_checked(frm);
+    },
+
+    sales_invoice_export_document_item_add(frm) {
+        update_custom_document_checked(frm);
+    },
+
+    sales_invoice_export_document_item_remove(frm) {
+        update_custom_document_checked(frm);
+    }
+});
+
+
+// =======================================================
+// COMMON VALIDATION FUNCTION
+// =======================================================
+
+function update_custom_document_checked(frm) {
+
+    let all_checked = true;
+
+    // // ---------- Validate Contract Term Check ----------
+    // if (!frm.doc.sales_invoice_contract_term_check ||
+    //     frm.doc.sales_invoice_contract_term_check.length === 0) {
+
+    //     all_checked = false;
+
+    // } else {
+    //     frm.doc.sales_invoice_contract_term_check.forEach(row => {
+    //         if (row.checked !== 1) {
+    //             all_checked = false;
+    //         }
+    //     });
+    // }
+
+    // ---------- Validate Export Document Item ----------
+    if (!frm.doc.sales_invoice_export_document_item ||
+        frm.doc.sales_invoice_export_document_item.length === 0) {
+
+        all_checked = false;
+
+    } else {
+        frm.doc.sales_invoice_export_document_item.forEach(row => {
+            if (row.checked !== 1) {
+                all_checked = false;
+            }
+        });
+    }
+
+    // ---------- Apply Result ----------
+    if (all_checked) {
+        frm.set_value('custom_document_checked', 1);
+        frm.set_df_property('custom_document_checked', 'read_only', 0);
+    } else {
+        frm.set_value('custom_document_checked', 0);
+        frm.set_df_property('custom_document_checked', 'read_only', 1);
+    }
+
+    frm.refresh_field('custom_document_checked');
+}
+
