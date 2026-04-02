@@ -123,7 +123,7 @@
 import frappe
 from frappe.model.document import Document
 import json
-from frappe.utils import flt
+from frappe.utils import flt,get_time,nowdate, getdate
 from frappe.model.mapper import get_mapped_doc
 
 
@@ -243,8 +243,8 @@ class VehicleQueue(Document):
             pr.custom_token_number = self.token_number
             pr.cost_center = self.cost_center
             pr.branch = self.branch
-            pr.posting_date = frappe.utils.today()
-            pr.posting_time = frappe.utils.nowtime()
+            pr.posting_date = self.date
+            pr.posting_time = get_time(self.out_time)
             pr.vehicle_no = self.vehicle_no
             pr.set_warehouse = self.warehouse
             pr.custom_item_group = self.product
@@ -302,8 +302,15 @@ class VehicleQueue(Document):
             pr.custom_token_number = self.token_number
             pr.cost_center = self.cost_center
             pr.branch = self.branch
-            pr.posting_date = frappe.utils.today()
-            pr.posting_time = frappe.utils.nowtime()
+            if self.date:
+                pr.posting_date = getdate(self.date)
+
+            if self.out_time:
+                pr.posting_time = get_time(self.out_time)
+
+            # Enable manual posting time if backdated
+            if self.date and getdate(self.date) < getdate(nowdate()):
+                pr.set_posting_time = 1
             pr.vehicle_no = self.vehicle_no
             pr.set_warehouse = self.warehouse
             pr.custom_item_group = self.product
@@ -384,8 +391,14 @@ class VehicleQueue(Document):
             pr.custom_token_number = self.token_number
             pr.cost_center = self.cost_center
             pr.branch = self.branch
-            pr.posting_date = frappe.utils.today()
-            pr.posting_time = frappe.utils.nowtime()
+            if self.date:
+                pr.posting_date = getdate(self.date)
+            if self.out_time:
+                pr.posting_time = get_time(self.out_time)
+
+            # Enable manual posting time if backdated
+            if self.date and getdate(self.date) < getdate(nowdate()):
+                pr.set_posting_time = 1
             pr.vehicle_no = self.vehicle_no
             pr.set_warehouse = self.warehouse
             pr.custom_item_group = self.product
