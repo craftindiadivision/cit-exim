@@ -3,7 +3,7 @@ from frappe.model.document import Document
 from frappe.utils import flt
 from frappe.utils import nowdate 
 from cit_exim.cit_exim.doc_events.sales_invoice import set_contract_term_details
-
+from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 
 
@@ -80,7 +80,8 @@ import math
 class ConsolidatedSalesInvoice(Document):
         
     def validate(self):
-        
+        self.run_core_calculations()
+
 
         if not self.items:
             return
@@ -144,6 +145,68 @@ class ConsolidatedSalesInvoice(Document):
             #     "lot_no": lot["lot_no"],
             #     "no_of_packages": int(no_of_packages)
             # })
+    def before_save(self):
+        self.run_core_calculations()
+    
+    def run_core_calculations(self):
+
+
+
+        si = frappe.new_doc("Sales Invoice")
+
+        # Required fields
+        si.company = self.company
+        si.customer = self.customer
+        si.currency = self.currency
+        si.conversion_rate = self.conversion_rate or 1
+        si.selling_price_list = "Standard Selling"
+
+        si.set("items", [])
+
+        #  Initialize total_net_weight
+        total_net_weight = 0
+
+        for d in self.items:
+
+            # Calculate amount
+            d.amount = (d.qty or 0) * (d.rate or 0)
+
+            # Get conversion factor (default = 1 if not set)
+            conversion_factor = d.conversion_factor or 1
+
+            # Calculate stock_qty
+            d.stock_qty = (d.qty or 0) * conversion_factor
+
+            #  Add to total_net_weight
+            total_net_weight += d.stock_qty
+
+            si.append("items", {
+                "item_code": d.item_code,
+                "qty": d.qty,
+                "rate": d.rate,
+                "amount": d.amount,
+                "uom": d.uom,
+                "conversion_factor": conversion_factor,
+                "stock_qty": d.stock_qty
+            })
+
+        # Core logic
+        si.set_missing_values()
+        si.calculate_taxes_and_totals()
+
+        # Map back totals
+        self.total_qty = si.total_qty
+        self.total = si.total
+        self.net_total = si.net_total
+        self.grand_total = si.grand_total
+        self.rounded_total = si.rounded_total
+
+        self.base_total = si.base_total
+        self.base_net_total = si.base_net_total
+        self.base_grand_total = si.base_grand_total
+
+        #  Set total_net_weight
+        self.total_net_weight = total_net_weight
 
     def on_update_after_submit(self):
         print("date...........")
@@ -688,6 +751,7 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
             si.selling_price_list = source_doc.selling_price_list
             si.custom_consolidated_invoice_reference = source_doc.name
             si.branch = source_doc.branch
+            si.set_warehouse = source_doc.set_warehouse
 
             si.custom_product = source_doc.custom_product
             si.custom_quality_and_specification = source_doc.custom_quality_and_specification
@@ -850,3 +914,19 @@ def get_package_type_by_item(doctype, txt, searchfield, start, page_len, filters
         AND name LIKE %s
         LIMIT %s, %s
     """, (item_group, f"%{txt}%", start, page_len))
+
+@frappe.whitelist()
+def contract_and_lc_filter(doctype, txt, searchfield, start, page_len, filters):
+    
+    so_list = filters.get("sales_orders")
+
+    if not so_list:
+        return []
+
+    return frappe.db.sql("""
+        SELECT DISTINCT ct.name
+        FROM `tabContract Term` AS ct
+        JOIN `tabContract Term Order` AS cto 
+            ON cto.parent = ct.name
+        WHERE cto.sales_order IN ({})
+    """.format(", ".join(["%s"] * len(so_list))), tuple(so_list))
