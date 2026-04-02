@@ -2265,20 +2265,6 @@
    "show_dashboard": 1
   },
   {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "hide_days": 1,
-   "hide_seconds": 1,
-   "ignore_user_permissions": 1,
-   "label": "Amended From",
-   "no_copy": 1,
-   "oldfieldname": "amended_from",
-   "oldfieldtype": "Link",
-   "options": "Sales Invoice",
-   "print_hide": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "exim_tab",
    "fieldtype": "Tab Break",
    "label": "Exim"

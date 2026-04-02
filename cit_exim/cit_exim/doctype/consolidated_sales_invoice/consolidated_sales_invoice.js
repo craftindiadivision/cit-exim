@@ -803,4 +803,27 @@ function update_custom_document_checked(frm) {
 
     frm.refresh_field('custom_document_checked');
 }
+frappe.ui.form.on('Consolidated Sales Invoice', {
+    onload: function(frm) {
+
+        frm.set_query("contract_and_lc", function() {
+
+            let sales_orders = [];
+
+            (frm.doc.items || []).forEach(row => {
+                if (row.sales_order && !sales_orders.includes(row.sales_order)) {
+                    sales_orders.push(row.sales_order);
+                }
+            });
+
+            return {
+                query: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.contract_and_lc_filter",
+                filters: {
+                    sales_orders: sales_orders
+                }
+            };
+        });
+    }
+});
+
 
