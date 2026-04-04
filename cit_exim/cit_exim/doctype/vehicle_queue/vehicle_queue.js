@@ -89,7 +89,8 @@ frappe.ui.form.on("Vehicle Queue", {
             frm.set_query("warehouse", function () {
                 return {
                     filters: {
-                        company: frm.doc.company
+                        company: frm.doc.company,
+                        is_group: 0
                     }
                 };
             });
