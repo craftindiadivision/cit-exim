@@ -752,6 +752,7 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
             si.custom_consolidated_invoice_reference = source_doc.name
             si.branch = source_doc.branch
             si.set_warehouse = source_doc.set_warehouse
+            si.custom_is_splitted_invoice = 1
 
             si.custom_product = source_doc.custom_product
             si.custom_quality_and_specification = source_doc.custom_quality_and_specification
