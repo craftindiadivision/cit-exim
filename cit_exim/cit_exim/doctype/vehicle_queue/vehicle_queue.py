@@ -506,7 +506,7 @@ def create_purchase_voucher(doc, method=None):
     item_group = frappe.db.get_value("Item", first_item_code, "item_group")
 
     # Condition: Item Group must be 'Raw Fish'
-    if item_group != "Raw Fish":
+    if item_group not in ["Raw Fish", "Fire Wood"]:
         return
 
     # Create Purchase Voucher (Draft)
