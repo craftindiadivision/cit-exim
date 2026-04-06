@@ -296,7 +296,7 @@ function hide_fields_based_on_product(frm) {
 
     let product = frm.doc.product;
 
-    if (product === "Raw Fish") {
+    if (product === "Raw Fish" || product === "Fire Wood") {
 
         frm.fields_dict["item"].grid.toggle_display("avg_per_box", true);
         frm.fields_dict["item"].grid.toggle_display("net_wt", true);
