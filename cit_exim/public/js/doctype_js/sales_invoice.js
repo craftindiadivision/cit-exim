@@ -1521,4 +1521,139 @@ frappe.ui.form.on('Sales Invoice', {
 
 
 
+// frappe.ui.form.on('Sales Invoice', {
+//     onload: function(frm) {
+//         if (frm.doc.items && frm.doc.items.length > 0) {
+            
+//             let sales_order = frm.doc.items[0].sales_order;
 
+//             if (sales_order && frm.doc.payment_terms_template) {
+
+//                 frappe.db.get_doc('Sales Order', sales_order).then(so => {
+
+//                     frappe.db.get_doc('Payment Terms Template', frm.doc.payment_terms_template)
+//                         .then(template => {
+
+//                             frm.clear_table('payment_schedule');
+
+//                             template.terms.forEach(term => {
+//                                 if (term.due_date_based_on === "Day(s) after Sales Contract date") {
+
+//                                     let child = frm.add_child('payment_schedule');
+//                                     child.payment_term = term.payment_term;
+//                                     child.invoice_portion = term.invoice_portion;
+//                                     child.custom_days = term.custom_days;
+
+//                                     if (so.transaction_date && term.custom_days) {
+//                                         child.due_date = frappe.datetime.add_days(
+//                                             so.transaction_date,
+//                                             term.custom_days
+//                                         );
+//                                     }
+//                                 }
+//                             });
+
+//                             frm.refresh_field('payment_schedule');
+//                         });
+//                 });
+//             }
+//         }
+//     }
+// });
+
+frappe.ui.form.on('Sales Invoice', {
+
+    onload: function(frm) {
+        apply_payment_terms(frm);
+    },
+
+    payment_terms_template: function(frm) {
+        apply_payment_terms(frm);
+    },
+
+    posting_date: function(frm) {
+        apply_payment_terms(frm);
+    }
+});
+
+function apply_payment_terms(frm) {
+
+    // ✅ Prevent running during submit or after submit
+    if (frm.doc.docstatus !== 0) return;
+
+    if (!frm.doc.payment_terms_template) return;
+
+    let sales_order = (frm.doc.items && frm.doc.items.length > 0)
+        ? frm.doc.items[0].sales_order
+        : null;
+
+    frappe.db.get_doc('Payment Terms Template', frm.doc.payment_terms_template)
+        .then(template => {
+
+            let so_promise = sales_order
+                ? frappe.db.get_doc('Sales Order', sales_order)
+                : Promise.resolve(null);
+
+            so_promise.then(so => {
+
+                // ✅ Only rebuild if empty (prevents unnecessary deletion issues)
+                if (frm.doc.payment_schedule && frm.doc.payment_schedule.length > 0) {
+                    return;
+                }
+
+                frm.clear_table('payment_schedule');
+
+                let total = frm.doc.grand_total || 0;
+                let total_allocated = 0;
+
+                template.terms.forEach((term, index) => {
+
+                    let child = frm.add_child('payment_schedule');
+
+                    child.payment_term = term.payment_term;
+                    child.invoice_portion = term.invoice_portion;
+
+                    // ✅ Payment Amount Calculation
+                    if (term.invoice_portion && total) {
+                        let amount = flt((term.invoice_portion / 100) * total);
+
+                        // Fix rounding on last row
+                        if (index === template.terms.length - 1) {
+                            amount = flt(total - total_allocated);
+                        }
+
+                        child.payment_amount = amount;
+                        total_allocated += amount;
+                    }
+
+                    // ✅ Due Date Logic
+                    if (term.due_date_based_on === "Day(s) after Sales Contract date") {
+
+                        child.custom_days = term.custom_days;
+
+                        if (so && so.transaction_date && term.custom_days != null) {
+                            child.due_date = frappe.datetime.add_days(
+                                so.transaction_date,
+                                term.custom_days
+                            );
+                        }
+                    }
+
+                    else if (term.due_date_based_on === "Day(s) after invoice date") {
+
+                        child.credit_days = term.credit_days;
+
+                        if (frm.doc.posting_date && term.credit_days != null) {
+                            child.due_date = frappe.datetime.add_days(
+                                frm.doc.posting_date,
+                                term.credit_days
+                            );
+                        }
+                    }
+
+                });
+
+                frm.refresh_field('payment_schedule');
+            });
+        });
+}

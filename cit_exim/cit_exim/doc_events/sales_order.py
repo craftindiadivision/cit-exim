@@ -259,21 +259,54 @@ def map_buyer_to_consignee_address(buyer, consignee):
 
 
 
+# import frappe
+
+# @frappe.whitelist()
+# def get_customer_address(doctype, txt, searchfield, start, page_len, filters):
+#     customer = filters.get("customer")
+
+#     if not customer:
+#         return []
+
+#     # Get only non-consignee addresses directly
+#     data = frappe.get_all(
+#         "Dynamic Link",
+#         filters={
+#             "link_doctype": "Customer",
+#             "link_name": customer,
+#             "custom_is_consignee": ["!=", 1],
+#             "parent": ["like", f"%{txt}%"]
+#         },
+#         fields=["parent"],
+#         start=start,
+#         page_length=page_len
+#     )
+
+#     # Return in required format (name, label)
+#     return [[d.parent, d.parent] for d in data]
 
 
+# import frappe
 
-
-
-
-
-
-
-
-
-
-
-
-
+# @frappe.whitelist()
+# def get_customer_address(customer):
+#     if not customer:
+#         return []
+#     print('check......................')
+#     data = frappe.db.sql("""
+#         SELECT addr.name
+#         FROM `tabAddress` AS addr
+#         INNER JOIN `tabDynamic Link` AS dl
+#             ON dl.parent = addr.name
+#         WHERE dl.link_doctype = 'Customer'
+#             AND dl.link_name = %(customer)s
+#             AND IFNULL(dl.custom_is_consignee, 0) != 1
+#             AND addr.disabled = 0
+#     """, {
+#         "customer": customer
+#     }, as_dict=True)
+#     print('1111   it is working ................')
+#     return data
 
 
 
