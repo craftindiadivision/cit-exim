@@ -686,7 +686,7 @@ def sync_workflow_from_sales_invoice(doc, method):
         fields = [
             "bl_no","bl_date","vessel_no","custom_shipped_on_board_date","port_address","branch",
             "total_fob_value","freight","insurance","freight_calculated","total_duty_drawback",
-            "total_meis","duty_drawback_jv","meis_jv","custom_lab_test_remarks","shipping_terms",
+            "total_meis","custom_lab_test_remarks","shipping_terms","is_export_with_gst","taxes_and_charges",
             "port_of_loading","port_of_discharge","pre_carriage_by","custom_dclc","custom_dc_no",
             "custom_lc_no","custom_loading_point","final_destination","custom_carriage_by",
             "custom_dhl","custom_dc_date","custom_lc_date","container_size","country_of_origin",
@@ -908,8 +908,12 @@ def sync_workflow_from_sales_invoice(doc, method):
         # ---------------------------------------
         for inv in invoices:
             if inv.name != doc.name:
+                inv.flags.ignore_validate = True
+                inv.flags.ignore_mandatory = True
+                inv.flags.ignore_version = True
                 inv.save(ignore_permissions=True)
 
+        consolidated_doc.flags.ignore_version = True
         consolidated_doc.save(ignore_permissions=True)
 
     finally:

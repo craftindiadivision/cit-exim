@@ -827,3 +827,25 @@ frappe.ui.form.on('Consolidated Sales Invoice', {
 });
 
 
+frappe.ui.form.on('Consolidated Sales Invoice', {
+    is_export_with_gst(frm) {
+        frm.trigger('refresh_taxes');
+    },
+
+    taxes_and_charges(frm) {
+        frm.trigger('refresh_taxes');
+    },
+
+    refresh_taxes(frm) {
+        frappe.call({
+            method: 'cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.run_core_calculations',
+            // /home/user/v15/apps/cit_exim/cit_exim/cit_exim/doctype/consolidated_sales_invoice/consolidated_sales_invoice.py
+            args: {
+                doc: frm.doc
+            },
+            callback: function(r) {
+                frm.refresh_fields(['taxes', 'taxes_and_charges', 'tax_category']);
+            }
+        });
+    }
+});

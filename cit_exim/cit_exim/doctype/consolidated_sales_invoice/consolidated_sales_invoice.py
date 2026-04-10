@@ -4,6 +4,7 @@ from frappe.utils import flt
 from frappe.utils import nowdate 
 from cit_exim.cit_exim.doc_events.sales_invoice import set_contract_term_details
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+from frappe.utils import money_in_words
 
 
 
@@ -145,56 +146,174 @@ class ConsolidatedSalesInvoice(Document):
             #     "lot_no": lot["lot_no"],
             #     "no_of_packages": int(no_of_packages)
             # })
+
+        if getattr(frappe.flags, "in_consolidated_reverse_sync", False):
+            return
+
+        frappe.flags.in_consolidated_reverse_sync = True
+        try:
+            self.sync_consolidated_to_invoices()
+        finally:
+            frappe.flags.in_consolidated_reverse_sync = False
+
     def before_save(self):
         self.run_core_calculations()
-    
+
     def run_core_calculations(self):
+        import frappe
+        from frappe.utils import flt, money_in_words
+        from erpnext.controllers.accounts_controller import get_taxes_and_charges
 
-
-
+        # ---------------------------------
+        # Create Temporary Sales Invoice
+        # ---------------------------------
         si = frappe.new_doc("Sales Invoice")
 
-        # Required fields
+        # -------------------------------
+        # Basic Fields
+        # -------------------------------
         si.company = self.company
         si.customer = self.customer
         si.currency = self.currency
         si.conversion_rate = self.conversion_rate or 1
-        si.selling_price_list = "Standard Selling"
+        si.selling_price_list = self.selling_price_list or "Standard Selling"
 
+        si.posting_date = self.get("posting_date")
+        si.due_date = self.get("posting_date")
+
+        company_currency = frappe.db.get_value("Company", self.company, "default_currency")
+
+        # -------------------------------
+        # Customer Details
+        # -------------------------------
+        if self.customer:
+            si.customer_group = frappe.db.get_value("Customer", self.customer, "customer_group")
+            si.territory = frappe.db.get_value("Customer", self.customer, "territory")
+            si.gst_category = frappe.db.get_value("Customer", self.customer, "gst_category")
+
+        # -------------------------------
+        # GST Fields
+        # -------------------------------
+        si.is_export_with_gst = self.is_export_with_gst
+        si.company_gstin = frappe.db.get_value("Company", self.company, "gstin")
+
+        si.customer_address = self.get("customer_address")
+
+        if si.customer_address:
+            si.place_of_supply = frappe.db.get_value(
+                "Address", si.customer_address, "gst_state"
+            )
+
+        # -------------------------------
+        # ✅ TAX CATEGORY + TEMPLATE LOGIC
+        # -------------------------------
+        if self.is_export_with_gst:
+            si.tax_category = "Out-State"
+
+            si.taxes_and_charges = frappe.db.get_value(
+                "Sales Taxes and Charges Template",
+                {
+                    "company": self.company,
+                    "tax_category": "Out-State",
+                    "disabled": 0
+                },
+                "name"
+            )
+        else:
+            si.tax_category = None
+
+            si.taxes_and_charges = self.taxes_and_charges
+
+            if not si.taxes_and_charges:
+                si.taxes_and_charges = frappe.db.get_value(
+                    "Sales Taxes and Charges Template",
+                    {
+                        "company": self.company,
+                        "is_default": 1
+                    },
+                    "name"
+                )
+
+        # -------------------------------
+        # ITEMS
+        # -------------------------------
         si.set("items", [])
+        si.set("taxes", [])
 
-        #  Initialize total_net_weight
         total_net_weight = 0
 
         for d in self.items:
+            qty = flt(d.qty)
+            rate = flt(d.rate)
+            discount_percentage = flt(d.get("discount_percentage", 0))
+            conversion_factor = flt(d.conversion_factor) or 1
 
-            # Calculate amount
-            d.amount = (d.qty or 0) * (d.rate or 0)
+            # Amount Calculation
+            amount = qty * rate
+            discount_amount = amount * discount_percentage / 100
+            net_amount = amount - discount_amount
 
-            # Get conversion factor (default = 1 if not set)
-            conversion_factor = d.conversion_factor or 1
+            # Update YOUR Doc
+            d.amount = net_amount
 
-            # Calculate stock_qty
-            d.stock_qty = (d.qty or 0) * conversion_factor
-
-            #  Add to total_net_weight
+            d.stock_qty = qty * conversion_factor
             total_net_weight += d.stock_qty
 
             si.append("items", {
                 "item_code": d.item_code,
-                "qty": d.qty,
-                "rate": d.rate,
-                "amount": d.amount,
+                "item_name": d.item_name,
+                "description": d.description,
+                "qty": qty,
+                "rate": rate,
+                "discount_percentage": discount_percentage,
+                "amount": net_amount,
                 "uom": d.uom,
+                "stock_uom": d.stock_uom,
                 "conversion_factor": conversion_factor,
-                "stock_qty": d.stock_qty
+                "warehouse": d.warehouse
             })
 
-        # Core logic
-        si.set_missing_values()
-        si.calculate_taxes_and_totals()
+        si.flags.ignore_permissions = True
 
-        # Map back totals
+        # -------------------------------
+        # LOAD TAXES USING get_taxes_and_charges
+        # -------------------------------
+        if si.taxes_and_charges:
+            taxes = get_taxes_and_charges(
+                "Sales Taxes and Charges Template",
+                si.taxes_and_charges
+            )
+
+            for tax in taxes:
+                si.append("taxes", tax)
+
+        # -------------------------------
+        # ENSURE ITEM AMOUNT (SAFE)
+        # -------------------------------
+        for item in si.items:
+            item.amount = flt(item.qty) * flt(item.rate)
+            item.base_amount = item.amount * si.conversion_rate
+            item.stock_qty = flt(item.qty) * flt(item.conversion_factor)
+
+
+        # -------------------------------
+        # CALCULATE TOTALS
+        # -------------------------------
+
+        si.run_method("calculate_taxes_and_totals")
+
+        # -------------------------------
+        # IN WORDS
+        # -------------------------------
+        si_in_words = money_in_words(si.grand_total, si.currency)
+        base_in_words = money_in_words(si.base_grand_total, company_currency)
+
+        # -------------------------------
+        # MAP BACK TO YOUR DOC
+        # -------------------------------
+        self.in_words = si_in_words
+        self.base_in_words = base_in_words
+
         self.total_qty = si.total_qty
         self.total = si.total
         self.net_total = si.net_total
@@ -205,174 +324,48 @@ class ConsolidatedSalesInvoice(Document):
         self.base_net_total = si.base_net_total
         self.base_grand_total = si.base_grand_total
 
-        #  Set total_net_weight
+        self.total_taxes_and_charges = si.total_taxes_and_charges
+        self.base_total_taxes_and_charges = si.base_total_taxes_and_charges
+
         self.total_net_weight = total_net_weight
 
+        # -------------------------------
+        # 🔥 IMPORTANT: MAP TAX FIELDS BACK
+        # -------------------------------
+        self.taxes_and_charges = si.taxes_and_charges
+        self.tax_category = si.tax_category
+
+        # -------------------------------
+        # MAP TAX TABLE
+        # -------------------------------
+        self.set("taxes", [])
+
+        for tax in si.get("taxes"):
+            self.append("taxes", {
+                "charge_type": tax.charge_type,
+                "account_head": tax.account_head,
+                "description": tax.description,
+                "rate": tax.rate,
+                "tax_amount": tax.tax_amount,
+                "total": tax.total,
+                "base_tax_amount": tax.base_tax_amount,
+                "base_total": tax.base_total
+            })
     def on_update_after_submit(self):
-        print("date...........")
-        """
-        Runs when a submitted Consolidated Sales Invoice is updated
-        (e.g., workflow state change)
-        """
+        import frappe
+        from frappe.utils import nowdate
+
         target_state = "Document Submitted & Awaiting Payments"
 
-        # Check workflow state and ensure date is not already set
         if self.workflow_state == target_state and not self.custom_submission_date:
-            
-            # Update field bypassing validation
-            self.db_set('custom_submission_date', nowdate())
+            self.db_set("custom_submission_date", nowdate())
 
-            # Add comment (optional)
-            self.add_comment(
-                "Info",
-                text=f"Captured submission date as state changed to {target_state}"
-            )
-        if frappe.flags.in_consolidated_reverse_sync:
+        if getattr(frappe.flags, "in_consolidated_reverse_sync", False):
             return
 
         frappe.flags.in_consolidated_reverse_sync = True
-
         try:
-            consolidated_name = self.name
-
-            # ---------------------------------------
-            # PREPARE FORM UPDATES
-            # ---------------------------------------
-            form_updates = {
-                "workflow_state": self.workflow_state,
-            }
-
-            fields = [
-                "bl_no","bl_date","vessel_no","custom_shipped_on_board_date","port_address","branch",
-                "total_fob_value","freight","insurance","freight_calculated","total_duty_drawback",
-                "total_meis","duty_drawback_jv","meis_jv","custom_lab_test_remarks","shipping_terms",
-                "port_of_loading","port_of_discharge","pre_carriage_by","custom_dclc","custom_dc_no",
-                "custom_lc_no","custom_loading_point","final_destination","custom_carriage_by",
-                "custom_dhl","custom_dc_date","custom_lc_date","container_size","country_of_origin",
-                "country_of_destination","movement","custom_submission_date",
-                "custom_bl_issued_remarks","contract_and_lc","custom_document_checked","set_warehouse"
-            ]
-
-            for f in fields:
-                val = self.get(f)
-                if val is not None:
-                    form_updates[f] = val
-
-            # ---------------------------------------
-            # GET LINKED SALES INVOICES
-            # ---------------------------------------
-            invoice_names = frappe.get_all(
-                "Sales Invoice",
-                filters={
-                    "custom_consolidated_invoice_reference": consolidated_name
-                },
-                pluck="name"
-            )
-
-            print("Updating invoices:", invoice_names)
-
-            if not invoice_names:
-                return
-
-            invoices = [frappe.get_doc("Sales Invoice", inv) for inv in invoice_names]
-
-            # ---------------------------------------
-            # UPDATE SALES INVOICES
-            # ---------------------------------------
-            for inv in invoices:
-
-                inv.reload()
-
-                # ---------------------------------------
-                # APPLY FORM FIELD UPDATES
-                # ---------------------------------------
-                for key, value in form_updates.items():
-                    inv.set(key, value)
-
-                if "contract_and_lc" in form_updates:
-                    set_contract_term_details(inv)
-
-                # ---------------------------------------
-                # ITEM TABLE SYNC (IDX BASED)
-                # ---------------------------------------
-                for item in self.items:
-                    for row in inv.items:
-                        if row.idx == item.idx:
-                            row.set("duty_drawback_rate", item.duty_drawback_rate)
-                            row.set("capped_rate", item.capped_rate)
-                            row.set("meis_rate", item.meis_rate)
-                            row.set("custom_rodtep_capped_rate", item.custom_rodtep_capped_rate)
-                            row.set("freight", item.freight)
-                            row.set("insurance", item.insurance)
-                            row.set("duty_drawback_amount", item.duty_drawback_amount)
-                            row.set("capped_amount", item.capped_amount)
-                            row.set("meis_value", item.meis_value)
-                            row.set("custom_rodtep_capped_amount", item.custom_rodtep_capped_amount)
-                            row.set("fob_value", item.fob_value)
-                            row.set("description", item.description)
-
-                # ---------------------------------------
-                # CONTAINER DETAILS SYNC
-                # ---------------------------------------
-                for container in self.container_detail:
-                    for row in inv.container_detail:
-                        if row.idx == container.idx:
-                            row.set("container_no", container.container_no)
-                            row.set("size", container.size)
-                            row.set("shipping_line_seal_no", container.shipping_line_seal_no)
-                            row.set("nt_wt_kgs", container.nt_wt_kgs)
-                            row.set("gr_wt_kgs", container.gr_wt_kgs)
-                            row.set("no_of_packages", container.no_of_packages)
-                            row.set("manufacturing_date", container.manufacturing_date)
-                            row.set("batch_name", container.batch_name)
-
-                # ---------------------------------------
-                # CONTRACT TERMS SYNC
-                # ---------------------------------------
-                for ct in self.sales_invoice_contract_term_check:
-                    for row in inv.sales_invoice_contract_term_check:
-                        if row.idx == ct.idx:
-                            row.set("contract_term", ct.contract_term)
-                            row.set("document_check", ct.document_check)
-                            row.set("checked", ct.checked)
-
-                # ---------------------------------------
-                # EXPORT DOCUMENT SYNC
-                # ---------------------------------------
-                for ed in self.sales_invoice_export_document_item:
-                    for row in inv.sales_invoice_export_document_item:
-                        if row.idx == ed.idx:
-                            row.set("contract_term", ed.contract_term)
-                            row.set("export_document", ed.export_document)
-                            row.set("number", ed.number)
-                            row.set("checked", ed.checked)
-
-                # ---------------------------------------
-                # MARK CHILD TABLES DIRTY
-                # ---------------------------------------
-                inv.set("items", inv.items)
-                inv.set("container_detail", inv.container_detail)
-                inv.set("sales_invoice_contract_term_check", inv.sales_invoice_contract_term_check)
-                inv.set("sales_invoice_export_document_item", inv.sales_invoice_export_document_item)
-
-                # ---------------------------------------
-                # ALLOW UPDATE AFTER SUBMIT
-                # ---------------------------------------
-                inv.flags.ignore_validate_update_after_submit = True
-
-                # ---------------------------------------
-                # SAVE
-                # ---------------------------------------
-                inv.save(
-                    ignore_permissions=True,
-                    ignore_version=True
-                )
-
-            # ---------------------------------------
-            # FORCE DB COMMIT
-            # ---------------------------------------
-            frappe.db.commit()
-
+            self.sync_consolidated_to_invoices()
         finally:
             frappe.flags.in_consolidated_reverse_sync = False
     def on_submit(self):
@@ -403,6 +396,113 @@ class ConsolidatedSalesInvoice(Document):
 
         finally:
             frappe.flags.in_consolidated_submit = False
+
+    def sync_consolidated_to_invoices(self):
+        import frappe
+
+        consolidated_name = self.name
+
+        form_updates = {
+            "workflow_state": self.workflow_state,
+        }
+
+        fields = [
+            "bl_no","bl_date","vessel_no","custom_shipped_on_board_date","port_address","branch",
+            "total_fob_value","freight","insurance","freight_calculated","total_duty_drawback",
+            "total_meis","custom_lab_test_remarks","shipping_terms","is_export_with_gst",
+            "taxes_and_charges","port_of_loading","port_of_discharge","pre_carriage_by",
+            "custom_dclc","custom_dc_no","custom_lc_no","custom_loading_point","final_destination",
+            "custom_carriage_by","custom_dhl","custom_dc_date","custom_lc_date","container_size",
+            "country_of_origin","country_of_destination","movement","custom_submission_date",
+            "custom_bl_issued_remarks","contract_and_lc","custom_document_checked","set_warehouse"
+        ]
+
+        for f in fields:
+            val = self.get(f)
+            if val is not None:
+                form_updates[f] = val
+
+        invoice_names = frappe.get_all(
+            "Sales Invoice",
+            filters={"custom_consolidated_invoice_reference": consolidated_name},
+            pluck="name"
+        )
+
+        if not invoice_names:
+            return
+
+        for inv_name in invoice_names:
+
+            inv = frappe.get_doc("Sales Invoice", inv_name)
+
+            inv.flags.ignore_validate_update_after_submit = True
+            inv.flags.ignore_version = True
+
+            # -------------------------
+            # HEADER SYNC (IMPORTANT FIX)
+            # -------------------------
+            for key, value in form_updates.items():
+                setattr(inv, key, value)
+
+            # -------------------------
+            # ITEM SYNC (IMPORTANT FIX)
+            # -------------------------
+            for item in self.items:
+                for row in inv.items:
+                    if row.idx == item.idx:
+                        row.duty_drawback_rate = item.duty_drawback_rate
+                        row.capped_rate = item.capped_rate
+                        row.meis_rate = item.meis_rate
+                        row.custom_rodtep_capped_rate = item.custom_rodtep_capped_rate
+                        row.freight = item.freight
+                        row.insurance = item.insurance
+                        row.duty_drawback_amount = item.duty_drawback_amount
+                        row.capped_amount = item.capped_amount
+                        row.meis_value = item.meis_value
+                        row.custom_rodtep_capped_amount = item.custom_rodtep_capped_amount
+                        row.fob_value = item.fob_value
+                        row.description = item.description
+
+            # -------------------------
+            # CONTAINER SYNC (FIX)
+            # -------------------------
+            for container in self.container_detail:
+                for row in inv.container_detail:
+                    if row.idx == container.idx:
+                        row.container_no = container.container_no
+                        row.size = container.size
+                        row.shipping_line_seal_no = container.shipping_line_seal_no
+                        row.nt_wt_kgs = container.nt_wt_kgs
+                        row.gr_wt_kgs = container.gr_wt_kgs
+                        row.no_of_packages = container.no_of_packages
+                        row.manufacturing_date = container.manufacturing_date
+                        row.batch_name = container.batch_name
+            
+            for ct in self.sales_invoice_contract_term_check:
+                for row in inv.sales_invoice_contract_term_check:
+                    if row.idx == ct.idx:
+                        row.contract_term = ct.contract_term
+                        row.document_check = ct.document_check
+                        row.checked = ct.checked
+
+            # =====================================================
+            # ✅ ADDED: EXPORT DOC SYNC (FIXED VERSION)
+            # =====================================================
+            for ed in self.sales_invoice_export_document_item:
+                for row in inv.sales_invoice_export_document_item:
+                    if row.idx == ed.idx:
+                        row.contract_term = ed.contract_term
+                        row.export_document = ed.export_document
+                        row.number = ed.number
+                        row.checked = ed.checked
+
+
+            # -------------------------
+            # FINAL SAVE (MOST IMPORTANT)
+            # -------------------------
+            inv.save(ignore_permissions=True)
+
+        frappe.db.commit()
 
 #     def sync_to_sales_invoices(self):
 #         if frappe.flags.in_consolidated_sync:
@@ -620,6 +720,9 @@ class ConsolidatedSalesInvoice(Document):
 #             child.address = row.address
 #             child.selected = row.selected
 
+
+
+
 import frappe
 from frappe.model.mapper import get_mapped_doc
 @frappe.whitelist()
@@ -751,8 +854,10 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
             si.selling_price_list = source_doc.selling_price_list
             si.custom_consolidated_invoice_reference = source_doc.name
             si.branch = source_doc.branch
+            si.cost_center = source_doc.cost_center
             si.set_warehouse = source_doc.set_warehouse
             si.custom_is_splitted_invoice = 1
+            si.is_export_with_gst = source_doc.is_export_with_gst
 
             si.custom_product = source_doc.custom_product
             si.custom_quality_and_specification = source_doc.custom_quality_and_specification
@@ -775,6 +880,8 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
             # si.vessel_no = source_doc.vessel_no
             si.final_destination = source_doc.final_destination
             si.port_address = source_doc.port_address
+            si.tax_category = source_doc.tax_category
+            si.taxes_and_charges = source_doc.taxes_and_charges
 
 
 
@@ -810,7 +917,8 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
                         data.pop(k, None)
 
                     si.append("container_detail", data)
-
+            si.set_missing_values()
+            si.run_method("calculate_taxes_and_totals")
             # Insert invoice
             si.insert(ignore_permissions=True)
 
@@ -931,3 +1039,87 @@ def contract_and_lc_filter(doctype, txt, searchfield, start, page_len, filters):
             ON cto.parent = ct.name
         WHERE cto.sales_order IN ({})
     """.format(", ".join(["%s"] * len(so_list))), tuple(so_list))
+
+
+def is_branch_dimension_enabled():
+    return frappe.db.exists(
+        "Accounting Dimension",
+        {
+            "document_type": "Branch",
+            "disabled": 0
+        }
+    )
+def create_jv_with_gst(self):
+    if not (self.get("is_export_with_gst") and self.get("taxes")):
+        return
+
+    branch_enabled = is_branch_dimension_enabled()
+
+    taxes = self.get("taxes")[0]
+    company_gst_payable_account = frappe.db.get_value(
+        "Company", {"company_name": self.company}, "igst_export_refund_receivable"
+    )
+
+    currency_precision = frappe.get_precision(
+        "Journal Entry Account", "debit_in_account_currency"
+    )
+
+    jv = frappe.get_doc(
+        {
+            "doctype": "Journal Entry",
+            "voucher_type": "Journal Entry",
+            "posting_date": self.posting_date,
+            "cheque_date": self.posting_date,
+            "multi_currency": 1,
+            "company": self.company,
+            "company_gstin": self.company_gstin,
+            "branch": self.branch if branch_enabled else None,
+
+            "cheque_no": self.name,
+            "accounts": [
+                {
+                    "account": self.debit_to,
+                    "exchange_rate": flt(self.conversion_rate),
+                    "credit_in_account_currency": flt(
+                        taxes.tax_amount, currency_precision
+                    ),
+                    "debit_in_account_currency": 0,
+                    "party_type": "Customer",
+                    "party": self.customer,
+                    "cost_center": self.cost_center,
+                    "reference_type": self.doctype,
+                    "reference_name": self.name,
+                    **({"branch": self.branch} if branch_enabled else {}),
+
+                },
+                {
+                    "account": company_gst_payable_account,
+                    "credit_in_account_currency": 0,
+                    "debit_in_account_currency": flt(
+                        taxes.tax_amount, currency_precision
+                    )
+                    * self.conversion_rate,
+                    "exchange_rate": 1,
+                    "cost_center": self.cost_center,
+                    **({"branch": self.branch} if branch_enabled else {}),
+
+                },
+            ],
+        }
+    )
+
+    jv.save(ignore_permissions=True)
+    jv.submit()
+
+    meta = frappe.get_meta(self.doctype)
+    if meta.has_field("igst_refund_jv"):
+        self.db_set("igst_refund_jv", jv.name)
+
+@frappe.whitelist()
+def run_core_calculations(doc):
+    import frappe
+
+    doc = frappe.get_doc(frappe.parse_json(doc))
+    doc.run_core_calculations()
+
+    return doc

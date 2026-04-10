@@ -338,7 +338,10 @@ doc_events = {
 
         "before_insert": "cit_exim.cit_exim.doc_events.sales_invoice.before_insert",
         "before_save": "cit_exim.cit_exim.doc_events.sales_invoice.before_save",
-        "validate": "cit_exim.cit_exim.doc_events.sales_invoice.validate",
+        "validate": [
+            "cit_exim.cit_exim.doc_events.sales_invoice.validate",
+            # "cit_exim.cit_exim.doc_events.sales_invoice.sync_workflow_from_sales_invoice",
+        ],
         "before_submit": "cit_exim.cit_exim.doc_events.sales_invoice.before_submit",
         "on_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_submit",
         # "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_invoice.on_update_after_submit",

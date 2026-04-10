@@ -1322,6 +1322,8 @@ function create_consolidated_invoice(frm) {
                 new_doc.tc_name = frm.doc.tc_name;
                 new_doc.terms = frm.doc.terms;
                 new_doc.set_warehouse = frm.doc.set_warehouse
+                new_doc.branch = frm.doc.branch
+                new_doc.cost_center = frm.doc.cost_center
 
                 // Totals & Currency
                 new_doc.currency = frm.doc.currency;
@@ -1385,7 +1387,7 @@ function create_consolidated_invoice(frm) {
                         row.conversion_factor = item.conversion_factor;
                         row.warehouse = item.warehouse;
                         row.gst_hsn_code = item.gst_hsn_code;
-                        row.stock_qty = item.qty * item.conversion_factor;
+                        // row.stock_qty = item.qty * item.conversion_factor;
                         row.gst_hsn_code = item.gst_hsn_code
 
                         
