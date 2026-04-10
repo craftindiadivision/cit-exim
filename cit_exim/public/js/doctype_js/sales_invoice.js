@@ -1358,6 +1358,33 @@ frappe.ui.form.on('Sales Invoice', {
 
 
 
+  
+    
+frappe.ui.form.on('Sales Invoice', {
+
+    onload: function(frm) {
+        set_customer_address_filter(frm);
+    },
+
+    refresh: function(frm) {
+        set_customer_address_filter(frm);
+    }
+
+});
+
+function set_customer_address_filter(frm) {
+    frm.set_query("customer_address", function(doc) {
+        return {
+            query: "cit_exim.cit_exim.doc_events.sales_invoice.get_filtered_customer_addresses",
+            filters: {
+                customer: doc.customer
+            }
+        };
+    });
+}
+ 
+
+
 
 // -------------------------------------------------------------------------------------------------------------
 

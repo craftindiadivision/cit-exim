@@ -170,6 +170,101 @@ def get_billing_address_for_customer(customer):
 
 
 
+# import frappe
+# from frappe import _
+
+# @frappe.whitelist()
+# def map_buyer_to_consignee_address(buyer, consignee):
+#     if not buyer or not consignee:
+#         frappe.throw(_("Buyer and Consignee are required"))
+
+#     # -----------------------------------
+#     # 1. GET CONSIGNEE ADDRESS (SHIPPING)
+#     # -----------------------------------
+#     addresses = frappe.db.sql("""
+#         SELECT parent
+#         FROM `tabDynamic Link`
+#         WHERE link_name = %s
+#         AND parenttype = 'Address'
+#     """, (consignee,), as_dict=True)
+
+#     if not addresses:
+#         frappe.throw(_("No Address found linked to Consignee: {0}").format(consignee))
+
+#     shipping_address = None
+
+#     for row in addresses:
+#         address_doc = frappe.get_doc("Address", row.parent)
+
+#         updated = False
+#         buyer_link_exists = False
+
+#         for link in address_doc.links:
+
+#             # 👉 Identify consignee row
+#             if link.link_name == consignee:
+
+#                 # ✅ Mark consignee checkbox
+#                 if not getattr(link, "custom_is_consignee", 0):
+#                     link.custom_is_consignee = 1
+#                     updated = True
+
+#                 shipping_address = address_doc
+
+#             # 👉 Check if buyer already linked
+#             if link.link_doctype == "Customer" and link.link_name == buyer:
+#                 buyer_link_exists = True
+
+#         # 👉 ADD BUYER INTO LINKS TABLE (IMPORTANT)
+#         if shipping_address and not buyer_link_exists:
+#             address_doc.append("links", {
+#                 "link_doctype": "Customer",
+#                 "link_name": buyer
+#             })
+#             updated = True
+
+#         if updated:
+#             address_doc.save(ignore_permissions=True)
+
+#         if shipping_address:
+#             break
+
+#     if not shipping_address:
+#         frappe.throw(_("No valid shipping address found for Consignee"))
+
+#     # -----------------------------------
+#     # 2. GET BUYER ADDRESS (BILLING)
+#     # -----------------------------------
+#     buyer_addresses = frappe.db.sql("""
+#         SELECT parent
+#         FROM `tabDynamic Link`
+#         WHERE link_name = %s
+#         AND parenttype = 'Address'
+#     """, (buyer,), as_dict=True)
+
+#     if not buyer_addresses:
+#         frappe.throw(_("No Address found for Buyer: {0}").format(buyer))
+
+#     billing_address = frappe.get_doc("Address", buyer_addresses[0].parent)
+
+#     # -----------------------------------
+#     # 3. RETURN VALUES
+#     # -----------------------------------
+#     return {
+#         "shipping_address_name": shipping_address.name,
+#         "shipping_address": shipping_address.get_display(),
+#         "customer_address": billing_address.name,
+#         "address_display": billing_address.get_display()
+#     }
+
+
+
+
+
+
+
+
+
 import frappe
 from frappe import _
 
@@ -181,17 +276,19 @@ def map_buyer_to_consignee_address(buyer, consignee):
     # -----------------------------------
     # 1. GET CONSIGNEE ADDRESS (SHIPPING)
     # -----------------------------------
-    addresses = frappe.db.sql("""
-        SELECT parent
-        FROM `tabDynamic Link`
-        WHERE link_name = %s
-        AND parenttype = 'Address'
-    """, (consignee,), as_dict=True)
+    shipping_address = None
+
+    addresses = frappe.get_all(
+        "Dynamic Link",
+        filters={
+            "link_name": consignee,
+            "parenttype": "Address"
+        },
+        fields=["parent"]
+    )
 
     if not addresses:
         frappe.throw(_("No Address found linked to Consignee: {0}").format(consignee))
-
-    shipping_address = None
 
     for row in addresses:
         address_doc = frappe.get_doc("Address", row.parent)
@@ -201,21 +298,18 @@ def map_buyer_to_consignee_address(buyer, consignee):
 
         for link in address_doc.links:
 
-            # 👉 Identify consignee row
+            # Mark consignee row
             if link.link_name == consignee:
-
-                # ✅ Mark consignee checkbox
                 if not getattr(link, "custom_is_consignee", 0):
                     link.custom_is_consignee = 1
                     updated = True
-
                 shipping_address = address_doc
 
-            # 👉 Check if buyer already linked
+            # Check if buyer already linked
             if link.link_doctype == "Customer" and link.link_name == buyer:
                 buyer_link_exists = True
 
-        # 👉 ADD BUYER INTO LINKS TABLE (IMPORTANT)
+        # Add buyer to consignee address (for relationship only)
         if shipping_address and not buyer_link_exists:
             address_doc.append("links", {
                 "link_doctype": "Customer",
@@ -235,17 +329,34 @@ def map_buyer_to_consignee_address(buyer, consignee):
     # -----------------------------------
     # 2. GET BUYER ADDRESS (BILLING)
     # -----------------------------------
-    buyer_addresses = frappe.db.sql("""
-        SELECT parent
-        FROM `tabDynamic Link`
-        WHERE link_name = %s
-        AND parenttype = 'Address'
-    """, (buyer,), as_dict=True)
+    billing_address = None
 
-    if not buyer_addresses:
-        frappe.throw(_("No Address found for Buyer: {0}").format(buyer))
+    buyer_addresses = frappe.get_all(
+        "Dynamic Link",
+        filters={
+            "link_name": buyer,
+            "parenttype": "Address"
+        },
+        fields=["parent"]
+    )
 
-    billing_address = frappe.get_doc("Address", buyer_addresses[0].parent)
+    for row in buyer_addresses:
+        addr = frappe.get_doc("Address", row.parent)
+
+        is_consignee_address = False
+
+        for link in addr.links:
+            # If ANY other party is marked as consignee → skip
+            if getattr(link, "custom_is_consignee", 0) == 1 and link.link_name != buyer:
+                is_consignee_address = True
+                break
+
+        if not is_consignee_address:
+            billing_address = addr
+            break
+
+    if not billing_address:
+        frappe.throw(_("No valid billing address found for Buyer"))
 
     # -----------------------------------
     # 3. RETURN VALUES
@@ -256,6 +367,48 @@ def map_buyer_to_consignee_address(buyer, consignee):
         "customer_address": billing_address.name,
         "address_display": billing_address.get_display()
     }
+
+@frappe.whitelist()
+def get_filtered_customer_addresses(doctype, txt, searchfield, start, page_len, filters):
+    customer = filters.get("customer")
+
+    if not customer:
+        return []
+
+    addresses = frappe.get_all(
+        "Dynamic Link",
+        filters={
+            "link_name": customer,
+            "parenttype": "Address"
+        },
+        fields=["parent"]
+    )
+
+    result = []
+
+    for row in addresses:
+        addr = frappe.get_doc("Address", row.parent)
+
+        # ❌ STRICT RULE:
+        # If ANY row in this address has custom_is_consignee = 1 → reject
+        is_consignee_address = any(
+            getattr(link, "custom_is_consignee", 0) == 1
+            for link in addr.links
+        )
+
+        if not is_consignee_address:
+            result.append((addr.name, addr.address_line1 or addr.name))
+
+    return result
+    
+
+
+
+
+
+
+
+
 
 
 

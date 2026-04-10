@@ -847,6 +847,33 @@ frappe.ui.form.on('Sales Order', {
     }
 });
 
+  
+frappe.ui.form.on('Sales Order', {
+
+    onload: function(frm) {
+        set_customer_address_filter(frm);
+    },
+
+    refresh: function(frm) {
+        set_customer_address_filter(frm);
+    }
+
+});
+
+function set_customer_address_filter(frm) {
+    frm.set_query("customer_address", function(doc) {
+        return {
+            query: "cit_exim.cit_exim.doc_events.sales_order.get_filtered_customer_addresses",
+            filters: {
+                customer: doc.customer
+            }
+        };
+    });
+}
+
+
+
+
 
 
 
