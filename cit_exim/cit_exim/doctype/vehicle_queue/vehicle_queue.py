@@ -131,6 +131,8 @@ from frappe.model.mapper import get_mapped_doc
 class VehicleQueue(Document):
 
     def validate(self):
+        if getdate(self.supplier_invoice_date) > getdate(self.date):
+            frappe.throw("Supplier Invoice Date cannot be after Vehicle Queue Date.")
         self.validate_supplier_invoice_number()
         # if self.product != "Raw Fish":
         #     if self.net_weight != self.invoice_qty:
