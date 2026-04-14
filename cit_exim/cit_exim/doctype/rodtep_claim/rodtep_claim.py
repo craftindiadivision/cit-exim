@@ -134,12 +134,14 @@ def create_jv_on_submit(self, method):
             "reference_type": "Journal Entry",
             "reference_name": row.je_no,
             "credit_in_account_currency": flt(row.debit_amount),
+            "branch":self.branch
         })
 
     meis_jv.append("accounts", {
         "account": self.credit_account,
         "debit_in_account_currency": flt(self.total_debit_amount),
-        "cost_center": meis_cost_center
+        "cost_center": meis_cost_center,
+        "branch":self.branch
     })
 
     try:
