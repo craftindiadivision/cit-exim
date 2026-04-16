@@ -82,6 +82,9 @@ class ConsolidatedSalesInvoice(Document):
         
     def validate(self):
         self.run_core_calculations()
+        # calculate_total(self)
+        # duty_calculation(self)
+        # meis_calculation(self)
 
 
         if not self.items:
@@ -158,6 +161,10 @@ class ConsolidatedSalesInvoice(Document):
 
     def before_save(self):
         self.run_core_calculations()
+        
+
+
+# 
 
     def run_core_calculations(self):
         import frappe
@@ -723,146 +730,396 @@ class ConsolidatedSalesInvoice(Document):
 
 
 
+# import frappe
+# from frappe.model.mapper import get_mapped_doc
+# @frappe.whitelist()
+# def get_serial_batch_bundle(bundle_name):
+#     if not bundle_name:
+#         return []
+
+#     bundle = frappe.get_doc("Serial and Batch Bundle", bundle_name)
+
+#     return [
+#         {
+#             "batch_no": row.batch_no,
+#             "qty": abs(flt(row.qty))
+#         }
+#         for row in bundle.entries if row.batch_no
+#     ]
+
+# @frappe.whitelist()
+# def split_consolidated_invoice(source_name, split_count, split_data=None):
+
+#     split_count = int(split_count)
+#     if split_data:
+#         split_data = frappe.parse_json(split_data)
+
+
+#     split_count = int(split_count)
+
+#     if split_count <= 0:
+#         frappe.throw("Split count must be greater than 0")
+
+#     source_doc = frappe.get_doc("Consolidated Sales Invoice", source_name)
+#     bundle_batch_qty = {}
+
+#     for itm in source_doc.items:
+
+#         if not itm.serial_and_batch_bundle:
+#             continue
+
+#         bundle = frappe.get_doc("Serial and Batch Bundle", itm.serial_and_batch_bundle)
+
+#         for entry in bundle.entries:
+
+#             batch = entry.batch_no
+#             qty = abs(flt(entry.qty))
+
+#             if batch not in bundle_batch_qty:
+#                 bundle_batch_qty[batch] = 0
+
+#             bundle_batch_qty[batch] += qty
+
+#     print(bundle_batch_qty)
+#     selected_batch_qty = {}
+
+#     for entry in split_data:
+
+#         batch = entry.get("batch")
+#         qty = flt(entry.get("qty"))
+
+#         if not batch:
+#             continue
+
+#         # if batch not in bundle_batch_qty:
+#         #     frappe.throw(
+#         #         f"Batch <b>{batch}</b> was not used in the Consolidated Invoice."
+#         #     )
+
+#         if batch not in selected_batch_qty:
+#             selected_batch_qty[batch] = 0
+
+#         selected_batch_qty[batch] += qty
+
+
+#     for batch, qty in selected_batch_qty.items():
+
+#         allowed_qty = bundle_batch_qty.get(batch, 0)
+
+#         # if qty > allowed_qty:
+#         #     frappe.throw(
+#         #         f"Selected quantity <b>{qty}</b> for Batch <b>{batch}</b> exceeds available quantity <b>{allowed_qty}</b> in the Consolidated Invoice."
+#         #     )
+
+
+#     if len(source_doc.items) != 1:
+#         frappe.throw("Consolidated Sales Invoice must contain exactly one item")
+
+#     item = source_doc.items[0]
+
+#     total_qty = item.qty
+#     total_rate = item.rate
+#     total_amount = item.amount
+
+#     qty_per_invoice = total_qty / split_count
+#     rate_per_invoice = total_rate
+#     amount_per_invoice = total_amount / split_count
+
+#     remainder_qty = total_qty % split_count
+#     remainder_amount = total_amount % split_count
+
+#     created_invoices = []
+#     bundle_dict = {
+#     itm.item_code: {
+#         "qty": itm.qty,
+#         "bundle": itm.serial_and_batch_bundle
+#     }
+#     for itm in source_doc.items if itm.serial_and_batch_bundle
+#     }
+
+#     # -----------------------------
+#     # Disable workflow sync
+#     # -----------------------------
+#     frappe.flags.in_consolidated_sync = True
+
+#     try:
+
+#         for i in range(split_count):
+
+#             si = frappe.new_doc("Sales Invoice")
+
+#             container_rows = source_doc.get("container_detail") or []
+#             rows_per_split = math.ceil(len(container_rows) / split_count) if container_rows else 0
+
+#             # Map fields
+#             si.customer = source_doc.customer
+#             si.company = source_doc.company
+#             si.posting_date = source_doc.posting_date
+#             si.due_date = source_doc.due_date
+#             si.currency = source_doc.currency
+#             si.conversion_rate = source_doc.conversion_rate
+#             si.selling_price_list = source_doc.selling_price_list
+#             si.custom_consolidated_invoice_reference = source_doc.name
+#             si.branch = source_doc.branch
+#             si.cost_center = source_doc.cost_center
+#             si.set_warehouse = source_doc.set_warehouse
+#             si.custom_is_splitted_invoice = 1
+#             si.is_export_with_gst = source_doc.is_export_with_gst
+
+#             si.custom_product = source_doc.custom_product
+#             si.custom_quality_and_specification = source_doc.custom_quality_and_specification
+#             si.payment_terms_template = source_doc.payment_terms_template
+#             si.payment_schedule = source_doc.payment_schedule
+#             si.custom_packing_template = source_doc.custom_packing_template
+#             si.custom_packing_detailsfor_sales_invoice = source_doc.custom_packing_detailsfor_sales_invoice
+#             si.tc_name = source_doc.tc_name
+#             si.terms = source_doc.terms
+#             si.shipping_terms = source_doc.shipping_terms
+#             si.port_of_loading = source_doc.port_of_loading
+#             si.port_of_discharge = source_doc.port_of_discharge
+#             si.pre_carriage_by = source_doc.pre_carriage_by
+#             si.custom_carriage_by = source_doc.custom_carriage_by
+#             si.custom_loading_point = source_doc.custom_loading_point
+#             si.container_size = source_doc.container_size
+#             si.country_of_origin = source_doc.country_of_origin
+#             si.country_of_destination = source_doc.country_of_destination
+#             si.custom_lab_test_remarks = source_doc.custom_lab_test_remarks
+#             # si.vessel_no = source_doc.vessel_no
+#             si.final_destination = source_doc.final_destination
+#             si.port_address = source_doc.port_address
+#             si.tax_category = source_doc.tax_category
+#             si.taxes_and_charges = source_doc.taxes_and_charges
+
+
+
+#             # Add item
+#             row = si.append("items", {})
+#             row.item_code = item.item_code
+#             row.item_name = item.item_name
+#             row.description = item.description
+#             row.uom = item.uom
+#             row.stock_uom = item.stock_uom
+#             row.conversion_factor = item.conversion_factor
+#             row.warehouse = item.warehouse
+#             row.sales_order = item.sales_order
+#             row.custom_export_uom = item.export_uom
+
+#             if i < remainder_qty:
+#                 row.qty = qty_per_invoice + 1
+#             else:
+#                 row.qty = qty_per_invoice
+
+#             row.rate = rate_per_invoice
+#             row.amount = row.qty * row.rate
+            
+#             # Container split
+#             if container_rows:
+#                 start = i * rows_per_split
+#                 end = (i + 1) * rows_per_split
+
+#                 for r in container_rows[start:end]:
+#                     data = r.as_dict()
+
+#                     for k in ("name", "parent", "parenttype", "parentfield", "creation", "modified"):
+#                         data.pop(k, None)
+
+#                     si.append("container_detail", data)
+#             si.set_missing_values()
+#             si.run_method("calculate_taxes_and_totals")
+#             # Insert invoice
+#             si.insert(ignore_permissions=True)
+
+#             # Copy workflow state
+#             if source_doc.workflow_state:
+#                 frappe.db.set_value(
+#                     "Sales Invoice",
+#                     si.name,
+#                     {
+#                         "workflow_state": source_doc.workflow_state,
+#                         "docstatus": source_doc.docstatus
+#                     },
+#                     update_modified=False
+#                 )
+#             si_doc = frappe.get_doc("Sales Invoice", si.name)
+
+#             for row in si_doc.items:
+
+#                 print("Processing Item:", row.item_code)
+
+#                 if not split_data:
+#                     print("No split data received")
+#                     continue
+
+#                 new_bundle = frappe.new_doc("Serial and Batch Bundle")
+#                 new_bundle.company = si_doc.company
+#                 new_bundle.type_of_transaction = "Outward"
+#                 new_bundle.voucher_type = "Sales Invoice"
+#                 new_bundle.voucher_no = si_doc.name
+#                 new_bundle.voucher_detail_no = row.name
+#                 new_bundle.item_code = row.item_code
+#                 new_bundle.warehouse = row.warehouse
+
+#                 for batch_entry in split_data:
+
+#                     if not batch_entry.get("batch"):
+#                         continue
+
+#                     if flt(batch_entry.get("qty")) <= 0:
+#                         continue
+
+#                     if batch_entry.get("invoice") != (i + 1):
+#                         continue
+
+#                     existing_batches = [e.batch_no for e in new_bundle.entries]
+
+#                     if batch_entry.get("batch") not in existing_batches:
+#                         new_bundle.append("entries", {
+#                             "batch_no": batch_entry.get("batch"),
+#                             "qty": -flt(batch_entry.get("qty")),
+#                             "warehouse": row.warehouse
+#                         })
+
+#                 if new_bundle.entries:
+#                     new_bundle.posting_date = si_doc.posting_date
+#                     new_bundle.posting_time = si_doc.posting_time or frappe.utils.nowtime()
+#                     new_bundle.has_batch_no = 1
+#                     new_bundle.has_serial_no = 0
+#                     new_bundle.insert(ignore_permissions=True)
+
+
+#                 # attach bundle to item row
+#                 row.serial_and_batch_bundle = new_bundle.name
+            
+#             # save invoice after attaching bundle
+#             si_doc.save(ignore_permissions=True)
+            
+
+#             created_invoices.append(si.name)
+
+#         frappe.db.commit()
+
+#     finally:
+#         # -----------------------------
+#         # Enable workflow sync again
+#         # -----------------------------
+#         frappe.flags.in_consolidated_sync = False
+
+#     return created_invoices
 import frappe
-from frappe.model.mapper import get_mapped_doc
+import math
+from frappe.utils import flt
+
+
+# -------------------------------------------------
+# GENERIC CLEANER FOR ANY CHILD TABLE ROWS
+# -------------------------------------------------
+def clean_rows(rows):
+    cleaned = []
+    for r in rows or []:
+        d = r.as_dict()
+
+        # remove ALL system fields that cause duplicate issues
+        for k in [
+            "name", "owner", "creation", "modified", "modified_by",
+            "parent", "parentfield", "parenttype", "idx"
+        ]:
+            d.pop(k, None)
+
+        cleaned.append(d)
+
+    return cleaned
+
+
+# -------------------------------------------------
+# COPY ALL CHILD TABLES SAFELY (AUTO DETECT)
+# -------------------------------------------------
+def copy_all_child_tables(source_doc, target_doc, exclude_fields=None):
+    exclude_fields = exclude_fields or set()
+
+    for df in source_doc.meta.get("fields"):
+        if df.fieldtype == "Table" and df.fieldname not in exclude_fields:
+            rows = source_doc.get(df.fieldname) or []
+
+            for r in clean_rows(rows):
+                target_doc.append(df.fieldname, r)
+
+
+# -------------------------------------------------
+# MAIN FUNCTION
+# -------------------------------------------------
 @frappe.whitelist()
-def get_serial_batch_bundle(bundle_name):
-    if not bundle_name:
-        return []
-
-    bundle = frappe.get_doc("Serial and Batch Bundle", bundle_name)
-
-    return [
-        {
-            "batch_no": row.batch_no,
-            "qty": abs(flt(row.qty))
-        }
-        for row in bundle.entries if row.batch_no
-    ]
-
-@frappe.whitelist()
-def split_consolidated_invoice(source_name, split_count, split_data=None):
-
-    split_count = int(split_count)
-    if split_data:
-        split_data = frappe.parse_json(split_data)
-
+def split_consolidated_invoice(source_name, split_count, invoice_names=None):
 
     split_count = int(split_count)
 
     if split_count <= 0:
         frappe.throw("Split count must be greater than 0")
 
+    # ----------------------------
+    # Parse custom invoice names
+    # ----------------------------
+    if invoice_names:
+        invoice_names = frappe.parse_json(invoice_names)
+        invoice_name_map = {
+            d.get("invoice"): d.get("invoice_name")
+            for d in invoice_names
+        }
+    else:
+        invoice_name_map = {}
+
     source_doc = frappe.get_doc("Consolidated Sales Invoice", source_name)
-    bundle_batch_qty = {}
-
-    for itm in source_doc.items:
-
-        if not itm.serial_and_batch_bundle:
-            continue
-
-        bundle = frappe.get_doc("Serial and Batch Bundle", itm.serial_and_batch_bundle)
-
-        for entry in bundle.entries:
-
-            batch = entry.batch_no
-            qty = abs(flt(entry.qty))
-
-            if batch not in bundle_batch_qty:
-                bundle_batch_qty[batch] = 0
-
-            bundle_batch_qty[batch] += qty
-
-    print(bundle_batch_qty)
-    selected_batch_qty = {}
-
-    for entry in split_data:
-
-        batch = entry.get("batch")
-        qty = flt(entry.get("qty"))
-
-        if not batch:
-            continue
-
-        # if batch not in bundle_batch_qty:
-        #     frappe.throw(
-        #         f"Batch <b>{batch}</b> was not used in the Consolidated Invoice."
-        #     )
-
-        if batch not in selected_batch_qty:
-            selected_batch_qty[batch] = 0
-
-        selected_batch_qty[batch] += qty
-
-
-    for batch, qty in selected_batch_qty.items():
-
-        allowed_qty = bundle_batch_qty.get(batch, 0)
-
-        # if qty > allowed_qty:
-        #     frappe.throw(
-        #         f"Selected quantity <b>{qty}</b> for Batch <b>{batch}</b> exceeds available quantity <b>{allowed_qty}</b> in the Consolidated Invoice."
-        #     )
-
 
     if len(source_doc.items) != 1:
         frappe.throw("Consolidated Sales Invoice must contain exactly one item")
 
     item = source_doc.items[0]
 
-    total_qty = item.qty
-    total_rate = item.rate
-    total_amount = item.amount
+    total_qty = flt(item.qty)
+    total_rate = flt(item.rate)
 
     qty_per_invoice = total_qty / split_count
-    rate_per_invoice = total_rate
-    amount_per_invoice = total_amount / split_count
-
-    remainder_qty = total_qty % split_count
-    remainder_amount = total_amount % split_count
+    remainder_qty = int(total_qty % split_count)
 
     created_invoices = []
-    bundle_dict = {
-    itm.item_code: {
-        "qty": itm.qty,
-        "bundle": itm.serial_and_batch_bundle
-    }
-    for itm in source_doc.items if itm.serial_and_batch_bundle
-    }
 
-    # -----------------------------
-    # Disable workflow sync
-    # -----------------------------
     frappe.flags.in_consolidated_sync = True
 
     try:
-
         for i in range(split_count):
 
             si = frappe.new_doc("Sales Invoice")
 
-            container_rows = source_doc.get("container_detail") or []
-            rows_per_split = math.ceil(len(container_rows) / split_count) if container_rows else 0
+            # ----------------------------
+            # CUSTOM NAME
+            # ----------------------------
+            custom_name = invoice_name_map.get(i + 1)
 
-            # Map fields
+            if custom_name:
+                if frappe.db.exists("Sales Invoice", custom_name):
+                    frappe.throw(f"Sales Invoice {custom_name} already exists")
+
+                si.name = custom_name
+                si.flags.name_set = True
+
+            # ----------------------------
+            # HEADER FIELDS
+            # ----------------------------
             si.customer = source_doc.customer
+            si.custom_consignee = source_doc.custom_consignee
+            si.shipping_address_name = source_doc.shipping_address_name
             si.company = source_doc.company
             si.posting_date = source_doc.posting_date
-            si.due_date = source_doc.due_date
             si.currency = source_doc.currency
             si.conversion_rate = source_doc.conversion_rate
-            si.selling_price_list = source_doc.selling_price_list
-            si.custom_consolidated_invoice_reference = source_doc.name
-            si.branch = source_doc.branch
-            si.cost_center = source_doc.cost_center
-            si.set_warehouse = source_doc.set_warehouse
-            si.custom_is_splitted_invoice = 1
             si.is_export_with_gst = source_doc.is_export_with_gst
 
+            si.custom_consolidated_invoice_reference = source_doc.name
+            si.custom_is_splitted_invoice = 1
+            si.update_stock = 0
             si.custom_product = source_doc.custom_product
-            si.custom_quality_and_specification = source_doc.custom_quality_and_specification
+            # si.custom_quality_and_specification = source_doc.custom_quality_and_specification
             si.payment_terms_template = source_doc.payment_terms_template
-            si.payment_schedule = source_doc.payment_schedule
+            # si.payment_schedule = source_doc.payment_schedule
             si.custom_packing_template = source_doc.custom_packing_template
             si.custom_packing_detailsfor_sales_invoice = source_doc.custom_packing_detailsfor_sales_invoice
             si.tc_name = source_doc.tc_name
@@ -882,122 +1139,87 @@ def split_consolidated_invoice(source_name, split_count, split_data=None):
             si.port_address = source_doc.port_address
             si.tax_category = source_doc.tax_category
             si.taxes_and_charges = source_doc.taxes_and_charges
+        
 
-
-
-            # Add item
+            # ----------------------------
+            # ITEM SPLIT
+            # ----------------------------
             row = si.append("items", {})
             row.item_code = item.item_code
             row.item_name = item.item_name
-            row.description = item.description
-            row.uom = item.uom
-            row.stock_uom = item.stock_uom
-            row.conversion_factor = item.conversion_factor
+            row.qty = qty_per_invoice + (1 if i < remainder_qty else 0)
+            row.rate = total_rate
+            row.amount = row.qty * row.rate
+
             row.warehouse = item.warehouse
             row.sales_order = item.sales_order
-            row.custom_export_uom = item.export_uom
 
-            if i < remainder_qty:
-                row.qty = qty_per_invoice + 1
-            else:
-                row.qty = qty_per_invoice
+            # ----------------------------
+            # CONTAINER DETAIL SPLIT (SAFE)
+            # ----------------------------
+            container_rows = source_doc.get("container_detail") or []
+            rows_per_split = math.ceil(len(container_rows) / split_count) if container_rows else 0
 
-            row.rate = rate_per_invoice
-            row.amount = row.qty * row.rate
-            
-            # Container split
             if container_rows:
                 start = i * rows_per_split
                 end = (i + 1) * rows_per_split
 
                 for r in container_rows[start:end]:
-                    data = r.as_dict()
+                    si.append("container_detail", clean_rows([r])[0])
 
-                    for k in ("name", "parent", "parenttype", "parentfield", "creation", "modified"):
-                        data.pop(k, None)
+            # ----------------------------
+            # PAYMENT SCHEDULE FIX
+            # ----------------------------
+            for ps in clean_rows(source_doc.payment_schedule):
+                si.append("payment_schedule", ps)
 
-                    si.append("container_detail", data)
+            # ----------------------------
+            # 🔥 FIX FOR FISH MEAL CHILD TABLE
+            # ----------------------------
+            # This works EVEN if fieldname is unknown dynamically
+            copy_all_child_tables(
+                source_doc,
+                si,
+                exclude_fields={"items", "container_detail", "payment_schedule"}
+            )
+
+            # ----------------------------
+            # FINALIZE
+            # ----------------------------
             si.set_missing_values()
             si.run_method("calculate_taxes_and_totals")
-            # Insert invoice
+
             si.insert(ignore_permissions=True)
 
-            # Copy workflow state
+            # ----------------------------
+            # WORKFLOW STATE
+            # ----------------------------
             if source_doc.workflow_state:
                 frappe.db.set_value(
                     "Sales Invoice",
                     si.name,
-                    {
-                        "workflow_state": source_doc.workflow_state,
-                        "docstatus": source_doc.docstatus
-                    },
-                    update_modified=False
+                    "workflow_state",
+                    source_doc.workflow_state
                 )
-            si_doc = frappe.get_doc("Sales Invoice", si.name)
-
-            for row in si_doc.items:
-
-                print("Processing Item:", row.item_code)
-
-                if not split_data:
-                    print("No split data received")
-                    continue
-
-                new_bundle = frappe.new_doc("Serial and Batch Bundle")
-                new_bundle.company = si_doc.company
-                new_bundle.type_of_transaction = "Outward"
-                new_bundle.voucher_type = "Sales Invoice"
-                new_bundle.voucher_no = si_doc.name
-                new_bundle.voucher_detail_no = row.name
-                new_bundle.item_code = row.item_code
-                new_bundle.warehouse = row.warehouse
-
-                for batch_entry in split_data:
-
-                    if not batch_entry.get("batch"):
-                        continue
-
-                    if flt(batch_entry.get("qty")) <= 0:
-                        continue
-
-                    if batch_entry.get("invoice") != (i + 1):
-                        continue
-
-                    existing_batches = [e.batch_no for e in new_bundle.entries]
-
-                    if batch_entry.get("batch") not in existing_batches:
-                        new_bundle.append("entries", {
-                            "batch_no": batch_entry.get("batch"),
-                            "qty": -flt(batch_entry.get("qty")),
-                            "warehouse": row.warehouse
-                        })
-
-                if new_bundle.entries:
-                    new_bundle.posting_date = si_doc.posting_date
-                    new_bundle.posting_time = si_doc.posting_time or frappe.utils.nowtime()
-                    new_bundle.has_batch_no = 1
-                    new_bundle.has_serial_no = 0
-                    new_bundle.insert(ignore_permissions=True)
-
-
-                # attach bundle to item row
-                row.serial_and_batch_bundle = new_bundle.name
-            
-            # save invoice after attaching bundle
-            si_doc.save(ignore_permissions=True)
-            
 
             created_invoices.append(si.name)
 
         frappe.db.commit()
 
     finally:
-        # -----------------------------
-        # Enable workflow sync again
-        # -----------------------------
         frappe.flags.in_consolidated_sync = False
 
     return created_invoices
+
+
+
+
+
+
+
+
+
+
 
 import frappe
 
@@ -1123,3 +1345,188 @@ def run_core_calculations(doc):
     doc.run_core_calculations()
 
     return doc
+
+
+
+
+
+
+
+
+
+import frappe
+from frappe.utils import flt
+
+
+# ------------------- VALIDATE (BEST PLACE FOR CALCULATION) -------------------
+
+# def validate(self):
+    # # Always safe to recalculate before save/submit
+    # calculate_total(self)
+    # duty_calculation(self)
+    # meis_calculation(self)
+
+
+# # ------------------- BEFORE SUBMIT LOCK -------------------
+
+# def before_submit(self):
+#     # Prevent recalculation during submit stage
+#     self.flags.ignore_validate_update_after_submit = True
+
+
+# # ------------------- CALCULATE TOTAL -------------------
+
+# def calculate_total(self):
+#     total_qty = 0
+#     total_packages = 0
+#     total_gr_wt = 0
+#     total_tare_wt = 0
+#     total_freight = 0
+#     total_insurance = 0
+#     total_meis = 0
+#     total_drawback = 0
+#     total_fob_value = 0
+#     total_pallets = 0
+
+#     for row in self.items:
+
+#         qty = flt(row.qty)
+#         base_amount = flt(row.base_amount)
+
+#         no_of_packages = flt(getattr(row, "no_of_packages", 0))
+#         tare_wt = flt(getattr(row, "tare_wt", 0))
+#         pallet_weight = flt(getattr(row, "pallet_weight", 0))
+#         total_pallets_row = flt(getattr(row, "total_pallets", 0))
+#         weight_per_unit = flt(getattr(row, "weight_per_unit", 0))
+
+#         # ---------------- Freight ----------------
+#         if self.freight_calculated == "By Qty" and self.total_qty:
+#             row.freight = (qty * flt(self.freight)) / flt(self.total_qty)
+#             row.insurance = (qty * flt(self.insurance)) / flt(self.total_qty)
+
+#         elif self.freight_calculated == "By Amount" and self.base_total:
+#             row.freight = (base_amount * flt(self.freight)) / flt(self.base_total)
+#             row.insurance = (base_amount * flt(self.insurance)) / flt(self.base_total)
+
+#         # ---------------- Totals ----------------
+#         total_qty += qty
+#         total_packages += no_of_packages
+
+#         # ---------------- Weights ----------------
+#         row.total_tare_weight = tare_wt * no_of_packages
+
+#         pallet = pallet_weight * total_pallets_row
+
+#         row.gross_wt = (
+#             row.total_tare_weight +
+#             (qty * (weight_per_unit or 1)) +
+#             pallet
+#         )
+
+#         # ---------------- FOB ----------------
+#         if not self.manually_enter_fob_value and self.gst_category == "Overseas":
+#             if self.shipping_terms in ["CIF", "CFR", "CNF", "CPT"]:
+#                 row.fob_value = (
+#                     base_amount
+#                     - flt(row.freight) * flt(self.conversion_rate)
+#                     - flt(row.insurance) * flt(self.conversion_rate)
+#                 )
+#             else:
+#                 row.fob_value = base_amount
+
+#         # ---------------- Totals accumulation ----------------
+#         total_tare_wt += flt(row.total_tare_weight)
+#         total_gr_wt += flt(row.gross_wt)
+#         total_insurance += flt(getattr(row, "insurance", 0))
+#         total_meis += flt(getattr(row, "meis_value", 0))
+#         total_drawback += flt(getattr(row, "duty_drawback_amount", 0))
+#         total_fob_value += flt(getattr(row, "fob_value", 0))
+#         total_pallets += total_pallets_row
+
+#     # ---------------- Assign Parent Values ----------------
+#     self.total_qty = total_qty
+#     self.total_packages = total_packages
+#     self.total_gr_wt = total_gr_wt
+#     self.total_tare_wt = total_tare_wt
+
+#     self.total_fob_value = total_fob_value
+#     self.total_pallets = total_pallets
+
+#     if self.freight_calculated == "Manual":
+#         self.freight = total_freight
+#         self.insurance = total_insurance
+
+
+# # ------------------- DUTY CALCULATION -------------------
+
+# def duty_calculation(self):
+#     if frappe.db.get_value('Address', self.customer_address, 'country') == "India":
+#         return
+
+#     total_duty_drawback = 0.0
+
+#     for row in self.items:
+#         conversion_factor = frappe.db.get_value(
+#             "UOM Conversion Detail",
+#             {"parent": row.item_code, "uom": row.uom},
+#             "conversion_factor"
+#         ) or 1.0
+
+#         calculated_weight = flt(row.qty * conversion_factor)
+
+#         row.capped_amount = 0.0
+#         row.duty_drawback_amount = 0.0
+
+#         if row.duty_drawback_rate and row.fob_value:
+#             duty_drawback_amount = flt(row.fob_value * row.duty_drawback_rate / 100.0)
+
+#             if row.capped_rate and calculated_weight:
+#                 row.capped_amount = flt(calculated_weight * row.capped_rate)
+
+#             if getattr(row, "maximum_cap", 0) == 1:
+#                 row.duty_drawback_amount = min(
+#                     duty_drawback_amount,
+#                     row.capped_amount if row.capped_amount else duty_drawback_amount
+#                 )
+#             else:
+#                 row.duty_drawback_amount = duty_drawback_amount
+
+#         total_duty_drawback += flt(row.duty_drawback_amount)
+
+#     self.total_duty_drawback = total_duty_drawback
+
+
+# # ------------------- MEIS / RODTEP -------------------
+
+# def meis_calculation(self):
+#     if frappe.db.get_value('Address', self.customer_address, 'country') == "India":
+#         return
+
+#     total_meis = 0.0
+
+#     for row in self.items:
+#         conversion_factor = frappe.db.get_value(
+#             "UOM Conversion Detail",
+#             {"parent": row.item_code, "uom": row.uom},
+#             "conversion_factor"
+#         ) or 1.0
+
+#         calculated_weight = flt(row.qty * conversion_factor)
+
+#         rodtep_fob = 0.0
+#         rodtep_kg = 0.0
+
+#         if row.fob_value and row.meis_rate:
+#             rodtep_fob = flt(row.fob_value * row.meis_rate / 100)
+
+#         if calculated_weight and row.custom_rodtep_capped_rate:
+#             rodtep_kg = flt(calculated_weight * row.custom_rodtep_capped_rate)
+#             row.custom_rodtep_capped_amount = rodtep_kg
+#         else:
+#             row.custom_rodtep_capped_amount = 0.0
+
+#         row.meis_value = min(rodtep_fob, rodtep_kg) if rodtep_fob and rodtep_kg else rodtep_fob or rodtep_kg or 0.0
+
+#         total_meis += flt(row.meis_value)
+
+#     self.total_meis = total_meis

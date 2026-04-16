@@ -110,12 +110,255 @@ frappe.ui.form.on("Consolidated Sales Invoice Item", {
 
 
 
+// frappe.ui.form.on('Consolidated Sales Invoice', {
+//     refresh(frm) {
+//         if (!frm.doc.__islocal && frm.doc.workflow_state === "Loading In-progress") {
+
+            
+// frm.add_custom_button(__('Split Invoice'), () => {
+//                 frappe.prompt([
+//                     {
+//                         fieldtype: 'Int',
+//                         fieldname: 'count',
+//                         label: 'Number of Splits',
+//                         default: 2,
+//                         reqd: 1
+//                     }
+//                 ], (data) => {
+//                     if (data.count <= 0) {
+//                         frappe.msgprint(__('Please enter a split count greater than 0.'));
+//                         return;
+//                     }
+
+//                     // --------------------------
+//                     // CREATE DIALOG FOR SPLIT
+//                     // --------------------------
+//                     let d = new frappe.ui.Dialog({
+//                         title: "Split Invoice Batch Allocation",
+//                         size: "extra-large",
+//                         fields: [
+//                             { fieldtype: "HTML", fieldname: "batch_info" },
+//                             { fieldtype: "HTML", fieldname: "invoice_tables" }
+//                         ],
+//                         primary_action_label: "Create Split Invoices",
+//                         primary_action() {
+//                             let split_data = [];
+
+//                             $(".batch-row").each(function () {
+//                                  {
+//                                     split_data.push({
+//                                         invoice: parseInt($(this).attr("data-invoice")),
+//                                         batch: $(this).find(".batch").val(),
+//                                         qty: parseFloat($(this).find(".qty").val() || 0),
+//                                         item_code: frm.doc.items[0].item_code
+//                                     });
+//                                 }
+//                             });
+
+//                             frappe.call({
+//                             method: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.split_consolidated_invoice",
+//                             args: {
+//                                 source_name: frm.doc.name,
+//                                 split_count: data.count,
+//                                 split_data: split_data
+//                             },
+//                             freeze: true,
+//                             freeze_message: __("Creating Split Invoices..."),
+//                             callback(r) {
+
+//                                 if (!r.exc && r.message) {
+
+//                                     frappe.show_alert({
+//                                         message: __("{0} Sales Invoices created.", [r.message.length]),
+//                                         indicator: 'green'
+//                                     });
+
+//                                     d.hide();   
+
+//                                     frappe.set_route("List", "Sales Invoice", {
+//                                         "custom_consolidated_invoice_reference": frm.doc.name
+//                                     });
+//                                 }
+
+//                             }
+//                         });
+//                         }
+//                     });
+
+//                     // --------------------------
+//                     // GET BATCHES FROM BUNDLE
+//                     // --------------------------
+//                     let bundle = frm.doc.items[0].serial_and_batch_bundle;
+
+//                     if (!bundle){
+//                         frappe.msgprint("No Serial and Batch Bundle found");
+//                         return;
+//                     }
+
+//                     frappe.call({
+//                         method: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.get_serial_batch_bundle",
+//                         args: {
+//                             bundle_name: bundle
+//                         },
+//                         callback: function(r){
+//                             if(!r.message) return;
+
+//                             // Already formatted from backend
+//                             d.batches = r.message;
+
+//                             render_tables(d.batches);
+//                         }
+//                     });
+
+//                     // --------------------------
+//                     // RENDER TABLES
+//                     // --------------------------
+//                     function render_tables(batches){
+//                         let batch_html = `
+//                             <h4>Batches Used in Consolidated Invoice</h4>
+//                             <table class="table table-bordered">
+//                                 <tr><th>Batch</th><th>Qty</th></tr>`;
+//                         batches.forEach(b => {
+//                             batch_html += `<tr><td>${b.batch_no}</td><td>${b.qty}</td></tr>`;
+//                         });
+//                         batch_html += "</table>";
+//                         d.fields_dict.batch_info.$wrapper.html(batch_html);
+
+//                         let invoice_html = "";
+//                         for (let i = 1; i <= data.count; i++) {
+//                             invoice_html += `
+//                                 <h4>Invoice ${i}</h4>
+//                                 <table class="table table-bordered invoice-table" data-invoice="${i}">
+//                                     <thead>
+//                                         <tr>
+//                                             <th style="width:60px"></th>
+//                                             <th>Batch No</th>
+//                                             <th>Quantity</th>
+//                                         </tr>
+//                                     </thead>
+//                                     <tbody>`;
+//                             batches.forEach(b => {
+//                                 let split_qty = (b.qty / data.count).toFixed(2);
+//                                 invoice_html += `
+//                                     <tr class="batch-row" data-invoice="${i}">
+//                                         <td><input type="checkbox" class="select-row"></td>
+//                                         <td><input class="form-control batch" value="${b.batch_no}"></td>
+//                                         <td><input class="form-control qty" type="number" value="${split_qty}"></td>
+//                                     </tr>`;
+//                             });
+//                             invoice_html += `
+//                                     </tbody>
+//                                 </table>
+//                                 <div style="margin-bottom:10px;">
+//                                     <button class="btn btn-sm btn-primary add-row" data-invoice="${i}">Add Row</button>
+//                                     <button class="btn btn-sm btn-danger delete-row" data-invoice="${i}" style="display:none;">Delete Row</button>
+//                                 </div>`;
+//                         }
+//                         d.fields_dict.invoice_tables.$wrapper.html(invoice_html);
+//                         d.show();
+//                     }
+
+//                     // --------------------------
+//                     // ADD ROW
+//                     // --------------------------
+//                     d.$wrapper.off("click", ".add-row").on("click", ".add-row", function() {
+//                     let invoice = $(this).data("invoice");
+
+//                     // Build batch options
+//                     let batch_options = d.batches.map(b => `<option value="${b.batch_no}" data-qty="${b.qty}">${b.batch_no}</option>`).join("");
+
+//                     let row = `<tr class="batch-row" data-invoice="${invoice}">
+//                         <td><input type="checkbox" class="select-row"></td>
+//                         <td>
+//                             <select class="form-control batch">
+//                                 <option value=""></option>
+//                                 ${batch_options}
+//                             </select>
+//                         </td>
+//                         <td><input class="form-control qty" type="number" value="0"></td>
+//                     </tr>`;
+
+//                     $(`table[data-invoice="${invoice}"] tbody`).append(row);
+//                 });
+
+//                 // --------------------------
+//                 // FILL QTY ON BATCH SELECT
+//                 // --------------------------
+//                 $(document).on("change", ".batch-row .batch", function() {
+//                     let selected_batch = $(this).find("option:selected");
+//                     let qty = parseFloat(selected_batch.data("qty") || 0);
+
+//                     // Optionally divide by total split count if needed
+//                     let invoice_table = $(this).closest("table");
+//                     let split_count = invoice_table.data("invoice"); // not needed if using total qty
+//                     $(this).closest("tr").find(".qty").val(qty);
+//                 });
+
+//                     // --------------------------
+//                     // DELETE ROW
+//                     // --------------------------
+//                     $(document).on("click", ".delete-row", function(){
+//                         let invoice = $(this).data("invoice");
+//                         $(`table[data-invoice="${invoice}"] tbody tr`).each(function(){
+//                             if($(this).find(".select-row").is(":checked")){
+//                                 $(this).remove();
+//                             }
+//                         });
+
+//                         let any_selected = $(`table[data-invoice="${invoice}"] tbody .select-row:checked`).length > 0;
+//                         if(!any_selected){
+//                             $(this).hide();
+//                         }
+//                     });
+
+//                     // --------------------------
+//                     // TOGGLE DELETE BUTTON ON CHECKBOX
+//                     // --------------------------
+//                     $(document).on("change", ".select-row", function(){
+//                         let invoice = $(this).closest("table").data("invoice");
+//                         let any_selected = $(`table[data-invoice="${invoice}"] tbody .select-row:checked`).length > 0;
+//                         $(`.delete-row[data-invoice="${invoice}"]`).toggle(any_selected);
+//                     });
+
+//                 }, __('Split Parameters'), __('Split Now'));
+//             });
+//         }
+//     },
+//     contract_and_lc: function (frm) {
+//         if (frm.doc.contract_and_lc) {
+//             frappe.model.with_doc("Contract Term", frm.doc.contract_and_lc, function () {
+//                 var doc = frappe.model.get_doc("Contract Term", frm.doc.contract_and_lc)
+
+//                 frm.clear_table('sales_invoice_export_document_item')
+//                 $.each(doc.document || [], function (i, d) {
+//                     let c = frm.add_child('sales_invoice_export_document_item')
+//                     c.contract_term = doc.name;
+//                     c.export_document = d.export_document
+//                     c.number = d.number
+//                     c.copy = d.copy
+//                 })
+
+//                 frm.clear_table('sales_invoice_contract_term_check')
+//                 $.each(doc.contract_term_check || [], function (i, d) {
+//                     let c = frm.add_child('sales_invoice_contract_term_check')
+//                     c.contract_term = doc.name;
+//                     c.document_check = d.document_check
+//                 })
+
+//                 frm.refresh_field('sales_invoice_export_document_item')
+//                 frm.refresh_field('sales_invoice_contract_term_check')
+//             });
+//         }
+//     },
+// });
+
 frappe.ui.form.on('Consolidated Sales Invoice', {
+
     refresh(frm) {
         if (!frm.doc.__islocal && frm.doc.workflow_state === "Loading In-progress") {
 
-            
-frm.add_custom_button(__('Split Invoice'), () => {
+            frm.add_custom_button(__('Split Invoice'), () => {
+
                 frappe.prompt([
                     {
                         fieldtype: 'Int',
@@ -125,232 +368,123 @@ frm.add_custom_button(__('Split Invoice'), () => {
                         reqd: 1
                     }
                 ], (data) => {
+
                     if (data.count <= 0) {
-                        frappe.msgprint(__('Please enter a split count greater than 0.'));
+                        frappe.msgprint(__('Please enter valid split count'));
                         return;
                     }
 
-                    // --------------------------
-                    // CREATE DIALOG FOR SPLIT
-                    // --------------------------
                     let d = new frappe.ui.Dialog({
-                        title: "Split Invoice Batch Allocation",
-                        size: "extra-large",
+                        title: "Enter Sales Invoice Names",
+                        size: "large",
                         fields: [
-                            { fieldtype: "HTML", fieldname: "batch_info" },
-                            { fieldtype: "HTML", fieldname: "invoice_tables" }
+                            { fieldtype: "HTML", fieldname: "table_html" }
                         ],
                         primary_action_label: "Create Split Invoices",
                         primary_action() {
-                            let split_data = [];
 
-                            $(".batch-row").each(function () {
-                                 {
-                                    split_data.push({
-                                        invoice: parseInt($(this).attr("data-invoice")),
-                                        batch: $(this).find(".batch").val(),
-                                        qty: parseFloat($(this).find(".qty").val() || 0),
-                                        item_code: frm.doc.items[0].item_code
-                                    });
-                                }
+                            let invoice_names = [];
+
+                            $(".split-row").each(function () {
+                                invoice_names.push({
+                                    invoice: $(this).data("idx"),
+                                    invoice_name: $(this).find(".invoice-name").val()
+                                });
                             });
+
+                            let empty = invoice_names.some(d => !d.invoice_name);
+                            if (empty) {
+                                frappe.msgprint("All invoice names are required");
+                                return;
+                            }
 
                             frappe.call({
-                            method: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.split_consolidated_invoice",
-                            args: {
-                                source_name: frm.doc.name,
-                                split_count: data.count,
-                                split_data: split_data
-                            },
-                            freeze: true,
-                            freeze_message: __("Creating Split Invoices..."),
-                            callback(r) {
+                                method: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.split_consolidated_invoice",
+                                args: {
+                                    source_name: frm.doc.name,
+                                    split_count: data.count,
+                                    invoice_names: invoice_names
+                                },
+                                freeze: true,
+                                freeze_message: __("Creating Split Invoices..."),
+                                callback(r) {
+                                    if (!r.exc) {
 
-                                if (!r.exc && r.message) {
+                                        frappe.show_alert({
+                                            message: __("{0} Sales Invoices created", [r.message.length]),
+                                            indicator: "green"
+                                        });
 
-                                    frappe.show_alert({
-                                        message: __("{0} Sales Invoices created.", [r.message.length]),
-                                        indicator: 'green'
-                                    });
+                                        d.hide();
 
-                                    d.hide();   
-
-                                    frappe.set_route("List", "Sales Invoice", {
-                                        "custom_consolidated_invoice_reference": frm.doc.name
-                                    });
+                                        frappe.set_route("List", "Sales Invoice", {
+                                            custom_consolidated_invoice_reference: frm.doc.name
+                                        });
+                                    }
                                 }
-
-                            }
-                        });
-                        }
-                    });
-
-                    // --------------------------
-                    // GET BATCHES FROM BUNDLE
-                    // --------------------------
-                    let bundle = frm.doc.items[0].serial_and_batch_bundle;
-
-                    if (!bundle){
-                        frappe.msgprint("No Serial and Batch Bundle found");
-                        return;
-                    }
-
-                    frappe.call({
-                        method: "cit_exim.cit_exim.doctype.consolidated_sales_invoice.consolidated_sales_invoice.get_serial_batch_bundle",
-                        args: {
-                            bundle_name: bundle
-                        },
-                        callback: function(r){
-                            if(!r.message) return;
-
-                            // Already formatted from backend
-                            d.batches = r.message;
-
-                            render_tables(d.batches);
-                        }
-                    });
-
-                    // --------------------------
-                    // RENDER TABLES
-                    // --------------------------
-                    function render_tables(batches){
-                        let batch_html = `
-                            <h4>Batches Used in Consolidated Invoice</h4>
-                            <table class="table table-bordered">
-                                <tr><th>Batch</th><th>Qty</th></tr>`;
-                        batches.forEach(b => {
-                            batch_html += `<tr><td>${b.batch_no}</td><td>${b.qty}</td></tr>`;
-                        });
-                        batch_html += "</table>";
-                        d.fields_dict.batch_info.$wrapper.html(batch_html);
-
-                        let invoice_html = "";
-                        for (let i = 1; i <= data.count; i++) {
-                            invoice_html += `
-                                <h4>Invoice ${i}</h4>
-                                <table class="table table-bordered invoice-table" data-invoice="${i}">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:60px"></th>
-                                            <th>Batch No</th>
-                                            <th>Quantity</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                            batches.forEach(b => {
-                                let split_qty = (b.qty / data.count).toFixed(2);
-                                invoice_html += `
-                                    <tr class="batch-row" data-invoice="${i}">
-                                        <td><input type="checkbox" class="select-row"></td>
-                                        <td><input class="form-control batch" value="${b.batch_no}"></td>
-                                        <td><input class="form-control qty" type="number" value="${split_qty}"></td>
-                                    </tr>`;
                             });
-                            invoice_html += `
-                                    </tbody>
-                                </table>
-                                <div style="margin-bottom:10px;">
-                                    <button class="btn btn-sm btn-primary add-row" data-invoice="${i}">Add Row</button>
-                                    <button class="btn btn-sm btn-danger delete-row" data-invoice="${i}" style="display:none;">Delete Row</button>
-                                </div>`;
                         }
-                        d.fields_dict.invoice_tables.$wrapper.html(invoice_html);
-                        d.show();
+                    });
+
+                    let html = `
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Split No</th>
+                                <th>Sales Invoice Name</th>
+                            </tr>`;
+
+                    for (let i = 1; i <= data.count; i++) {
+                        html += `
+                            <tr class="split-row" data-idx="${i}">
+                                <td>${i}</td>
+                                <td>
+                                    <input type="text" class="form-control invoice-name"
+                                        placeholder="Enter Invoice Name">
+                                </td>
+                            </tr>`;
                     }
 
-                    // --------------------------
-                    // ADD ROW
-                    // --------------------------
-                    d.$wrapper.off("click", ".add-row").on("click", ".add-row", function() {
-                    let invoice = $(this).data("invoice");
+                    html += `</table>`;
 
-                    // Build batch options
-                    let batch_options = d.batches.map(b => `<option value="${b.batch_no}" data-qty="${b.qty}">${b.batch_no}</option>`).join("");
+                    d.fields_dict.table_html.$wrapper.html(html);
+                    d.show();
 
-                    let row = `<tr class="batch-row" data-invoice="${invoice}">
-                        <td><input type="checkbox" class="select-row"></td>
-                        <td>
-                            <select class="form-control batch">
-                                <option value=""></option>
-                                ${batch_options}
-                            </select>
-                        </td>
-                        <td><input class="form-control qty" type="number" value="0"></td>
-                    </tr>`;
-
-                    $(`table[data-invoice="${invoice}"] tbody`).append(row);
                 });
 
-                // --------------------------
-                // FILL QTY ON BATCH SELECT
-                // --------------------------
-                $(document).on("change", ".batch-row .batch", function() {
-                    let selected_batch = $(this).find("option:selected");
-                    let qty = parseFloat(selected_batch.data("qty") || 0);
-
-                    // Optionally divide by total split count if needed
-                    let invoice_table = $(this).closest("table");
-                    let split_count = invoice_table.data("invoice"); // not needed if using total qty
-                    $(this).closest("tr").find(".qty").val(qty);
-                });
-
-                    // --------------------------
-                    // DELETE ROW
-                    // --------------------------
-                    $(document).on("click", ".delete-row", function(){
-                        let invoice = $(this).data("invoice");
-                        $(`table[data-invoice="${invoice}"] tbody tr`).each(function(){
-                            if($(this).find(".select-row").is(":checked")){
-                                $(this).remove();
-                            }
-                        });
-
-                        let any_selected = $(`table[data-invoice="${invoice}"] tbody .select-row:checked`).length > 0;
-                        if(!any_selected){
-                            $(this).hide();
-                        }
-                    });
-
-                    // --------------------------
-                    // TOGGLE DELETE BUTTON ON CHECKBOX
-                    // --------------------------
-                    $(document).on("change", ".select-row", function(){
-                        let invoice = $(this).closest("table").data("invoice");
-                        let any_selected = $(`table[data-invoice="${invoice}"] tbody .select-row:checked`).length > 0;
-                        $(`.delete-row[data-invoice="${invoice}"]`).toggle(any_selected);
-                    });
-
-                }, __('Split Parameters'), __('Split Now'));
             });
         }
     },
-    contract_and_lc: function (frm) {
+
+    contract_and_lc(frm) {
         if (frm.doc.contract_and_lc) {
+
             frappe.model.with_doc("Contract Term", frm.doc.contract_and_lc, function () {
-                var doc = frappe.model.get_doc("Contract Term", frm.doc.contract_and_lc)
+                let doc = frappe.model.get_doc("Contract Term", frm.doc.contract_and_lc);
 
-                frm.clear_table('sales_invoice_export_document_item')
+                frm.clear_table('sales_invoice_export_document_item');
                 $.each(doc.document || [], function (i, d) {
-                    let c = frm.add_child('sales_invoice_export_document_item')
+                    let c = frm.add_child('sales_invoice_export_document_item');
                     c.contract_term = doc.name;
-                    c.export_document = d.export_document
-                    c.number = d.number
-                    c.copy = d.copy
-                })
+                    c.export_document = d.export_document;
+                    c.number = d.number;
+                    c.copy = d.copy;
+                });
 
-                frm.clear_table('sales_invoice_contract_term_check')
+                frm.clear_table('sales_invoice_contract_term_check');
                 $.each(doc.contract_term_check || [], function (i, d) {
-                    let c = frm.add_child('sales_invoice_contract_term_check')
+                    let c = frm.add_child('sales_invoice_contract_term_check');
                     c.contract_term = doc.name;
-                    c.document_check = d.document_check
-                })
+                    c.document_check = d.document_check;
+                });
 
-                frm.refresh_field('sales_invoice_export_document_item')
-                frm.refresh_field('sales_invoice_contract_term_check')
+                frm.refresh_field('sales_invoice_export_document_item');
+                frm.refresh_field('sales_invoice_contract_term_check');
             });
         }
-    },
+    }
+
 });
+
 
 
 //----------------producer table--------------------------
