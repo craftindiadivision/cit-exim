@@ -418,3 +418,34 @@ function apply_fifo(frm) {
 
     frm.refresh_field("references");
 }
+
+
+
+
+frappe.ui.form.on('Payment Entry', {
+
+    onload: function(frm) {
+        set_consolidated_invoice_filter(frm);
+    },
+
+    refresh: function(frm) {
+        set_consolidated_invoice_filter(frm);
+    },
+
+    party: function(frm) {
+        frm.set_value("custom_consolidated_sales_invoice", null);
+        set_consolidated_invoice_filter(frm);
+    }
+
+});
+
+function set_consolidated_invoice_filter(frm) {
+    frm.set_query("custom_consolidated_sales_invoice", function(doc) {
+        return {
+            query: "cit_exim.cit_exim.doc_events.payment_entry.get_filtered_consolidated_invoices",
+            filters: {
+                party: doc.party
+            }
+        };
+    });
+}

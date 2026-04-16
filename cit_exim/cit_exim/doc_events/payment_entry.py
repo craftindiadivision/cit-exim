@@ -404,3 +404,43 @@ def validate(doc, method):
             "outstanding_amount": outstanding,
             "allocated_amount": allocated
         })
+
+
+
+import frappe
+
+@frappe.whitelist()
+def get_filtered_consolidated_invoices(doctype, txt, searchfield, start, page_len, filters):
+
+    party = filters.get("party")
+
+    conditions = [
+        "docstatus = 1",
+        "TRIM(workflow_state) = %s",
+        "name LIKE %s"
+    ]
+
+    values = [
+        "Document Submitted & Awaiting Payments",
+        f"%{txt}%"
+    ]
+
+    # 🔴 IMPORTANT: apply party filter ONLY if field exists in your doctype
+    # change 'customer' if your Consolidated Sales Invoice uses different field
+    if party:
+        conditions.append("customer = %s")
+        values.append(party)
+
+    where_clause = " AND ".join(conditions)
+
+    values.extend([start, page_len])
+
+    return frappe.db.sql(f"""
+        SELECT
+            name,
+            name as label
+        FROM `tabConsolidated Sales Invoice`
+        WHERE {where_clause}
+        ORDER BY modified DESC
+        LIMIT %s, %s
+    """, values)
