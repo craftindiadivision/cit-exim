@@ -782,22 +782,59 @@ def sync_workflow_from_sales_invoice(doc, method):
         # ---------------------------------------
         # CONTAINER DETAILS SYNC
         # ---------------------------------------
-        for container in doc.container_detail:
+        # for container in doc.container_detail:
 
-            for row in consolidated_doc.container_detail:
+        #     for row in consolidated_doc.container_detail:
 
-                if row.lot_no != container.lot_no:
+        #         if row.lot_no != container.lot_no:
+        #             continue
+
+        #         row.container_no = container.container_no
+        #         row.size = container.size
+        #         row.lot_no = container.lot_no
+        #         row.shipping_line_seal_no = container.shipping_line_seal_no
+        #         row.nt_wt_kgs = container.nt_wt_kgs
+        #         row.gr_wt_kgs = container.gr_wt_kgs
+        #         row.no_of_packages = container.no_of_packages
+        #         row.manufacturing_date = container.manufacturing_date
+        #         row.batch_name = container.batch_name
+
+        # Step 1: Build existing keys in consolidated (to avoid duplicates)
+        existing_containers = set()
+
+        for row in consolidated_doc.container_detail:
+            key = (
+                row.lot_no,
+                row.container_no
+            )
+            existing_containers.add(key)
+
+        # Step 2: ONLY APPEND from split invoices into consolidated
+        for inv in invoices:
+            for c in inv.container_detail:
+
+                key = (
+                    c.lot_no,
+                    c.container_no
+                )
+
+                # SKIP if already exists in consolidated
+                if key in existing_containers:
                     continue
 
-                row.container_no = container.container_no
-                row.size = container.size
-                row.lot_no = container.lot_no
-                row.shipping_line_seal_no = container.shipping_line_seal_no
-                row.nt_wt_kgs = container.nt_wt_kgs
-                row.gr_wt_kgs = container.gr_wt_kgs
-                row.no_of_packages = container.no_of_packages
-                row.manufacturing_date = container.manufacturing_date
-                row.batch_name = container.batch_name
+                consolidated_doc.append("container_detail", {
+                    "lot_no": c.lot_no,
+                    "container_no": c.container_no,
+                    "size": c.size,
+                    "shipping_line_seal_no": c.shipping_line_seal_no,
+                    "nt_wt_kgs": c.nt_wt_kgs,
+                    "gr_wt_kgs": c.gr_wt_kgs,
+                    "no_of_packages": c.no_of_packages,
+                    "manufacturing_date": c.manufacturing_date,
+                    "batch_name": c.batch_name
+                })
+
+                existing_containers.add(key)
 
         # ---------------------------------------
         # CONTRACT TERMS SYNC

@@ -983,3 +983,6 @@ frappe.ui.form.on('Consolidated Sales Invoice', {
         });
     }
 });
+
+
+

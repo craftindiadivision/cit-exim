@@ -162,9 +162,10 @@ class ConsolidatedSalesInvoice(Document):
     def before_save(self):
         self.run_core_calculations()
         
+        
 
 
-# 
+
 
     def run_core_calculations(self):
         import frappe
@@ -358,6 +359,26 @@ class ConsolidatedSalesInvoice(Document):
                 "base_tax_amount": tax.base_tax_amount,
                 "base_total": tax.base_total
             })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
     def on_update_after_submit(self):
         import frappe
         from frappe.utils import nowdate
