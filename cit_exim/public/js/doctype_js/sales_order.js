@@ -1373,6 +1373,7 @@ function create_consolidated_invoice(frm) {
                 new_doc.plc_conversion_rate = frm.doc.conversion_rate;
                 new_doc.custom_producer_list = frm.doc.custom_producer_list;
                 new_doc.custom_producer_table = frm.doc.custom_producer_table;
+                new_doc.update_stock = 0;
 
                 // Address & GST
                 new_doc.customer_address = frm.doc.customer_address;

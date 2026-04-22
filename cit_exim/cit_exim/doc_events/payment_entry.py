@@ -486,7 +486,7 @@ def on_submit_update_sales_invoice(doc, method=None):
 
         #  FULL PAYMENT CHECK
         if flt(si.outstanding_amount) == 0:
-
+            
             # 🔹 Update Sales Invoice
             si.db_set("workflow_state", "Completed Shipment")
             si.db_set("custom_work_flow_status", "Completed Shipment")
@@ -755,10 +755,10 @@ def get_filtered_consolidated_invoices(doctype, txt, searchfield, start, page_le
     party = filters.get("party")
 
     conditions = [
-        "docstatus = 1",
-        "TRIM(workflow_state) = %s",
-        "name LIKE %s"
-    ]
+    "docstatus IN (0, 1)",
+    "TRIM(workflow_state) = %s",
+    "name LIKE %s"
+]
 
     values = [
         "Document Submitted & Awaiting Payments",
