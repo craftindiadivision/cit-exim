@@ -215,21 +215,117 @@ class VehicleQueue(Document):
 
         #     row.amount = net_weight * rate
         #     self.difference_in_amount = supplier_invoice_amount - row.amount
+    # def on_submit(self):
+    #     # CONDITION CHECK
+    #     if self.type != "Inward":
+    #         return
+
+    #     if self.product not in ["RM-Fish Meal", "Soluble Paste", "Fish Oil"]:
+    #         return
+
+    #     # if not self.purchase_order:
+    #     #     frappe.throw("Purchase Order is mandatory to create Purchase Receipt")
+
+    #     self.create_purchase_receipt()
+
+    #     # -------------------------------------------------
+    #     # CONDITION CHECK
+    #     # -------------------------------------------------
+    #     if self.type != "Outward":
+    #         return
+
+    #     if self.product != "FG-Fish Meal":
+    #         return
+
+    #     self.create_delivery_note()
+    #     print('delivery note is workig ..')
+
     def on_submit(self):
-        # CONDITION CHECK
-        if self.type != "Inward":
-            return
 
-        if self.product not in ["RM-Fish Meal", "Soluble Paste", "Fish Oil"]:
-            return
+        # -----------------------------
+        # INWARD → PURCHASE RECEIPT
+        # -----------------------------
+        if self.type == "Inward":
 
-        # if not self.purchase_order:
-        #     frappe.throw("Purchase Order is mandatory to create Purchase Receipt")
+            if self.product in ["RM-Fish Meal", "Soluble Paste", "Fish Oil"]:
+                self.create_purchase_receipt()
 
-        self.create_purchase_receipt()
+        # -----------------------------
+        # OUTWARD → DELIVERY NOTE
+        # -----------------------------
+        elif self.type == "Outward":
+
+            if self.product == "FG-Fish Meal":
+                self.create_delivery_note()
+                print("Delivery Note is working ..")
+
+
     def on_cancel(self):
         self.delete_linked_purchase_receipt()
         self.delete_linked_purchase_voucher()
+
+
+
+
+    def create_delivery_note(self):
+
+        import frappe
+        from frappe.utils import getdate, get_time, nowdate
+
+        dn = frappe.new_doc("Delivery Note")
+
+        dn.customer = self.customer
+        dn.company = self.company
+        dn.posting_date = getdate(self.date) if self.date else nowdate()
+        dn.posting_time = get_time(self.out_time) if self.out_time else None
+        dn.custom_vehicle_queue = self.name
+        dn.custom_token_number = self.token_number
+        dn.cost_center = self.cost_center
+        dn.vehicle_no = self.vehicle_no
+        dn.custom_item_group = self.product
+        # dn.currency = "USD"
+        dn.currency = frappe.db.get_value("Customer", self.customer, "default_currency")
+        dn.set_warehouse = self.source_location
+        dn.branch = self.branch
+        dn.custom_vehicle_queue = self.name
+
+        # -------------------------------------------------
+        # ITEM MAPPING
+        # -------------------------------------------------
+        for vq_item in self.item:
+
+            item_code = vq_item.item
+
+            dn_item = dn.append("items", {})
+
+            dn_item.item_code = item_code
+            dn_item.qty = self.net_weight   # same logic as your PR
+            dn_item.rate = vq_item.rate or 0
+            dn_item.uom = frappe.db.get_value("Item", item_code, "stock_uom")
+            dn_item.stock_uom = dn_item.uom
+            dn_item.warehouse = self.warehouse
+
+            # Optional custom link
+            dn_item.custom_vehicle_queue_item_ref = vq_item.name
+
+            # Item group / template fetch (same pattern as your PR)
+            item_group = frappe.db.get_value("Item", item_code, "item_group")
+
+            dn_item.custom_test_variable_template = frappe.db.get_value(
+                "Item Group",
+                item_group,
+                "custom_test_variable_template"
+            )
+
+        dn.insert(ignore_permissions=True)
+
+        frappe.msgprint(
+            f"Delivery Note <b>{dn.name}</b> created in Draft from Vehicle Queue"
+        )
+
+
+
+
 
     def create_purchase_receipt(self):
 
@@ -493,6 +589,8 @@ def create_purchase_voucher(doc, method=None):
     # Ensure submit state
     if doc.docstatus != 1:
         return
+    if doc.type == "Outward":
+        return
 
     # Mandatory validations
     if not doc.supplier:
@@ -562,6 +660,9 @@ def create_purchase_voucher(doc, method=None):
         f"Purchase Voucher Draft Created : <b>{pv.name}</b>",
         alert=True
     )
+
+
+
 
 
 # @frappe.whitelist()

@@ -277,7 +277,7 @@ fixtures=[
            "Sales Invoice-mode_of_transport-options","Split Sales Invoice-container_size-options","Sales Invoice Item-main-field_order","Sales Invoice Item-capped_rate-label","Sales Invoice Item-capped_amount-depends_on",
            "Sales Invoice Item-effective_rate-depends_on","Sales Invoice Item-capped_rate-depends_on","Sales Invoice Item-maximum_cap-hidden","Sales Invoice-main-field_order","Container Details-batch_no-hidden","Payment Term-due_date_based_on-options","Payment Schedule-due_date_based_on-options","Payment Terms Template Detail-main-field_order","Payment Term-due_date_based_on-options","Payment Terms Template Detail-due_date_based_on-options",
            "Payment Terms Template Detail-main-field_order","Payment Schedule-main-field_order","Payment Schedule-due_date_based_on-options","Sales Invoice-main-field_order","Sales Order-main-links_order","Sales Order-main-field_order","Sales Invoice-is_export_with_gst-hidden","Sales Order-is_export_with_gst-hidden",
-           "Sales Order-main-links_order","Sales Order-main-field_order","Sales Order-main-links_order","Sales Order-main-field_order","Sales Order-main-links_order","Sales Order-main-field_order","Sales Invoice-main-field_order","Sales Order-main-links_order","Consolidated Sales Invoice-custom_consignee-options"
+           "Sales Order-main-links_order","Sales Order-main-field_order","Sales Order-main-links_order","Sales Order-main-field_order","Sales Order-main-links_order","Sales Order-main-field_order","Sales Invoice-main-field_order","Sales Order-main-links_order","Consolidated Sales Invoice-custom_consignee-options","Delivery Note-main-field_order"
         
            
         ]]
@@ -424,7 +424,8 @@ doc_events = {
 
 
      "Vehicle Queue": {
-        "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_voucher"
+        "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_voucher",
+        # "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.on_submit"
     }
 
     #    "Vehicle Queue": {

@@ -27,6 +27,7 @@
   "weighment_location",
   "vehicle_no",
   "driver_name",
+  "source_location",
   "accounting_dimensions_section",
   "cost_center",
   "column_break_odxd",
@@ -113,8 +114,7 @@
   {
    "fieldname": "token_number",
    "fieldtype": "Data",
-   "label": "Weighing Bridge Ticket Number",
-   "unique": 1
+   "label": "Weighing Bridge Ticket Number"
   },
   {
    "fieldname": "weigh_bridge_name",
@@ -376,6 +376,12 @@
    "fieldname": "no_of_supplier_packages",
    "fieldtype": "Float",
    "label": "Total No. of Supplier Packages"
+  },
+  {
+   "fieldname": "source_location",
+   "fieldtype": "Link",
+   "label": "Source Location",
+   "options": "Warehouse"
   }
  ],
  "grid_page_length": 50,
@@ -389,9 +395,13 @@
   {
    "link_doctype": "Purchase Voucher",
    "link_fieldname": "vehicle_queue"
+  },
+  {
+   "link_doctype": "Delivery Note",
+   "link_fieldname": "custom_vehicle_queue"
   }
  ],
- "modified": "2026-04-06 15:29:00.636990",
+ "modified": "2026-04-23 12:51:30.736729",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",
