@@ -855,3 +855,159 @@ function calculate_po_details(frm, cdt, cdn) {
     frm.refresh_field('items');
 
 }
+frappe.ui.form.on("Vehicle Queue", {
+    refresh(frm) {
+        if (frm.doc.docstatus !== 0) return;
+    frm.add_custom_button("Sales Contract", () => {
+    if (!frm.doc.customer) {
+        frappe.throw("Please select Customer");
+    }
+
+    const dialog = new frappe.ui.Dialog({
+        title: "Select Sales Contract Items",
+        size: "extra-large",
+        fields: [
+            {
+                fieldname: "sc_items",
+                fieldtype: "Table",
+                cannot_add_rows: true,
+                in_place_edit: false,
+                fields: [
+                    {
+                        fieldtype: "Link",
+                        fieldname: "sales_order",
+                        label: "Sales Contract",
+                        options: "Sales Order",
+                        in_list_view: 1,
+                        read_only: 1,
+                        columns: 2
+                    },
+                    {
+                        fieldtype: "Date",
+                        fieldname: "transaction_date",
+                        label: "Contract Date",
+                        in_list_view: 1,
+                        read_only: 1,
+                        columns: 1
+                    },
+                    {
+                        fieldtype: "Data",
+                        fieldname: "customer",
+                        label: "Customer",
+                        in_list_view: 1,
+                        read_only: 1,
+                        columns: 2
+                    },
+                    {
+                        fieldtype: "Link",
+                        fieldname: "item_code",
+                        label: "Item Code",
+                        options: "Item",
+                        in_list_view: 1,
+                        read_only: 1,
+                        columns: 2
+                    },
+                    {
+                        fieldtype: "Data",
+                        fieldname: "item_name",
+                        label: "Item Name",
+                        read_only: 1,
+                        columns: 2
+                    },
+                    {
+                        fieldtype: "Float",
+                        fieldname: "ordered_qty",
+                        label: "Contract Qty",
+                        read_only: 1,
+                        columns: 1
+                    },
+                    {
+                        fieldtype: "Float",
+                        fieldname: "delivered_qty",
+                        label: "Delivered Qty",
+                        read_only: 1,
+                        columns: 1
+                    },
+                    {
+                        fieldtype: "Float",
+                        fieldname: "pending_qty",
+                        label: "Pending Qty",
+                        in_list_view: 1,
+                        read_only: 1,
+                        columns: 1
+                    },
+                    {
+                        fieldtype: "Currency",
+                        fieldname: "rate",
+                        label: "Price",
+                        read_only: 1,
+                        columns: 1
+                    }
+                ]
+            }
+        ],
+
+        primary_action_label: "Add Items",
+        primary_action() {
+            const grid = dialog.fields_dict.sc_items.grid;
+            const selected = grid.get_selected_children();
+
+            if (!selected.length) {
+                frappe.msgprint("Please select at least one item");
+                return;
+            }
+
+            selected.forEach(row => {
+                let child = frm.add_child("item");
+
+                child.sales_contract = row.sales_contract;
+
+                frappe.model.set_value(child.doctype, child.name, "item", row.item_code);
+                frappe.model.set_value(child.doctype, child.name, "rate", row.rate);
+                frappe.model.set_value(child.doctype, child.name, "sales_contract", row.sales_order);
+            });
+
+            frm.refresh_field("item");
+            dialog.hide();
+        }
+    });
+
+    // 🔥 UI Fix (same as PO)
+    setTimeout(() => {
+        dialog.$wrapper.find('[data-fieldname="sc_items"] .grid-body').css({
+            "overflow-x": "auto",
+            "overflow-y": "auto"
+        });
+
+        dialog.$wrapper.find('[data-fieldname="sc_items"] .grid-body .rows').css({
+            "min-width": "1200px"
+        });
+
+        dialog.$wrapper.find('.modal-dialog').css({
+            "width": "95vw",
+            "max-width": "1400px"
+        });
+
+    }, 300);
+
+    // Fetch data
+    frappe.call({
+        method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_sc_items",
+        args: {
+            customer: frm.doc.customer,
+            company: frm.doc.company
+        },
+        callback(r) {
+            if (r.message?.length) {
+                dialog.fields_dict.sc_items.df.data = r.message;
+                dialog.fields_dict.sc_items.grid.refresh();
+                dialog.show();
+            } else {
+                frappe.msgprint("No pending Sales Contracts found");
+            }
+        }
+    });
+
+}, __("Get Items From"));
+ }
+});

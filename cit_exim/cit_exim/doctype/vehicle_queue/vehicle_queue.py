@@ -789,7 +789,7 @@ def validate_supplier_invoice_number(self):
 @frappe.whitelist()
 def get_po_item_details(purchase_order, item, net_weight=0, product=None):
 
-    # 🚫 Skip Raw Fish
+    # Skip Raw Fish
     if product == "Raw Fish":
         return {}
 
@@ -822,3 +822,46 @@ def get_po_item_details(purchase_order, item, net_weight=0, product=None):
         "received_qty": received_qty,
         "po_balance_qty": balance_qty
     }
+
+@frappe.whitelist()
+def get_pending_sc_items(customer, company):
+
+    sc_items = frappe.db.sql("""
+        SELECT
+            sc.name AS sales_order,
+            sc.transaction_date,
+            sc.customer,
+
+            sci.name AS sales_order_item,
+            sci.item_code,
+            sci.item_name,
+
+            sci.qty AS ordered_qty,
+
+            IFNULL(SUM(dni.qty), 0) AS delivered_qty,
+
+            (sci.qty - IFNULL(SUM(dni.qty), 0)) AS pending_qty,
+
+            sci.rate
+
+        FROM `tabSales Order` sc
+
+        INNER JOIN `tabSales Order Item` sci
+            ON sci.parent = sc.name
+
+        LEFT JOIN `tabDelivery Note Item` dni
+            ON dni.against_sales_order = sc.name
+            AND dni.item_code = sci.item_code
+
+        WHERE
+            sc.docstatus = 1
+            AND sc.customer = %s
+            AND sc.company = %s
+
+        GROUP BY sci.name
+
+        HAVING pending_qty > 0
+
+    """, (customer, company), as_dict=True)
+
+    return sc_items
