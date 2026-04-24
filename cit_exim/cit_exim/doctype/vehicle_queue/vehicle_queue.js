@@ -1174,6 +1174,7 @@ frappe.ui.form.on("Vehicle Queue", {
                         cannot_add_rows: true,
                         in_place_edit: false,
                         fields: [
+
                             {
                                 fieldtype: "Link",
                                 fieldname: "sales_order",
@@ -1206,9 +1207,26 @@ frappe.ui.form.on("Vehicle Queue", {
                             {
                                 fieldtype: "Float",
                                 fieldname: "ordered_qty",
-                                label: "Qty",
+                                label: "Ordered Qty",
                                 read_only: 1
                             },
+
+                            // ✔ DELIVERY FIELDS (FIXED)
+                            {
+                                fieldtype: "Float",
+                                fieldname: "delivered_qty",
+                                label: "Delivered Qty",
+                                read_only: 1,
+                                in_list_view: 1
+                            },
+                            {
+                                fieldtype: "Float",
+                                fieldname: "pending_qty",
+                                label: "Pending Qty",
+                                read_only: 1,
+                                in_list_view: 1
+                            },
+
                             {
                                 fieldtype: "Currency",
                                 fieldname: "rate",
@@ -1243,9 +1261,6 @@ frappe.ui.form.on("Vehicle Queue", {
                         return;
                     }
 
-                    // -----------------------------
-                    // CHILD TABLE MAPPING
-                    // -----------------------------
                     selected.forEach(row => {
 
                         let child = frm.add_child("item");
@@ -1254,17 +1269,15 @@ frappe.ui.form.on("Vehicle Queue", {
                         child.rate = row.rate;
                         child.billing_uom = row.uom;
 
-                        // ✔ Sales Order
+                        // ✔ Sales Order mapping
                         child.sales_contract = row.sales_order;
 
-                        // ✔ Sales Order Item (CRITICAL FIX)
+                        // ✔ CRITICAL FIX (must for ERPNext validation)
                         child.sales_contract_item = row.sales_contract_item;
 
                     });
 
-                    // -----------------------------
-                    // PARENT MAPPING
-                    // -----------------------------
+                    // ✔ PARENT MAPPING
                     frm.set_value("cost_center", selected[0].cost_center);
                     frm.set_value("branch", selected[0].branch);
                     frm.set_value("product", selected[0].custom_item_group);
@@ -1274,7 +1287,7 @@ frappe.ui.form.on("Vehicle Queue", {
                 }
             });
 
-            // fetch data
+            // FETCH DATA
             frappe.call({
                 method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_sc_items",
                 args: {
@@ -1283,11 +1296,13 @@ frappe.ui.form.on("Vehicle Queue", {
                 },
                 callback(r) {
                     if (r.message?.length) {
+
                         sc_data = r.message;
 
                         dialog.fields_dict.sc_items.df.data = sc_data;
                         dialog.fields_dict.sc_items.grid.refresh();
                         dialog.show();
+
                     } else {
                         frappe.msgprint("No pending Sales Contracts found");
                     }
@@ -1297,7 +1312,6 @@ frappe.ui.form.on("Vehicle Queue", {
         }, __("Get Items From"));
     }
 });
-
 
 
 frappe.ui.form.on("Vehicle Queue", {

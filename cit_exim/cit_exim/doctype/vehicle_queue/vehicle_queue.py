@@ -893,12 +893,10 @@ def get_po_item_details(purchase_order, item, net_weight=0, product=None):
 
 #     return sc_items
 
-import frappe
-
 @frappe.whitelist()
 def get_pending_sc_items(customer, company):
 
-    data = frappe.db.sql("""
+    return frappe.db.sql("""
         SELECT
             sc.name AS sales_order,
             sc.transaction_date,
@@ -906,27 +904,38 @@ def get_pending_sc_items(customer, company):
             sc.cost_center,
             sc.branch,
 
-            sci.name AS sales_contract_item,   -- ✅ IMPORTANT FIX
+            sci.name AS sales_contract_item,
             sci.item_code,
             sci.item_name,
             sci.uom,
             sci.qty AS ordered_qty,
             sci.rate,
-            sci.item_group AS custom_item_group
+            sci.item_group AS custom_item_group,
+
+            IFNULL(SUM(dni.qty), 0) AS delivered_qty,
+
+            (sci.qty - IFNULL(SUM(dni.qty), 0)) AS pending_qty
 
         FROM `tabSales Order` sc
+
         INNER JOIN `tabSales Order Item` sci
             ON sci.parent = sc.name
+
+        LEFT JOIN `tabDelivery Note Item` dni
+            ON dni.so_detail = sci.name
+            AND dni.docstatus = 1
 
         WHERE
             sc.docstatus = 1
             AND sc.customer = %s
             AND sc.company = %s
 
+        GROUP BY sci.name
+
+        HAVING pending_qty > 0
+
         ORDER BY sc.transaction_date DESC
     """, (customer, company), as_dict=True)
-
-    return data
 
 @frappe.whitelist()
 def get_pending_si_items(customer, company):
