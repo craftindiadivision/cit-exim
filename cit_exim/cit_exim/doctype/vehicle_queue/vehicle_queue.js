@@ -857,176 +857,446 @@ function calculate_po_details(frm, cdt, cdn) {
     frm.refresh_field('items');
 
 }
+// frappe.ui.form.on("Vehicle Queue", {
+//     refresh(frm) {
+//         if (frm.doc.docstatus !== 0) return;
+//     frm.add_custom_button("Sales Contract", () => {
+//     if (!frm.doc.customer) {
+//         frappe.throw("Please select Customer");
+//     }
+
+//     const dialog = new frappe.ui.Dialog({
+//         title: "Select Sales Contract Items",
+//         size: "extra-large",
+//         fields: [
+//             {
+//                 fieldname: "sc_items",
+//                 fieldtype: "Table",
+//                 cannot_add_rows: true,
+//                 in_place_edit: false,
+//                 fields: [
+//                     {
+//                         fieldtype: "Link",
+//                         fieldname: "sales_order",
+//                         label: "Sales Contract",
+//                         options: "Sales Order",
+//                         in_list_view: 1,
+//                         read_only: 1,
+//                         columns: 2
+//                     },
+//                     {
+//                         fieldtype: "Date",
+//                         fieldname: "transaction_date",
+//                         label: "Contract Date",
+//                         in_list_view: 1,
+//                         read_only: 1,
+//                         columns: 1
+//                     },
+//                     {
+//                         fieldtype: "Data",
+//                         fieldname: "customer",
+//                         label: "Customer",
+//                         in_list_view: 1,
+//                         read_only: 1,
+//                         columns: 2
+//                     },
+//                     {
+//                         fieldtype: "Link",
+//                         fieldname: "item_code",
+//                         label: "Item Code",
+//                         options: "Item",
+//                         in_list_view: 1,
+//                         read_only: 1,
+//                         columns: 2
+//                     },
+//                     {
+//                         fieldtype: "Data",
+//                         fieldname: "item_name",
+//                         label: "Item Name",
+//                         read_only: 1,
+//                         columns: 2
+//                     },
+//                     {
+//                         fieldtype: "Float",
+//                         fieldname: "ordered_qty",
+//                         label: "Contract Qty",
+//                         read_only: 1,
+//                         columns: 1
+//                     },
+//                     {
+//                         fieldtype: "Float",
+//                         fieldname: "delivered_qty",
+//                         label: "Delivered Qty",
+//                         read_only: 1,
+//                         columns: 1
+//                     },
+//                     {
+//                         fieldtype: "Float",
+//                         fieldname: "pending_qty",
+//                         label: "Pending Qty",
+//                         in_list_view: 1,
+//                         read_only: 1,
+//                         columns: 1
+//                     },
+//                     {
+//                         fieldtype: "Currency",
+//                         fieldname: "rate",
+//                         label: "Price",
+//                         read_only: 1,
+//                         columns: 1
+//                     },
+//                     {
+//                         fieldtype: "Data",
+//                         fieldname: "uom",
+//                         label: "UOM",
+//                         read_only: 1,
+//                         columns: 1
+//                     }
+//                 ]
+//             }
+//         ],
+
+//         primary_action_label: "Add Items",
+//         primary_action() {
+//             const grid = dialog.fields_dict.sc_items.grid;
+//             const selected = grid.get_selected_children();
+
+//             if (!selected.length) {
+//                 frappe.msgprint("Please select at least one item");
+//                 return;
+//             }
+
+//             selected.forEach(row => {
+//                 let child = frm.add_child("item");
+
+//                 child.sales_contract = row.sales_contract;
+
+//                 frappe.model.set_value(child.doctype, child.name, "item", row.item_code);
+//                 frappe.model.set_value(child.doctype, child.name, "rate", row.rate);
+//                 frappe.model.set_value(child.doctype, child.name, "billing_uom", row.uom);
+//                 frappe.model.set_value(child.doctype, child.name, "sales_contract", row.sales_order);
+                
+//             });
+
+//             frm.refresh_field("item");
+//             dialog.hide();
+//         }
+//     });
+
+//     // 🔥 UI Fix (same as PO)
+//     setTimeout(() => {
+//         dialog.$wrapper.find('[data-fieldname="sc_items"] .grid-body').css({
+//             "overflow-x": "auto",
+//             "overflow-y": "auto"
+//         });
+
+//         dialog.$wrapper.find('[data-fieldname="sc_items"] .grid-body .rows').css({
+//             "min-width": "1200px"
+//         });
+
+//         dialog.$wrapper.find('.modal-dialog').css({
+//             "width": "95vw",
+//             "max-width": "1400px"
+//         });
+
+//     }, 300);
+
+//     // Fetch data
+//     frappe.call({
+//         method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_sc_items",
+//         args: {
+//             customer: frm.doc.customer,
+//             company: frm.doc.company
+//         },
+//         callback(r) {
+//             if (r.message?.length) {
+//                 dialog.fields_dict.sc_items.df.data = r.message;
+//                 dialog.fields_dict.sc_items.grid.refresh();
+//                 dialog.show();
+//             } else {
+//                 frappe.msgprint("No pending Sales Contracts found");
+//             }
+//         }
+//     });
+
+// }, __("Get Items From"));
+//  }
+// });
+
+// frappe.ui.form.on("Vehicle Queue", {
+//     refresh(frm) {
+
+//         if (frm.doc.docstatus !== 0) return;
+
+//         frm.add_custom_button("Sales Contract", () => {
+
+//             if (!frm.doc.customer) {
+//                 frappe.throw("Please select Customer");
+//             }
+
+//             const dialog = new frappe.ui.Dialog({
+//                 title: "Select Sales Contract Items",
+//                 size: "extra-large",
+//                 fields: [
+//                     {
+//                         fieldname: "sc_items",
+//                         fieldtype: "Table",
+//                         cannot_add_rows: true,
+//                         in_place_edit: false,
+//                         fields: [
+//                             {
+//                                 fieldtype: "Link",
+//                                 fieldname: "sales_order",
+//                                 label: "Sales Contract",
+//                                 options: "Sales Order",
+//                                 in_list_view: 1,
+//                                 read_only: 1,
+//                                 columns: 2
+//                             },
+//                             {
+//                                 fieldtype: "Data",
+//                                 fieldname: "customer",
+//                                 label: "Customer",
+//                                 in_list_view: 1,
+//                                 read_only: 1
+//                             },
+//                             {
+//                                 fieldtype: "Link",
+//                                 fieldname: "item_code",
+//                                 label: "Item Code",
+//                                 options: "Item",
+//                                 in_list_view: 1,
+//                                 read_only: 1
+//                             },
+//                             {
+//                                 fieldtype: "Data",
+//                                 fieldname: "item_name",
+//                                 label: "Item Name",
+//                                 read_only: 1
+//                             },
+//                             {
+//                                 fieldtype: "Float",
+//                                 fieldname: "ordered_qty",
+//                                 label: "Qty",
+//                                 read_only: 1
+//                             },
+//                             {
+//                                 fieldtype: "Currency",
+//                                 fieldname: "rate",
+//                                 label: "Rate",
+//                                 read_only: 1
+//                             },
+//                             {
+//                                 fieldtype: "Data",
+//                                 fieldname: "uom",
+//                                 label: "UOM",
+//                                 read_only: 1
+//                             }
+//                         ]
+//                     }
+//                 ],
+
+//                 primary_action_label: "Add Items",
+//                 primary_action() {
+
+//                     const grid = dialog.fields_dict.sc_items.grid;
+//                     const selected = grid.get_selected_children();
+
+//                     if (!selected.length) {
+//                         frappe.msgprint("Please select at least one item");
+//                         return;
+//                     }
+
+//                     // ✔ Take cost_center + branch from first row (or frm.doc)
+//                     let cost_center = frm.doc.cost_center;
+//                     let branch = frm.doc.branch;
+
+//                     selected.forEach(row => {
+
+//                         let child = frm.add_child("item");
+
+//                         child.item = row.item_code;
+//                         child.rate = row.rate;
+//                         child.billing_uom = row.uom;
+//                         child.sales_contract = row.sales_order;
+
+//                     });
+
+//                     // ✔ set OUTSIDE TABLE fields
+//                     frm.set_value("cost_center", cost_center);
+//                     frm.set_value("branch", branch);
+
+//                     frm.refresh_field("item");
+//                     dialog.hide();
+//                 }
+//             });
+
+//             frappe.call({
+//                 method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_sc_items",
+//                 args: {
+//                     customer: frm.doc.customer,
+//                     company: frm.doc.company
+//                 },
+//                 callback(r) {
+//                     if (r.message?.length) {
+//                         dialog.fields_dict.sc_items.df.data = r.message;
+//                         dialog.fields_dict.sc_items.grid.refresh();
+//                         dialog.show();
+//                     } else {
+//                         frappe.msgprint("No pending Sales Contracts found");
+//                     }
+//                 }
+//             });
+
+//         }, __("Get Items From"));
+//     }
+// });
 frappe.ui.form.on("Vehicle Queue", {
     refresh(frm) {
-        if (frm.doc.docstatus !== 0) return;
-    frm.add_custom_button("Sales Contract", () => {
-    if (!frm.doc.customer) {
-        frappe.throw("Please select Customer");
-    }
 
-    const dialog = new frappe.ui.Dialog({
-        title: "Select Sales Contract Items",
-        size: "extra-large",
-        fields: [
-            {
-                fieldname: "sc_items",
-                fieldtype: "Table",
-                cannot_add_rows: true,
-                in_place_edit: false,
+        if (frm.doc.docstatus !== 0) return;
+
+        frm.add_custom_button("Sales Contract", () => {
+
+            if (!frm.doc.customer) {
+                frappe.throw("Please select Customer");
+            }
+
+            let sc_data = [];
+
+            const dialog = new frappe.ui.Dialog({
+                title: "Select Sales Contract Items",
+                size: "extra-large",
                 fields: [
                     {
-                        fieldtype: "Link",
-                        fieldname: "sales_order",
-                        label: "Sales Contract",
-                        options: "Sales Order",
-                        in_list_view: 1,
-                        read_only: 1,
-                        columns: 2
-                    },
-                    {
-                        fieldtype: "Date",
-                        fieldname: "transaction_date",
-                        label: "Contract Date",
-                        in_list_view: 1,
-                        read_only: 1,
-                        columns: 1
-                    },
-                    {
-                        fieldtype: "Data",
-                        fieldname: "customer",
-                        label: "Customer",
-                        in_list_view: 1,
-                        read_only: 1,
-                        columns: 2
-                    },
-                    {
-                        fieldtype: "Link",
-                        fieldname: "item_code",
-                        label: "Item Code",
-                        options: "Item",
-                        in_list_view: 1,
-                        read_only: 1,
-                        columns: 2
-                    },
-                    {
-                        fieldtype: "Data",
-                        fieldname: "item_name",
-                        label: "Item Name",
-                        read_only: 1,
-                        columns: 2
-                    },
-                    {
-                        fieldtype: "Float",
-                        fieldname: "ordered_qty",
-                        label: "Contract Qty",
-                        read_only: 1,
-                        columns: 1
-                    },
-                    {
-                        fieldtype: "Float",
-                        fieldname: "delivered_qty",
-                        label: "Delivered Qty",
-                        read_only: 1,
-                        columns: 1
-                    },
-                    {
-                        fieldtype: "Float",
-                        fieldname: "pending_qty",
-                        label: "Pending Qty",
-                        in_list_view: 1,
-                        read_only: 1,
-                        columns: 1
-                    },
-                    {
-                        fieldtype: "Currency",
-                        fieldname: "rate",
-                        label: "Price",
-                        read_only: 1,
-                        columns: 1
-                    },
-                    {
-                        fieldtype: "Data",
-                        fieldname: "uom",
-                        label: "UOM",
-                        read_only: 1,
-                        columns: 1
+                        fieldname: "sc_items",
+                        fieldtype: "Table",
+                        cannot_add_rows: true,
+                        in_place_edit: false,
+                        fields: [
+                            {
+                                fieldtype: "Link",
+                                fieldname: "sales_order",
+                                label: "Sales Contract",
+                                options: "Sales Order",
+                                read_only: 1,
+                                in_list_view: 1
+                            },
+                            {
+                                fieldtype: "Data",
+                                fieldname: "customer",
+                                label: "Customer",
+                                read_only: 1,
+                                in_list_view: 1
+                            },
+                            {
+                                fieldtype: "Link",
+                                fieldname: "item_code",
+                                label: "Item Code",
+                                options: "Item",
+                                read_only: 1,
+                                in_list_view: 1
+                            },
+                            {
+                                fieldtype: "Data",
+                                fieldname: "item_name",
+                                label: "Item Name",
+                                read_only: 1
+                            },
+                            {
+                                fieldtype: "Float",
+                                fieldname: "ordered_qty",
+                                label: "Qty",
+                                read_only: 1
+                            },
+                            {
+                                fieldtype: "Currency",
+                                fieldname: "rate",
+                                label: "Rate",
+                                read_only: 1
+                            },
+                            {
+                                fieldtype: "Data",
+                                fieldname: "uom",
+                                label: "UOM",
+                                read_only: 1
+                            },
+                            {
+                                fieldtype: "Data",
+                                fieldname: "custom_item_group",
+                                label: "Item Group",
+                                read_only: 1
+                            }
+                        ]
                     }
-                ]
-            }
-        ],
+                ],
 
-        primary_action_label: "Add Items",
-        primary_action() {
-            const grid = dialog.fields_dict.sc_items.grid;
-            const selected = grid.get_selected_children();
+                primary_action_label: "Add Items",
 
-            if (!selected.length) {
-                frappe.msgprint("Please select at least one item");
-                return;
-            }
+                primary_action() {
 
-            selected.forEach(row => {
-                let child = frm.add_child("item");
+                    const grid = dialog.fields_dict.sc_items.grid;
+                    const selected = grid.get_selected_children();
 
-                child.sales_contract = row.sales_contract;
+                    if (!selected.length) {
+                        frappe.msgprint("Please select at least one item");
+                        return;
+                    }
 
-                frappe.model.set_value(child.doctype, child.name, "item", row.item_code);
-                frappe.model.set_value(child.doctype, child.name, "rate", row.rate);
-                frappe.model.set_value(child.doctype, child.name, "billing_uom", row.uom);
-                frappe.model.set_value(child.doctype, child.name, "sales_contract", row.sales_order);
+                    // -----------------------------
+                    // CHILD TABLE MAPPING
+                    // -----------------------------
+                    selected.forEach(row => {
+
+                        let child = frm.add_child("item");
+
+                        child.item = row.item_code;
+                        child.rate = row.rate;
+                        child.billing_uom = row.uom;
+
+                        // ✔ Sales Order
+                        child.sales_contract = row.sales_order;
+
+                        // ✔ Sales Order Item (CRITICAL FIX)
+                        child.sales_contract_item = row.sales_contract_item;
+
+                    });
+
+                    // -----------------------------
+                    // PARENT MAPPING
+                    // -----------------------------
+                    frm.set_value("cost_center", selected[0].cost_center);
+                    frm.set_value("branch", selected[0].branch);
+                    frm.set_value("product", selected[0].custom_item_group);
+
+                    frm.refresh_field("item");
+                    dialog.hide();
+                }
             });
 
-            frm.refresh_field("item");
-            dialog.hide();
-        }
-    });
+            // fetch data
+            frappe.call({
+                method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_sc_items",
+                args: {
+                    customer: frm.doc.customer,
+                    company: frm.doc.company
+                },
+                callback(r) {
+                    if (r.message?.length) {
+                        sc_data = r.message;
 
-    // 🔥 UI Fix (same as PO)
-    setTimeout(() => {
-        dialog.$wrapper.find('[data-fieldname="sc_items"] .grid-body').css({
-            "overflow-x": "auto",
-            "overflow-y": "auto"
-        });
+                        dialog.fields_dict.sc_items.df.data = sc_data;
+                        dialog.fields_dict.sc_items.grid.refresh();
+                        dialog.show();
+                    } else {
+                        frappe.msgprint("No pending Sales Contracts found");
+                    }
+                }
+            });
 
-        dialog.$wrapper.find('[data-fieldname="sc_items"] .grid-body .rows').css({
-            "min-width": "1200px"
-        });
-
-        dialog.$wrapper.find('.modal-dialog').css({
-            "width": "95vw",
-            "max-width": "1400px"
-        });
-
-    }, 300);
-
-    // Fetch data
-    frappe.call({
-        method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_sc_items",
-        args: {
-            customer: frm.doc.customer,
-            company: frm.doc.company
-        },
-        callback(r) {
-            if (r.message?.length) {
-                dialog.fields_dict.sc_items.df.data = r.message;
-                dialog.fields_dict.sc_items.grid.refresh();
-                dialog.show();
-            } else {
-                frappe.msgprint("No pending Sales Contracts found");
-            }
-        }
-    });
-
-}, __("Get Items From"));
- }
+        }, __("Get Items From"));
+    }
 });
-
-
-
-
-
-
 
 
 

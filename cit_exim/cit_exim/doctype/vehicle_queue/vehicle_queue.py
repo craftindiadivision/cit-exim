@@ -296,7 +296,6 @@ class VehicleQueue(Document):
 
         dn.set_warehouse = self.source_location
         dn.branch = self.branch
-
         # -----------------------------
         # ITEM MAPPING
         # -----------------------------
@@ -310,20 +309,29 @@ class VehicleQueue(Document):
             dn_item.qty = self.net_weight
             dn_item.rate = vq_item.rate or 0
 
-            # ✅ UOM mapping (Vehicle Queue → Delivery Note)
             dn_item.uom = vq_item.billing_uom or frappe.db.get_value("Item", item_code, "stock_uom")
             dn_item.stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
 
             dn_item.warehouse = self.warehouse
 
-            # ✅ Sales Invoice linkage
+            # -----------------------------
+            # ✔ SALES INVOICE LINK (existing)
+            # -----------------------------
             dn_item.against_sales_invoice = vq_item.sales_invoice or None
             dn_item.si_detail = vq_item.sales_invoice_item or None
 
-            # Custom reference
+            # -----------------------------
+            # ✔ SALES ORDER LINK (NEW FIX)
+            # -----------------------------
+            dn_item.against_sales_order = vq_item.sales_contract or None
+            dn_item.so_detail = vq_item.sales_contract_item or None
+
+            # Optional reference
             dn_item.custom_vehicle_queue_item_ref = vq_item.name
 
-            # Optional template mapping
+            # -----------------------------
+            # ITEM GROUP TEMPLATE
+            # -----------------------------
             item_group = frappe.db.get_value("Item", item_code, "item_group")
 
             dn_item.custom_test_variable_template = frappe.db.get_value(
@@ -840,51 +848,85 @@ def get_po_item_details(purchase_order, item, net_weight=0, product=None):
         "po_balance_qty": balance_qty
     }
 
+# @frappe.whitelist()
+# def get_pending_sc_items(customer, company):
+
+#     sc_items = frappe.db.sql("""
+#         SELECT
+#             sc.name AS sales_order,
+#             sc.transaction_date,
+#             sc.customer,
+                             
+
+#             sci.name AS sales_order_item,
+#             sci.item_code,
+#             sci.item_name,
+#             sci.uom, 
+
+#             sci.qty AS ordered_qty,
+
+#             IFNULL(SUM(dni.qty), 0) AS delivered_qty,
+
+#             (sci.qty - IFNULL(SUM(dni.qty), 0)) AS pending_qty,
+
+#             sci.rate
+
+#         FROM `tabSales Order` sc
+
+#         INNER JOIN `tabSales Order Item` sci
+#             ON sci.parent = sc.name
+
+#         LEFT JOIN `tabDelivery Note Item` dni
+#             ON dni.against_sales_order = sc.name
+#             AND dni.item_code = sci.item_code
+
+#         WHERE
+#             sc.docstatus = 1
+#             AND sc.customer = %s
+#             AND sc.company = %s
+
+#         GROUP BY sci.name
+
+#         HAVING pending_qty > 0
+
+#     """, (customer, company), as_dict=True)
+
+#     return sc_items
+
+import frappe
+
 @frappe.whitelist()
 def get_pending_sc_items(customer, company):
 
-    sc_items = frappe.db.sql("""
+    data = frappe.db.sql("""
         SELECT
             sc.name AS sales_order,
             sc.transaction_date,
             sc.customer,
+            sc.cost_center,
+            sc.branch,
 
-            sci.name AS sales_order_item,
+            sci.name AS sales_contract_item,   -- ✅ IMPORTANT FIX
             sci.item_code,
             sci.item_name,
-            sci.uom, 
-
+            sci.uom,
             sci.qty AS ordered_qty,
-
-            IFNULL(SUM(dni.qty), 0) AS delivered_qty,
-
-            (sci.qty - IFNULL(SUM(dni.qty), 0)) AS pending_qty,
-
-            sci.rate
+            sci.rate,
+            sci.item_group AS custom_item_group
 
         FROM `tabSales Order` sc
-
         INNER JOIN `tabSales Order Item` sci
             ON sci.parent = sc.name
-
-        LEFT JOIN `tabDelivery Note Item` dni
-            ON dni.against_sales_order = sc.name
-            AND dni.item_code = sci.item_code
 
         WHERE
             sc.docstatus = 1
             AND sc.customer = %s
             AND sc.company = %s
 
-        GROUP BY sci.name
-
-        HAVING pending_qty > 0
-
+        ORDER BY sc.transaction_date DESC
     """, (customer, company), as_dict=True)
 
-    return sc_items
-
-
+    return data
 
 @frappe.whitelist()
 def get_pending_si_items(customer, company):

@@ -22,6 +22,7 @@
   "po_qty",
   "p_o_balance_qty",
   "sales_contract",
+  "sales_contract_item",
   "sales_invoice",
   "sales_invoice_item"
  ],
@@ -150,13 +151,20 @@
    "fieldtype": "Link",
    "label": "Sales Invoice Item",
    "options": "Sales Invoice Item"
+  },
+  {
+   "depends_on": "eval:parent.product == \"FG-Fish Meal\"",
+   "fieldname": "sales_contract_item",
+   "fieldtype": "Link",
+   "label": "Sales Contract Item",
+   "options": "Sales Order Item"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-24 12:20:47.023134",
+ "modified": "2026-04-24 14:35:18.752016",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue Item",
