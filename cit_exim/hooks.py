@@ -368,7 +368,8 @@ doc_events = {
 
 
     "Sales Order": {
-        "validate": "cit_exim.cit_exim.doc_events.sales_order.validate"
+        "validate": "cit_exim.cit_exim.doc_events.sales_order.validate",
+        "on_update_after_submit": "cit_exim.cit_exim.doc_events.sales_order.on_update_after_submit"
         # "before_save": "cit_exim.cit_exim.doc_events.sales_order.before_save"
     },
 
@@ -426,11 +427,13 @@ doc_events = {
      "Vehicle Queue": {
         "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_voucher",
         # "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.on_submit"
+    },
+        "Delivery Note": {
+        "on_submit": "cit_exim.cit_exim.doc_events.delivery_note.update_so_delivery_qty",
+        "on_cancel": "cit_exim.cit_exim.doc_events.delivery_note.rollback_so_delivery_qty"
+
     }
 
-    #    "Vehicle Queue": {
-    #     "on_submit": "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.create_purchase_documents"
-    # }
    
 }
 
