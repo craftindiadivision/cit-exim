@@ -21,7 +21,9 @@
   "lab_test_completed",
   "po_qty",
   "p_o_balance_qty",
-  "sales_contract"
+  "sales_contract",
+  "sales_invoice",
+  "sales_invoice_item"
  ],
  "fields": [
   {
@@ -134,13 +136,27 @@
    "fieldtype": "Link",
    "label": "Sales Contract",
    "options": "Sales Order"
+  },
+  {
+   "depends_on": "eval:parent.product == \"FG-Fish Meal\"",
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice"
+  },
+  {
+   "depends_on": "eval:parent.product == \"FG-Fish Meal\"",
+   "fieldname": "sales_invoice_item",
+   "fieldtype": "Link",
+   "label": "Sales Invoice Item",
+   "options": "Sales Invoice Item"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-23 15:01:50.233089",
+ "modified": "2026-04-24 12:20:47.023134",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue Item",

@@ -793,21 +793,23 @@ frappe.ui.form.on('Vehicle Queue Item', {
                         frm.refresh_field('item');
                     }
                 });
-            frappe.db.get_value('Item', row.item, ['purchase_uom', 'stock_uom'])
-                .then(r => {
-                    if (r.message) {
+            if (frm.doc.type === "Inward") {   
+                frappe.db.get_value('Item', row.item, ['purchase_uom', 'stock_uom'])
+                    .then(r => {
+                        if (r.message) {
 
-                        let billing_uom = r.message.purchase_uom || r.message.stock_uom;
+                            let billing_uom = r.message.purchase_uom || r.message.stock_uom;
 
-                        frappe.model.set_value(
-                            cdt,
-                            cdn,
-                            'billing_uom',
-                            billing_uom
-                        );
+                            frappe.model.set_value(
+                                cdt,
+                                cdn,
+                                'billing_uom',
+                                billing_uom
+                            );
 
-                    }
-                });
+                        }
+                    });
+            }
         }
     }
 });
@@ -942,6 +944,13 @@ frappe.ui.form.on("Vehicle Queue", {
                         label: "Price",
                         read_only: 1,
                         columns: 1
+                    },
+                    {
+                        fieldtype: "Data",
+                        fieldname: "uom",
+                        label: "UOM",
+                        read_only: 1,
+                        columns: 1
                     }
                 ]
             }
@@ -964,6 +973,7 @@ frappe.ui.form.on("Vehicle Queue", {
 
                 frappe.model.set_value(child.doctype, child.name, "item", row.item_code);
                 frappe.model.set_value(child.doctype, child.name, "rate", row.rate);
+                frappe.model.set_value(child.doctype, child.name, "billing_uom", row.uom);
                 frappe.model.set_value(child.doctype, child.name, "sales_contract", row.sales_order);
             });
 
@@ -1010,4 +1020,178 @@ frappe.ui.form.on("Vehicle Queue", {
 
 }, __("Get Items From"));
  }
+});
+
+
+
+
+
+
+
+
+
+frappe.ui.form.on("Vehicle Queue", {
+    refresh(frm) {
+        if (frm.doc.docstatus !== 0) return;
+
+        frm.add_custom_button("Sales Invoice", () => {
+
+            if (!frm.doc.customer) {
+                frappe.throw("Please select Customer");
+            }
+
+            const dialog = new frappe.ui.Dialog({
+                title: "Select Sales Invoice Items",
+                size: "extra-large",
+                fields: [
+                    {
+                        fieldname: "si_items",
+                        fieldtype: "Table",
+                        cannot_add_rows: true,
+                        in_place_edit: false,
+                        fields: [
+                            {
+                                fieldtype: "Link",
+                                fieldname: "sales_invoice",
+                                label: "Sales Invoice",
+                                options: "Sales Invoice",
+                                in_list_view: 1,
+                                read_only: 1,
+                                columns: 2
+                            },
+                            {
+                                fieldtype: "Link",
+                                fieldname: "item_code",
+                                label: "Item Code",
+                                options: "Item",
+                                in_list_view: 1,
+                                read_only: 1,
+                                columns: 2
+                            },
+                            {
+                                fieldtype: "Data",
+                                fieldname: "item_name",
+                                label: "Item Name",
+                                read_only: 1,
+                                columns: 3
+                            },
+                            {
+                                fieldtype: "Data",
+                                fieldname: "uom",
+                                label: "UOM",
+                                read_only: 1,
+                                columns: 1
+                            },
+                            {
+                                fieldtype: "Currency",
+                                fieldname: "rate",
+                                label: "Rate",
+                                read_only: 1,
+                                columns: 2
+                            },
+                            // optional hidden fields (needed for mapping)
+                            {
+                                fieldtype: "Data",
+                                fieldname: "cost_center",
+                                hidden: 1
+                            },
+                            {
+                                fieldtype: "Data",
+                                fieldname: "branch",
+                                hidden: 1
+                            }
+                        ]
+                    }
+                ],
+
+                primary_action_label: "Add Items",
+                primary_action() {
+
+                    const grid = dialog.fields_dict.si_items.grid;
+                    const selected = grid.get_selected_children();
+
+                    if (!selected.length) {
+                        frappe.msgprint("Please select at least one item");
+                        return;
+                    }
+
+                    let cost_center = null;
+                    let branch = null;
+
+                    selected.forEach(row => {
+
+                        let child = frm.add_child("item");
+
+                        frappe.model.set_value(child.doctype, child.name, "item", row.item_code);
+                        frappe.model.set_value(child.doctype, child.name, "rate", row.rate);
+                        frappe.model.set_value(child.doctype, child.name, "billing_uom", row.uom);
+                        frappe.model.set_value(child.doctype, child.name, "sales_invoice", row.sales_invoice);
+                        frappe.model.set_value(child.doctype,child.name,"sales_invoice_item",row.sales_invoice_item);
+
+                        // ✅ capture from first valid row
+                        if (!cost_center && row.cost_center) {
+                            cost_center = row.cost_center;
+                        }
+
+                        if (!branch && row.branch) {
+                            branch = row.branch;
+                        }
+                    });
+
+                    // ✅ set PARENT fields (Vehicle Queue)
+                    if (cost_center) {
+                        frm.set_value("cost_center", cost_center);
+                    }
+
+                    if (branch) {
+                        frm.set_value("branch", branch);
+                    }
+
+                    frm.refresh_field("item");
+                    frm.refresh_field("cost_center");
+                    frm.refresh_field("branch");
+
+                    dialog.hide();
+                }
+            });
+
+            // UI styling
+            setTimeout(() => {
+
+                dialog.$wrapper.find('[data-fieldname="si_items"] .grid-body').css({
+                    "overflow-x": "auto",
+                    "overflow-y": "auto"
+                });
+
+                dialog.$wrapper.find('[data-fieldname="si_items"] .grid-body .rows').css({
+                    "min-width": "1000px"
+                });
+
+                dialog.$wrapper.find('.modal-dialog').css({
+                    "width": "95vw",
+                    "max-width": "1200px"
+                });
+
+            }, 300);
+
+            // Fetch data
+            frappe.call({
+                method: "cit_exim.cit_exim.doctype.vehicle_queue.vehicle_queue.get_pending_si_items",
+                args: {
+                    customer: frm.doc.customer,
+                    company: frm.doc.company
+                },
+                callback(r) {
+                    if (r.message?.length) {
+                        dialog.fields_dict.si_items.df.data = r.message;
+                        dialog.fields_dict.si_items.grid.refresh();
+                        dialog.show();
+                    } else {
+                        frappe.msgprint("No Sales Invoice items found");
+                    }
+                }
+            });
+
+        }, __("Get Items From"));
+    }
 });

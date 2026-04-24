@@ -274,24 +274,32 @@ class VehicleQueue(Document):
 
         dn = frappe.new_doc("Delivery Note")
 
+        # -----------------------------
+        # HEADER FIELDS
+        # -----------------------------
         dn.customer = self.customer
         dn.company = self.company
         dn.posting_date = getdate(self.date) if self.date else nowdate()
         dn.posting_time = get_time(self.out_time) if self.out_time else None
+
         dn.custom_vehicle_queue = self.name
         dn.custom_token_number = self.token_number
         dn.cost_center = self.cost_center
         dn.vehicle_no = self.vehicle_no
         dn.custom_item_group = self.product
-        # dn.currency = "USD"
-        dn.currency = frappe.db.get_value("Customer", self.customer, "default_currency")
+
+        # Currency fallback (safe)
+        dn.currency = (
+            frappe.db.get_value("Customer", self.customer, "default_currency")
+            or frappe.db.get_value("Company", self.company, "default_currency")
+        )
+
         dn.set_warehouse = self.source_location
         dn.branch = self.branch
-        dn.custom_vehicle_queue = self.name
 
-        # -------------------------------------------------
+        # -----------------------------
         # ITEM MAPPING
-        # -------------------------------------------------
+        # -----------------------------
         for vq_item in self.item:
 
             item_code = vq_item.item
@@ -299,16 +307,23 @@ class VehicleQueue(Document):
             dn_item = dn.append("items", {})
 
             dn_item.item_code = item_code
-            dn_item.qty = self.net_weight   # same logic as your PR
+            dn_item.qty = self.net_weight
             dn_item.rate = vq_item.rate or 0
-            dn_item.uom = frappe.db.get_value("Item", item_code, "stock_uom")
-            dn_item.stock_uom = dn_item.uom
+
+            # ✅ UOM mapping (Vehicle Queue → Delivery Note)
+            dn_item.uom = vq_item.billing_uom or frappe.db.get_value("Item", item_code, "stock_uom")
+            dn_item.stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
+
             dn_item.warehouse = self.warehouse
 
-            # Optional custom link
+            # ✅ Sales Invoice linkage
+            dn_item.against_sales_invoice = vq_item.sales_invoice or None
+            dn_item.si_detail = vq_item.sales_invoice_item or None
+
+            # Custom reference
             dn_item.custom_vehicle_queue_item_ref = vq_item.name
 
-            # Item group / template fetch (same pattern as your PR)
+            # Optional template mapping
             item_group = frappe.db.get_value("Item", item_code, "item_group")
 
             dn_item.custom_test_variable_template = frappe.db.get_value(
@@ -317,12 +332,14 @@ class VehicleQueue(Document):
                 "custom_test_variable_template"
             )
 
+        # -----------------------------
+        # INSERT ONLY (NO SUBMIT)
+        # -----------------------------
         dn.insert(ignore_permissions=True)
 
         frappe.msgprint(
             f"Delivery Note <b>{dn.name}</b> created in Draft from Vehicle Queue"
         )
-
 
 
 
@@ -835,6 +852,7 @@ def get_pending_sc_items(customer, company):
             sci.name AS sales_order_item,
             sci.item_code,
             sci.item_name,
+            sci.uom, 
 
             sci.qty AS ordered_qty,
 
@@ -865,3 +883,44 @@ def get_pending_sc_items(customer, company):
     """, (customer, company), as_dict=True)
 
     return sc_items
+
+
+
+@frappe.whitelist()
+def get_pending_si_items(customer, company):
+
+    data = frappe.db.sql("""
+        SELECT
+            si.name AS sales_invoice,
+            si.posting_date,
+            si.customer,
+            si.cost_center,
+            si.branch,
+
+            sii.name AS sales_invoice_item,
+            sii.item_code,
+            sii.item_name,
+            sii.uom,
+            sii.rate
+
+        FROM `tabSales Invoice` si
+        INNER JOIN `tabSales Invoice Item` sii
+            ON sii.parent = si.name
+
+        WHERE
+            si.docstatus = 1
+            AND si.customer = %s
+            AND si.company = %s
+
+            AND NOT EXISTS (
+                SELECT 1
+                FROM `tabDelivery Note Item` dni
+                WHERE dni.against_sales_invoice = si.name
+            )
+
+        GROUP BY sii.name
+        ORDER BY si.posting_date DESC
+
+    """, (customer, company), as_dict=True)
+
+    return data
