@@ -257,7 +257,7 @@ fixtures=[
     "dt": "Custom Field",
     "filters": [
         ["dt", "in", ["Sales Order","Address","Supplier","Sales Invoice","Sales Invoice Item","Sales Order Item","Payment Entry","Journal Entry","Company","Item","Purchase Order",
-                      "Purchase Invoice","Purchase Receipt","Opportunity","Payment Term","Payment Terms Template Detail","Dynamic Link"]]
+                      "Purchase Invoice","Purchase Receipt","Opportunity","Payment Term","Payment Terms Template Detail","Dynamic Link","Delivery Note"]]
     ]
     },
     {
