@@ -23,8 +23,8 @@ class DutyDrawBackClaim(Document):
 		self.script_amount = flt(total1)
 		self.round_off_amount = flt(total) - flt(total1)
 
-		if self.round_off_amount >= 20:
-			frappe.throw(_("Round off amount should be less than 20"))
+		# if self.round_off_amount >= 20:
+		# 	frappe.throw(_("Round off amount should be less than 20"))
 
 	def on_submit(self):
 		self.total_debit_amount = flt(self.total_debit_amount) - flt(self.round_off_amount)
@@ -139,11 +139,13 @@ def create_jv_on_submit(self, method):
 				"reference_type": "Journal Entry",
 				"reference_name": row.je_no,
 				"credit_in_account_currency": flt(row.debit_amount),
+				"branch":self.branch
 			})
 
 		meis_jv.append("accounts", {
 			"account": self.credit_account,
 			"debit_in_account_currency": flt(self.total_debit_amount),
+			"branch":self.branch
 		})
 
 		if flt(self.round_off_amount) < 0:

@@ -399,9 +399,19 @@
   {
    "link_doctype": "Delivery Note",
    "link_fieldname": "custom_vehicle_queue"
+  },
+  {
+   "custom": 1,
+   "link_doctype": "Sales Invoice",
+   "link_fieldname": "custom_vehicle_queue"
+  },
+  {
+   "custom": 1,
+   "link_doctype": "Sales Order",
+   "link_fieldname": "custom_vehicle_queue"
   }
  ],
- "modified": "2026-04-23 12:51:30.736729",
+ "modified": "2026-04-27 12:09:38.418403",
  "modified_by": "Administrator",
  "module": "CIT Exim",
  "name": "Vehicle Queue",

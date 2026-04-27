@@ -319,6 +319,7 @@ class VehicleQueue(Document):
             # -----------------------------
             dn_item.against_sales_invoice = vq_item.sales_invoice or None
             dn_item.si_detail = vq_item.sales_invoice_item or None
+            
 
             # -----------------------------
             # ✔ SALES ORDER LINK (NEW FIX)
@@ -952,7 +953,8 @@ def get_pending_si_items(customer, company):
             sii.item_code,
             sii.item_name,
             sii.uom,
-            sii.rate
+            sii.rate,
+            
 
         FROM `tabSales Invoice` si
         INNER JOIN `tabSales Invoice Item` sii
